@@ -161,3 +161,13 @@ html{background:var(--ground);-webkit-text-size-adjust:100%}body{overscroll-beha
  #gps-setup .gps-setup-actions{grid-template-columns:1fr}#gps-setup .gps-setup-actions .btn{width:100%}#gps-setup .gps-setup-actions span{text-align:center}
  .tabs{padding-left:3px;padding-right:3px}.tab{font-size:9px}
 }
+
+/* Navegar abre como una app de mapas: recorrido, mapa y acción principal. */
+.nav-clean{gap:12px}.nav-homebar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:2px 2px 0}.nav-homebar>div{min-width:0}.nav-homebar small{display:block;font-size:9px;font-weight:750;letter-spacing:.12em;color:var(--accent)}.nav-homebar h3{margin:2px 0 0;font-size:18px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nav-homebar p{margin:2px 0 0;font-size:11px;color:var(--muted)}#nav-settings-open{flex:none;gap:7px;padding:9px 12px;min-height:42px}#nav-settings-open .ui-icon{width:18px;height:18px}.route-settings{margin-top:2px}.route-settings:not([open]){display:none}.route-settings>summary{display:none}.route-settings-body{display:grid;gap:14px;padding:16px}.route-settings-body>.premium-fold,.route-settings-body>.nav-turn-list{margin:0}.route-settings-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:13px;border-bottom:1px solid var(--rule)}.route-settings-header small{display:block;color:var(--accent);font-size:9px;font-weight:750;letter-spacing:.12em}.route-settings-header h3{margin:1px 0 0;font-size:19px}.route-setting-line{display:flex;align-items:center;padding:2px 2px 10px;border-bottom:1px solid var(--rule)}.route-setting-line .switch{margin:0}.nav-clean>.nav-actions{padding:0;border:0}.nav-clean>.nav-actions #nav-start{flex:1}.nav-clean>#nav-message{display:none;font-size:11px;padding:10px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nav-clean>#nav-message.warn{display:block}
+@media(max-width:700px){
+ .nav-clean-shell>.panel-hd{display:none}.nav-clean-shell{border-radius:18px}.nav-clean-shell>.panel-bd{padding:10px}
+ .nav-homebar{padding:2px}.nav-homebar h3{font-size:16px}.nav-homebar p{font-size:10px}#nav-settings-open{font-size:11px;padding:8px 10px}
+ .nav-clean>#nav-stage #nav-map{height:55dvh;min-height:400px;max-height:610px}
+ .nav-clean>.nav-actions #nav-start{width:100%;font-size:15px;min-height:52px}.nav-clean>.nav-actions #nav-stop{flex:none}
+ .route-settings-body{padding:12px;gap:12px}.route-settings{scroll-margin-top:12px}
+}
