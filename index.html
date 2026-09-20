@@ -803,10 +803,13 @@ function parseGPX(text){
   var tracks = [], i, trks = all(doc,"trk");
   for(i=0;i<trks.length;i++){
     var segments = all(trks[i], "trkseg"), trackName = txt(trks[i], "name") || ("Traza " + (i+1));
-    segments.forEach(function(segment, si){
+    var parsedSegments = [];
+    segments.forEach(function(segment){
       var p = toPts(all(segment, "trkpt"));
-      if(p.length > 1) tracks.push({ name: trackName + (segments.length > 1 ? " · segmento " + (si+1) : ""), pts:p });
+      if(p.length > 1) parsedSegments.push(p);
     });
+    if(parsedSegments.length > 1) tracks.push({ name: trackName + " · recorrido completo", pts:[].concat.apply([],parsedSegments) });
+    parsedSegments.forEach(function(p,si){ tracks.push({ name: trackName + (parsedSegments.length > 1 ? " · segmento " + (si+1) : ""), pts:p }); });
   }
   if(!tracks.length){
     var rtes = all(doc,"rte");
@@ -1729,6 +1732,7 @@ showTab("nav");
 <script src="vendor/leaflet.js"></script>
 <script src="nav-core.js"></script>
 <script src="gpx-core.js"></script>
+<script src="street-match-core.js"></script>
 <script src="restrictions-core.js"></script>
 <script src="navigation.js"></script>
 <script src="restrictions.js"></script>
@@ -1765,3 +1769,6 @@ showTab("nav");
 
 <link rel="stylesheet" href="gps-setup.css">
 <script src="gps-setup.js"></script>
+
+<link rel="stylesheet" href="street-match.css">
+<script src="street-match.js"></script>
