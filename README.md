@@ -84,3 +84,9 @@ Al iniciar, la primera posición GPS reciente con precisión de 60 metros o mejo
 El enlace usa Maps URLs (https://developers.google.com/maps/architecture/maps-url), modo driving y dir_action=navigate; omite el origen para que Google Maps utilice la ubicación del dispositivo. Solo incluye el destino, nunca el GPX completo. Dependiendo del dispositivo y de la ubicación disponible, Google Maps abre navegación o vista previa. No es un itinerario adaptado a las dimensiones del camión. Al regresar a Rutas hay que pulsar Iniciar navegación; no se inicia automáticamente ni se altera el recorrido.
 
 Comprobado en navegador con GPS simulado: lejos no avanza el GPX, cerca comienza el seguimiento, baja precisión mantiene la espera, cambiar la pasada actualiza el destino y Escape cierra el diálogo. Las 39 pruebas existentes siguen pasando.
+
+### Volver del acceso
+
+Al abrir Google Maps se guarda localmente la huella de la ruta y el punto seleccionado, durante un máximo de 24 horas. La tarjeta «Tu ruta te espera» sobrevive a una recarga. «Ya he llegado · comprobar GPS» recupera ese punto y solicita una posición fiable antes de comenzar; no inicia nada automáticamente al volver a la app. El recordatorio se borra al comenzar cerca del destino, al descartarlo, al cambiar a otra ruta o al caducar.
+
+La carga inicial del mapa 3D mantiene visible el mapa 2D, señala que está cargando y permite cancelar y reintentar. Validado en navegador con respuesta de cartografía retrasada y con GPS simulado para regreso cercano y lejano después de recargar la página.
