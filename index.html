@@ -193,6 +193,65 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(8px);background:var(--ink);color:var(--ground);padding:9px 16px;border-radius:3px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:50;box-shadow:var(--shadow);max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
+
+/* ===================== movil ===================== */
+.t-short{display:none}
+
+@media (max-width:700px){
+  /* la cabecera ocupaba 178 px antes de la primera pestana: casi un tercio de la pantalla */
+  .wrap{padding:10px 12px 40px;gap:12px}
+  .masthead{gap:4px;padding-bottom:8px}
+  h1{font-size:26px}
+  .brandrow .sub{display:none}
+  .deck{display:none}               /* la explicacion completa vive en la pestana Guia */
+
+  /* la tira de pestanas acompana el scroll: cambiar de seccion no obliga a subir */
+  .tabs{position:sticky;top:0;z-index:40;background:var(--ground);
+        scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:12px 14px;font-size:15px;letter-spacing:.06em;min-height:48px;scroll-snap-align:start}
+  .t-long{display:none}
+  .t-short{display:inline}
+
+  /* cabeceras de panel: sin envolver a dos lineas */
+  .panel-hd{padding:10px 12px;flex-wrap:wrap;row-gap:2px}
+  .panel-hd h2{font-size:12px;letter-spacing:.1em}
+  .panel-bd{padding:12px;gap:10px}
+
+  /* cualquier cosa que se toca, al menos 46 px de alto */
+  .btn,.chip,select,input[type=text],input[type=number],input[type=file],label.btn{min-height:46px}
+  .btn{padding:11px 15px;font-size:15px}
+  .btn.sm{min-height:44px;padding:10px 13px;font-size:14.5px}
+  .btnrow{gap:9px}
+  .chips{gap:8px}
+  .chip{padding:10px 15px;font-size:15px}
+  /* 16 px evita que iOS haga zoom al enfocar un campo */
+  input[type=text],input[type=number],textarea,select{font-size:16px}
+  .switch input,input[type=checkbox]{width:24px;height:24px}
+  .switch{gap:12px;padding:4px 0}
+
+  /* texto de apoyo legible a la luz del dia */
+  .hint,.legend,.leg-meta{font-size:13.5px}
+  .stat dd{font-size:23px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+  /* controles de Leaflet: los de serie son de 30 px */
+  .leaflet-touch .leaflet-bar a{width:40px;height:40px;line-height:40px;font-size:20px}
+
+  .coords{font-size:12.5px}
+  .leg-no{padding-top:11px}
+  .fmt{grid-template-columns:1fr;gap:8px}
+  .fmt .btn{justify-self:start}
+  .road-vehicle label{flex:1 1 100px}
+  .road-vehicle input{width:100%}
+  #share-url{font-size:13px}
+}
+
+@media (max-width:380px){
+  .tab{padding:12px 8px;font-size:13.5px;letter-spacing:.02em}
+  h1{font-size:23px}
+  .stats{grid-template-columns:1fr 1fr}
+}
 </style>
 
 <div class="wrap">
@@ -206,11 +265,11 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
   </header>
 
   <div class="tabs" role="tablist">
-<button class="tab" role="tab" id="tab-nav" aria-controls="p-nav" aria-selected="false" type="button">Navegar</button>
-    <button class="tab" role="tab" id="tab-exp" aria-controls="p-exp" aria-selected="true" type="button">Para el conductor</button>
-    <button class="tab" role="tab" id="tab-conv" aria-controls="p-conv" aria-selected="false" type="button">Enlaces de Maps</button>
-    <button class="tab" role="tab" id="tab-make" aria-controls="p-make" aria-selected="false" type="button">Crear GPX</button>
-    <button class="tab" role="tab" id="tab-help" aria-controls="p-help" aria-selected="false" type="button">Guía</button>
+<button class="tab" role="tab" id="tab-nav" aria-controls="p-nav" aria-selected="false" type="button"><span class="t-long">Navegar</span><span class="t-short">Navegar</span></button>
+    <button class="tab" role="tab" id="tab-exp" aria-controls="p-exp" aria-selected="true" type="button"><span class="t-long">Para el conductor</span><span class="t-short">Conductor</span></button>
+    <button class="tab" role="tab" id="tab-conv" aria-controls="p-conv" aria-selected="false" type="button"><span class="t-long">Enlaces de Maps</span><span class="t-short">Maps</span></button>
+    <button class="tab" role="tab" id="tab-make" aria-controls="p-make" aria-selected="false" type="button"><span class="t-long">Crear GPX</span><span class="t-short">Crear</span></button>
+    <button class="tab" role="tab" id="tab-help" aria-controls="p-help" aria-selected="false" type="button"><span class="t-long">Guía</span><span class="t-short">Guía</span></button>
   </div>
 
 <section class="tabpanel" id="p-nav" role="tabpanel" aria-labelledby="tab-nav" hidden>
