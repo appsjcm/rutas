@@ -37,6 +37,7 @@ $('map-3d').onclick=()=>{if(!wanted)enable();};$('map-2d').onclick=()=>{$('map-3
 window.addEventListener('rutas:progress',schedule);window.addEventListener('rutas:gps',schedule);window.addEventListener('rutas:check-route',()=>{lastRoute=null;schedule();});window.addEventListener('rutas:visible',()=>{if(map&&wanted){map.resize();render();}});
 window.addEventListener('rutas:preview-pan',()=>camera(true));
 window.addEventListener('rutas:street-path',()=>{if(map&&ready)map.getSource('rutas-street')?.setData(streetData());});
+window.addEventListener('rutas:navigation-path',()=>{lastRoute=null;schedule();});
 $('nav-start').addEventListener('click',()=>{if(wanted&&!state().headingUp)$('drive-heading').click();schedule();});
 $('nav-fit').addEventListener('click',()=>{if(wanted)fit();});for(const id of ['nav-center','drive-center','drive-heading'])$(id).addEventListener('click',()=>camera(true));
 new ResizeObserver(()=>{if(map&&wanted)map.resize();}).observe(stage);

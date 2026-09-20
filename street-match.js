@@ -11,14 +11,14 @@ function status(kind,message,canRetry=false){bar.hidden=false;bar.dataset.state=
 async function match(force=false){
  const state=RutasMap.get(),data=Roadbook.getRoute();
  if(!state.route||data.sample||state.mode==='access'){clear();bar.hidden=true;routeRef=state.route?.pts||null;return;}
- if(!force&&routeRef===state.route.pts)return;clear();routeRef=state.route.pts;const own=++run,input=S.input(state.route.pts,C.simplify);
+ if(!force&&routeRef===data.pts)return;clear();routeRef=data.pts;const own=++run,input=S.input(data.pts,C.simplify);
  if(input.length<2){status('error','No hay puntos suficientes para reconocer las calles.');return;}
  const chunks=S.chunks(input);status('loading','Buscando las calles y carreteras que pasan por los puntos del GPX…');controller=new AbortController();
  try{
   const lines=[];for(let i=0;i<chunks.length;i++){if(chunks.length>1)status('loading','Reconociendo calles · tramo '+(i+1)+' de '+chunks.length+'…');const body={shape:chunks[i],costing:'auto',shape_match:'map_snap',directions_options:{units:'kilometers'},trace_options:{gps_accuracy:20,search_radius:60,breakage_distance:5000}};const response=await fetch('https://valhalla1.openstreetmap.de/trace_route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});const json=await response.json().catch(()=>null);if(!response.ok)throw Error(json?.error||json?.status_message||'El servicio de calles respondió '+response.status+'.');lines.push(S.extract(json));}
-  const matched=S.merge(lines);if(own!==run||RutasMap.get().route?.pts!==routeRef)return;const pct=S.coverage(input,matched);if(pct<25)throw Error('No se pudo asociar esta traza con suficientes calles cercanas.');
+  const matched=S.merge(lines);if(own!==run||Roadbook.getRoute().pts!==routeRef)return;const pct=S.coverage(input,matched);if(pct<25)throw Error('No se pudo asociar esta traza con suficientes calles cercanas.');
   path=matched;layer=L.polyline(path.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(state.map);layer.bringToBack();
-  mapKey(true);status('ready','Trazado vial visible · '+pct+' % de los puntos quedan cerca de una calle reconocida.');window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:pct}}));
+  const used=RutasMap.useStreetPath(path);mapKey(true);status('ready','Trazado vial visible · '+pct+' % de los puntos quedan cerca de una calle reconocida.'+(used?' Simulación y navegación preparadas sobre estas calles.':''));window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:pct,navigation:used}}));
  }catch(error){if(error.name!=='AbortError'&&own===run)status('error','No se pudo dibujar el trazado por calles. '+error.message+' El GPX original sigue disponible.',true);}
  finally{if(own===run)controller=null;}
 }
