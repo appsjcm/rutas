@@ -27,6 +27,12 @@ Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap c
 
 Publicación mediante GitHub Pages desde main.
 
+## Sin conexión
+
+Un service worker guarda la aplicación entera -código, estilos, Leaflet y los iconos- la primera vez que se abre, así que arranca sin cobertura. Las teselas del mapa se guardan solo cuando el mapa las ha pedido de verdad, mientras exploras la ruta o conduces, con un tope de 1500: no hay descarga por lotes, que es lo que desaconseja la política de uso de OpenStreetMap. Preparar la ronda en el depósito, con datos, deja esas calles disponibles después. Una zona que no se haya visto nunca aparecerá vacía, y un aviso en pantalla lo indica mientras no haya conexión. Las consultas a Overpass nunca pasan por ese almacén: tienen su propia caducidad de 24 horas.
+
+La aplicación se puede instalar en la pantalla de inicio con su manifiesto e iconos. Una versión nueva se descarga en segundo plano y entra al cerrar y volver a abrir, para no cambiar el código a mitad de una ronda.
+
 ## Comprobación de sentidos
 
 En Navegar, Comprobar mi recorrido compara muestras de la traza con vías de OpenStreetMap, incluyendo oneway=yes, oneway=-1, rotondas y excepciones para vehículos a motor. Las restricciones variables y las vías cercanas ambiguas se señalan aparte. No es una validación legal ni sustituye la señalización. No revisa obras ni prohibiciones de giro. Si rellenas las medidas de tu vehículo -altura, peso y anchura, opcionales y guardadas en el dispositivo- se comprueban además maxheight, maxweight y maxwidth, con la variante :hgv por delante de la general, y las vías cerradas por hgv, access o motor_vehicle. Un límite solo salta cuando tu vehículo no cabe, y el aviso dice la medida de la vía y la tuya. Sin medidas, esa parte no se comprueba y no aparece ningún aviso dimensional. access=destination no se señala: una ronda de recogida entra legítimamente en esas calles.

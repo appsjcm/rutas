@@ -3,6 +3,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rutas · Navegador GPX</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c24818">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rutas">
 <link rel="stylesheet" href="vendor/leaflet.css">
 <link rel="stylesheet" href="navigation.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
@@ -533,6 +539,7 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
   </section>
 
 </div>
+<div id="net-offline" hidden role="status">Sin conexión · el mapa solo muestra las zonas ya vistas</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
@@ -1655,4 +1662,14 @@ showTab("nav");
 <script src="restrictions-core.js"></script>
 <script src="navigation.js"></script>
 <script src="restrictions.js"></script>
+<script>
+(function(){
+ var badge=document.getElementById('net-offline');
+ function net(){if(badge)badge.hidden=navigator.onLine;}
+ addEventListener('online',net);addEventListener('offline',net);net();
+ if('serviceWorker' in navigator)addEventListener('load',function(){
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+ });
+})();
+</script>
 </html>
