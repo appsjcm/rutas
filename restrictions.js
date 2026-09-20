@@ -13,7 +13,7 @@ function setAck(issue,on){if(on){if(!muted(issue))acks.push([issue.way,Math.roun
 function reset(){const state=RutasMap.get();if(!state.route||state.route.pts===routeRef)return;routeRef=state.route.pts;loadAcks(state.route);token++;if(controller)controller.abort();report=null;if(layer){state.map.removeLayer(layer);layer=null;}$('road-issues').replaceChildren();$('road-export').disabled=true;$('road-check').disabled=Roadbook.getRoute().sample;$('road-status').textContent=Roadbook.getRoute().sample?'Carga tu GPX real para comprobarlo.':'Sin comprobar. Pulsa Comprobar mi recorrido; se consulta únicamente la zona del mapa.';$('nav-road-alert').hidden=true;try{const cache=JSON.parse(localStorage.getItem(key(routeRef)));if(cache&&Date.now()-cache.saved<86400000)render(cache.data,state.route,true);}catch{}}
 function description(issue){return issue.kind==='opposed'?'Posible sentido contrario':issue.kind==='conditional'?'Sentido variable: revisar condiciones':'Coincidencia dudosa entre vías cercanas';}
 function link(text,url){const a=document.createElement('a');a.textContent=text;a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
-function render(data,route,cached=false){if(data.remark||!Array.isArray(data.elements))throw Error('La consulta de OpenStreetMap está incompleta. No se puede verificar esta ruta.');report=A.analyze(route.pts,data.elements);report.osmDate=data.osm3s?.timestamp_osm_base||null;report.checked=new Date().toISOString();const state=RutasMap.get();if(layer)state.map.removeLayer(layer);layer=L.featureGroup().addTo(state.map);$('road-issues').replaceChildren();if(!ackKey)loadAcks(route);
+function render(data,route,cached=false){if(data.remark||!Array.isArray(data.elements))throw Error('La consulta de OpenStreetMap está incompleta. No se puede verificar esta ruta.');if(!data.elements.length)throw Error('Esos datos no contienen ninguna calle de la zona, así que no verifican nada. Repite la consulta o usa otro archivo.');report=A.analyze(route.pts,data.elements);report.osmDate=data.osm3s?.timestamp_osm_base||null;report.checked=new Date().toISOString();const state=RutasMap.get();if(layer)state.map.removeLayer(layer);layer=L.featureGroup().addTo(state.map);$('road-issues').replaceChildren();if(!ackKey)loadAcks(route);
  const painters=[];
  const updateStatus=()=>{const live=report.issues.filter(i=>!muted(i)),probable=live.filter(i=>i.kind==='opposed').length,doubtful=live.length-probable,hidden=report.issues.length-live.length,date=report.osmDate?new Date(report.osmDate).toLocaleDateString('es-ES'):'no indicada',coverage=report.sampled?Math.round(report.matched/report.sampled*100):0,old=report.osmDate&&Date.now()-Date.parse(report.osmDate)>30*86400000;
   $('road-status').textContent=(live.length?probable+(probable===1?' posible tramo en sentido contrario':' posibles tramos en sentido contrario')+' y '+doubtful+(doubtful===1?' punto dudoso.':' puntos dudosos.'):report.issues.length?'Todos los avisos de esta ruta están marcados como revisados.':'No se detectaron conflictos de sentido único con estos datos. Esto no confirma que toda la ruta sea legal.')+(hidden?' '+hidden+(hidden===1?' tramo revisado y silenciado.':' tramos revisados y silenciados.'):'')+' Coincidencia geométrica en el '+coverage+' % de las muestras. Fecha de los datos OSM: '+date+(old?' (más de 30 días; requiere verificación actual).':'.')+(cached?' Datos recuperados del dispositivo.':'');};
@@ -37,7 +37,42 @@ function render(data,route,cached=false){if(data.remark||!Array.isArray(data.ele
  for(const fn of painters)fn();
  updateStatus();
  $('road-export').disabled=false;alertAt(state.progress);RutasMap.refresh();window.dispatchEvent(new CustomEvent("rutas:roads",{detail:{pts:route.pts,elements:data.elements}}));}
-async function check(){const state=RutasMap.get();if(!state.route||Roadbook.getRoute().sample)return;const own=++token,route=state.route,box=bounds(route.pts),width=C.distance({lat:box[0],lon:box[1]},{lat:box[0],lon:box[3]}),height=C.distance({lat:box[0],lon:box[1]},{lat:box[2],lon:box[1]});if(width*height>250000000){$('road-status').textContent='La zona es demasiado extensa para esta consulta. Selecciona un segmento más corto.';return;}$('road-check').disabled=true;$('road-status').textContent='Consultando sentidos de circulación en OpenStreetMap…';const requestController=new AbortController();controller=requestController;const timer=setTimeout(()=>requestController.abort(),45000);try{const query='[out:json][timeout:30];way["highway"]('+box.join(',')+');out tags geom;',response=await fetch('https://overpass.kumi.systems/api/interpreter?data='+encodeURIComponent(query),{signal:requestController.signal});if(!response.ok)throw Error('Servidor del mapa no disponible ('+response.status+'). Inténtalo más tarde.');const data=await response.json();if(own!==token)return;render(data,route);try{localStorage.setItem(key(route.pts),JSON.stringify({saved:Date.now(),data}));}catch{}}catch(err){if(own===token)$('road-status').textContent='No se ha podido completar la comprobación. '+(err.name==='AbortError'?'El servidor ha tardado demasiado.':err.message);}finally{clearTimeout(timer);if(own===token){$('road-check').disabled=false;controller=null;}}}
+const MIRRORS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
+const ATTEMPT_MS=25000;
+function host(url){try{return new URL(url).hostname;}catch{return url;}}
+async function ask(query,outer,onTry){
+ let last=null;
+ for(let i=0;i<MIRRORS.length;i++){
+  if(outer.signal.aborted)throw Object.assign(Error('cancelado'),{name:'AbortError'});
+  onTry(i,MIRRORS.length,host(MIRRORS[i]));
+  const attempt=new AbortController(),relay=()=>attempt.abort();
+  outer.signal.addEventListener('abort',relay,{once:true});
+  const timer=setTimeout(()=>attempt.abort(),ATTEMPT_MS);
+  try{
+   const res=await fetch(MIRRORS[i]+'?data='+encodeURIComponent(query),{signal:attempt.signal});
+   if(!res.ok)throw Error(host(MIRRORS[i])+' respondió '+res.status+'.');
+   const data=await res.json();
+   if(data.remark)throw Error(host(MIRRORS[i])+' no pudo completar la consulta.');
+   if(!Array.isArray(data.elements)||!data.elements.length)throw Error(host(MIRRORS[i])+' no devolvió ninguna calle de la zona.');
+   return data;
+  }catch(err){
+   if(outer.signal.aborted)throw err;
+   last=attempt.signal.aborted?Error('Tiempo agotado en '+host(MIRRORS[i])+'.'):err;
+  }finally{clearTimeout(timer);outer.signal.removeEventListener('abort',relay);}
+ }
+ throw last||Error('Ningún servidor respondió.');
+}
+async function check(){const state=RutasMap.get();if(!state.route||Roadbook.getRoute().sample)return;const own=++token,route=state.route,box=bounds(route.pts),width=C.distance({lat:box[0],lon:box[1]},{lat:box[0],lon:box[3]}),height=C.distance({lat:box[0],lon:box[1]},{lat:box[2],lon:box[1]});if(width*height>250000000){$('road-status').textContent='La zona es demasiado extensa para esta consulta. Selecciona un segmento más corto.';return;}
+ $('road-check').disabled=true;const requestController=new AbortController();controller=requestController;
+ try{
+  const query='[out:json][timeout:30];way["highway"]('+box.join(',')+');out tags geom;';
+  const data=await ask(query,requestController,(i,n,name)=>{$('road-status').textContent='Consultando sentidos de circulación en '+name+(i?' (servidor '+(i+1)+' de '+n+')':'')+'…';});
+  if(own!==token)return;
+  render(data,route);
+  try{localStorage.setItem(key(route.pts),JSON.stringify({saved:Date.now(),data}));}catch{}
+ }catch(err){
+  if(own===token)$('road-status').textContent=err.name==='AbortError'?'Comprobación cancelada.':'No respondió ninguno de los '+MIRRORS.length+' servidores de OpenStreetMap. '+err.message+' Puedes reintentarlo o usar Cargar datos de calles.';
+ }finally{if(own===token){$('road-check').disabled=false;controller=null;}}}
 function upcoming(d){return report?.issues.find(i=>!muted(i)&&i.end+10>=d&&i.start-d<=100);}
 function alertAt(d){const issue=upcoming(d);$('nav-road-alert').hidden=!issue;if(issue)$('nav-road-alert').textContent=(issue.kind==='opposed'?'⛔ Posible sentido contrario':'⚠ Sentido por comprobar')+' · '+issue.name+(issue.start>d?' · en '+Math.round(issue.start-d)+' m':'')+'. No sigas esta traza sin comprobar la señalización.';}
 window.RutasChecks={gpsAlert:d=>{const i=upcoming(d);return i?(i.kind==='opposed'?'Atención, posible sentido contrario. ':'Atención, sentido de circulación por comprobar. ')+i.name+'. Revisa la señalización antes de continuar.':null;}};
