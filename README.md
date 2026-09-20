@@ -90,3 +90,11 @@ Comprobado en navegador con GPS simulado: lejos no avanza el GPX, cerca comienza
 Al abrir Google Maps se guarda localmente la huella de la ruta y el punto seleccionado, durante un máximo de 24 horas. La tarjeta «Tu ruta te espera» sobrevive a una recarga. «Ya he llegado · comprobar GPS» recupera ese punto y solicita una posición fiable antes de comenzar; no inicia nada automáticamente al volver a la app. El recordatorio se borra al comenzar cerca del destino, al descartarlo, al cambiar a otra ruta o al caducar.
 
 La carga inicial del mapa 3D mantiene visible el mapa 2D, señala que está cargando y permite cancelar y reintentar. Validado en navegador con respuesta de cartografía retrasada y con GPS simulado para regreso cercano y lejano después de recargar la página.
+
+### Indicaciones y cartografía más legibles
+
+La cabecera de conducción distingue preparación, cercanía y maniobra inmediata; «Ahora» aparece cuando se alcanza el umbral de la indicación. Se separan la calle y la acción y se muestra el giro siguiente. La voz utiliza acciones directas y, cuando hay otro giro a 100 metros o menos del actual, lo anticipa al anunciar la maniobra inmediata. Estas indicaciones siguen siendo estimaciones de la geometría del GPX. Los avisos de restricciones tienen prioridad, y una pérdida de precisión GPS limpia las instrucciones secundarias.
+
+El mapa 3D oculta inicialmente las capas de lugares y comercios; el botón Lugares permite recuperarlas y conserva la elección en el dispositivo. Los nombres de calles y las flechas de sentido siguen presentes. El recorrido lleva un contorno blanco y los edificios son más suaves. La posición de los controles se adapta a la altura real de la cabecera.
+
+Verificado con las 39 pruebas del motor, GPS simulado, dos giros próximos, voz, GPS impreciso, visibilidad de etiquetas, seguimiento 3D, restricciones y cambio de ruta.
