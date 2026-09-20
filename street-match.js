@@ -8,6 +8,29 @@ let controller=null,routeRef=null,layer=null,path=[],run=0;
 function mapKey(matched=false){document.querySelector('.nav-map-key').textContent=matched?'Dorado: calles · gris: GPX · verde: hecho · azul: siguiente':'Gris: recorrido · verde: completado · azul: siguiente tramo';}
 function clear(){if(controller)controller.abort();controller=null;run++;const state=RutasMap.get();if(layer&&state.map)state.map.removeLayer(layer);layer=null;path=[];mapKey();window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:[]}}));}
 function status(kind,message,canRetry=false){bar.hidden=false;bar.dataset.state=kind;text.textContent=message;retry.hidden=!canRetry;}
+const VALHALLA='https://valhalla1.openstreetmap.de';
+// Cada peticion lleva varios cortes: locations = [a1,b1,a2,b2...] y Valhalla devuelve una pata
+// por cada par consecutivo, asi que las pares son los enlaces pedidos y las impares se descartan.
+async function bridgeGaps(list,signal,onProgress){
+ const found=new Map();const groups=S.batches(list,20);
+ for(let g=0;g<groups.length;g++){onProgress(g+1,groups.length);await resolve(groups[g]);}
+ return found;
+ async function resolve(group){
+  if(!group.length)return;
+  const locations=[];for(const gap of group){locations.push({lat:gap.a.lat,lon:gap.a.lon,type:'break'});locations.push({lat:gap.b.lat,lon:gap.b.lon,type:'break'});}
+  try{
+   const response=await fetch(VALHALLA+'/route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({locations,costing:'auto',directions_options:{units:'kilometers'}}),signal,cache:'no-store'});
+   if(!response.ok)throw Error('respuesta '+response.status);
+   const shapes=S.legs(await response.json());
+   group.forEach((gap,i)=>{const line=shapes[i*2];if(line&&line.length>1)found.set(gap.leg,line);});
+  }catch(error){
+   if(error.name==='AbortError')throw error;
+   if(group.length===1)return;                       // ese corte se queda sin enlazar
+   const half=Math.ceil(group.length/2);
+   await resolve(group.slice(0,half));await resolve(group.slice(half));
+  }
+ }
+}
 async function match(force=false){
  const state=RutasMap.get(),data=Roadbook.getRoute();
  if(!state.route||data.sample||state.mode==='access'){clear();bar.hidden=true;routeRef=state.route?.pts||null;return;}
@@ -15,12 +38,33 @@ async function match(force=false){
  if(input.length<2){status('error','No hay puntos suficientes para reconocer las calles.');return;}
  const chunks=S.chunks(input);status('loading','Buscando las calles y carreteras que pasan por los puntos del GPX…');controller=new AbortController();
  try{
-  const lines=[];for(let i=0;i<chunks.length;i++){if(chunks.length>1)status('loading','Reconociendo calles · tramo '+(i+1)+' de '+chunks.length+'…');const body={shape:chunks[i],costing:'auto',shape_match:'map_snap',directions_options:{units:'kilometers'},trace_options:{gps_accuracy:20,search_radius:60,breakage_distance:5000}};const response=await fetch('https://valhalla1.openstreetmap.de/trace_route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});const json=await response.json().catch(()=>null);if(!response.ok)throw Error(json?.error||json?.status_message||'El servicio de calles respondió '+response.status+'.');lines.push(S.extract(json));}
-  const matched=S.merge(lines);if(own!==run||Roadbook.getRoute().pts!==routeRef)return;const pct=S.coverage(input,matched);if(pct<25)throw Error('No se pudo asociar esta traza con suficientes calles cercanas.');
-  path=matched;layer=L.polyline(path.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(state.map);layer.bringToBack();
-  const used=RutasMap.useStreetPath(path);mapKey(true);status('ready','Trazado vial visible · '+pct+' % de los puntos quedan cerca de una calle reconocida.'+(used?' Simulación y navegación preparadas sobre estas calles.':''));window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:pct,navigation:used}}));
+  const piezasVia=[];for(let i=0;i<chunks.length;i++){if(chunks.length>1)status('loading','Reconociendo calles · tramo '+(i+1)+' de '+chunks.length+'…');const body={shape:chunks[i],costing:'auto',shape_match:'map_snap',directions_options:{units:'kilometers'},trace_options:{gps_accuracy:20,search_radius:60,breakage_distance:5000}};const response=await fetch('https://valhalla1.openstreetmap.de/trace_route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});const json=await response.json().catch(()=>null);if(!response.ok)throw Error(json?.error||json?.status_message||'El servicio de calles respondió '+response.status+'.');for(const leg of S.legs(json))piezasVia.push(leg);}
+  if(own!==run||Roadbook.getRoute().pts!==routeRef)return;
+  let cortes=S.joins(piezasVia,C.distance);const detectados=cortes.length;
+  let connectors=null;
+  if(cortes.length){
+   connectors=await bridgeGaps(cortes,controller.signal,(i,n)=>status('loading','Enlazando cortes por carretera · lote '+i+' de '+n+'…'));
+   if(own!==run||Roadbook.getRoute().pts!==routeRef)return;
+  }
+  const {path:matched,breaks}=S.assemble(piezasVia,connectors,C.distance);
+  if(matched.length<2)throw Error('No se obtuvo un trazado continuo por calles.');
+  const pct=S.coverage(input,matched);if(pct<25)throw Error('No se pudo asociar esta traza con suficientes calles cercanas.');
+  path=matched;const continuo=breaks.length===0,enlazados=detectados-breaks.length;
+  // Un corte sin enlazar jamás se cruza con una recta: el camino se dibuja a trozos.
+  const piezas=continuo?[matched]:S.split(matched,breaks);
+  layer=L.featureGroup().addTo(state.map);
+  for(const pieza of piezas)L.polyline(pieza.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(layer);
+  layer.bringToBack();
+  const used=continuo?RutasMap.useStreetPath(path):false;mapKey(true);
+  status(continuo?'ready':'warn',
+   (continuo?'Trazado vial continuo · ':'Trazado vial con interrupciones · ')+pct+' % de los puntos quedan cerca de una calle reconocida.'
+   +(enlazados>0?' '+enlazados+(enlazados===1?' corte enlazado':' cortes enlazados')+' por carretera.':'')
+   +(continuo?(used?' Simulación y navegación preparadas sobre estas calles.':'')
+             :' Quedan '+breaks.length+(breaks.length===1?' corte sin enlazar, dibujado como interrupción en vez de como recta.':' cortes sin enlazar, dibujados como interrupciones en vez de como rectas.')+' La navegación sigue el GPX original.'),
+   !continuo);
+  cortesVisibles=breaks.length;window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:pct,navigation:used,bridges:enlazados,gaps:breaks.length,pieces:piezas.length}}));
  }catch(error){if(error.name!=='AbortError'&&own===run)status('error','No se pudo dibujar el trazado por calles. '+error.message+' El GPX original sigue disponible.',true);}
  finally{if(own===run)controller=null;}
 }
-retry.onclick=()=>match(true);window.addEventListener('rutas:check-route',()=>match());window.addEventListener('pagehide',clear);window.RutasStreetMatch={get:()=>({pts:path.slice(),active:!!layer})};match();
+retry.onclick=()=>match(true);window.addEventListener('rutas:check-route',()=>match());window.addEventListener('pagehide',clear);let cortesVisibles=0;window.RutasStreetMatch={get:()=>({pts:path.slice(),active:!!layer,gaps:cortesVisibles})};match();
 })();

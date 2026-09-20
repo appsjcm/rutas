@@ -13,6 +13,11 @@ function extract(data){
  const out=[];for(const leg of legs){const pts=decode(leg.shape);for(const p of pts)if(!out.length||Math.abs(out.at(-1).lat-p.lat)>1e-7||Math.abs(out.at(-1).lon-p.lon)>1e-7)out.push(p);}
  if(out.length<2)throw Error('No se obtuvo un trazado continuo por calles.');return out;
 }
+function legs(data){
+ const list=data&&data.trip&&Array.isArray(data.trip.legs)?data.trip.legs:[];
+ if(!list.length)throw Error(data?.error||data?.status_message||'No se encontraron calles próximas al recorrido.');
+ return list.map(leg=>decode(leg.shape));
+}
 function input(pts,simplify,max=1800){
  if(!Array.isArray(pts)||pts.length<2)return [];
  let out=typeof simplify==='function'?simplify(pts,5):pts.slice();
@@ -21,10 +26,56 @@ function input(pts,simplify,max=1800){
 }
 function chunks(points,max=120){const out=[];if(points.length<2)return out;for(let start=0;start<points.length-1;start+=max-1)out.push(points.slice(start,Math.min(points.length,start+max)));return out;}
 function merge(lines){const out=[];for(const line of lines)for(const p of line)if(!out.length||Math.abs(out.at(-1).lat-p.lat)>1e-7||Math.abs(out.at(-1).lon-p.lon)>1e-7)out.push(p);return out;}
+// Dentro de una pata todo el trazado va sobre asfalto, aunque dos puntos disten cientos de
+// metros: una calle recta se representa con dos puntos. Lo unico que puede cruzar edificios es
+// la union entre dos patas, asi que el corte se busca ahi y no en la distancia entre puntos.
+function joins(legs,distance,max=15){
+ const out=[];if(!Array.isArray(legs)||typeof distance!=='function')return out;
+ let last=null;
+ for(let i=0;i<legs.length;i++){
+  const leg=legs[i];if(!Array.isArray(leg)||!leg.length)continue;
+  if(last){const metres=distance(last,leg[0]);if(Number.isFinite(metres)&&metres>max)out.push({leg:i,metres,a:last,b:leg[0]});}
+  last=leg.at(-1);
+ }
+ return out;
+}
+// Monta el camino final: donde hay enlace lo intercala, y donde no lo hay anota una
+// interrupcion para que nadie dibuje ni navegue una recta inventada.
+function assemble(legs,connectors,distance,max=15){
+ const path=[],breaks=[];
+ if(!Array.isArray(legs))return {path,breaks};
+ for(let i=0;i<legs.length;i++){
+  const leg=legs[i];if(!Array.isArray(leg)||!leg.length)continue;
+  if(path.length){
+   const metres=typeof distance==='function'?distance(path.at(-1),leg[0]):0;
+   if(Number.isFinite(metres)&&metres>max){
+    const line=connectors&&connectors.get(i);
+    if(line&&line.length>1)for(const p of line)push(p);
+    else breaks.push(path.length);
+   }
+  }
+  for(const p of leg)push(p);
+ }
+ return {path,breaks};
+ function push(p){if(p&&(!path.length||Math.abs(path.at(-1).lat-p.lat)>1e-7||Math.abs(path.at(-1).lon-p.lon)>1e-7))path.push(p);}
+}
+function batches(list,size=20){const out=[];for(let i=0;i<list.length;i+=size)out.push(list.slice(i,i+size));return out;}
+// Un corte que no se ha podido enlazar nunca se dibuja como recta: el camino se parte ahi.
+function split(path,breaks){
+ const out=[];if(!Array.isArray(path))return out;
+ const cuts=new Set(Array.isArray(breaks)?breaks:[]);
+ let cur=[];
+ for(let i=0;i<path.length;i++){
+  if(cuts.has(i)){if(cur.length>1)out.push(cur);cur=[];}
+  cur.push(path[i]);
+ }
+ if(cur.length>1)out.push(cur);
+ return out;
+}
 function coverage(samples,path,radius=45){
  if(!samples.length||path.length<2)return 0;const take=samples.length<=160?samples:Array.from({length:160},(_,i)=>samples[Math.round(i*(samples.length-1)/159)]);let hit=0;
  for(const p of take){const kx=111320*Math.cos(p.lat*Math.PI/180),ky=110540;let best=Infinity;for(let i=0;i<path.length-1;i++){const a=path[i],b=path[i+1],x=(a.lon-p.lon)*kx,y=(a.lat-p.lat)*ky,dx=(b.lon-a.lon)*kx,dy=(b.lat-a.lat)*ky,l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,-(x*dx+y*dy)/l)):0;best=Math.min(best,Math.hypot(x+t*dx,y+t*dy));if(best<=radius)break;}if(best<=radius)hit++;}
  return Math.round(hit/take.length*100);
 }
-const api={decode,extract,input,chunks,merge,coverage};if(typeof module!=='undefined')module.exports=api;else root.RutasStreetCore=api;
+const api={decode,extract,legs,input,chunks,merge,joins,assemble,batches,split,coverage};if(typeof module!=='undefined')module.exports=api;else root.RutasStreetCore=api;
 })(typeof window!=='undefined'?window:globalThis);
