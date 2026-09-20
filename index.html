@@ -1,0 +1,1632 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roadbook GPX</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --ground:#E7EAE4; --surface:#FBFBF8; --surface-2:#F1F3EC;
+  --ink:#171B18; --ink-2:#4A524C; --muted:#6E766F;
+  --rule:#CBD0C6; --rule-strong:#AAB2A6;
+  --accent:#C24818; --on-accent:#FFFFFF; --accent-soft:#F3E1D7;
+  --pine:#1C6250; --pine-soft:#DDE8E2;
+  --warn:#8A6206; --warn-soft:#F6ECD2; --danger:#A8321F;
+  --shadow:0 1px 2px rgba(23,27,24,.07), 0 6px 18px -10px rgba(23,27,24,.24);
+  --focus:#C24818;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#12150F; --surface:#1B1F19; --surface-2:#232821;
+    --ink:#E9ECE3; --ink-2:#B3BAAF; --muted:#8B938A;
+    --rule:#333A30; --rule-strong:#4A5345;
+    --accent:#FF8248; --on-accent:#1B1206; --accent-soft:#3A2418;
+    --pine:#6FC4A8; --pine-soft:#1B2E28;
+    --warn:#D9A733; --warn-soft:#332A15; --danger:#FF7A63;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 22px -12px rgba(0,0,0,.7);
+    --focus:#FF8248;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#12150F; --surface:#1B1F19; --surface-2:#232821;
+  --ink:#E9ECE3; --ink-2:#B3BAAF; --muted:#8B938A;
+  --rule:#333A30; --rule-strong:#4A5345;
+  --accent:#FF8248; --on-accent:#1B1206; --accent-soft:#3A2418;
+  --pine:#6FC4A8; --pine-soft:#1B2E28;
+  --warn:#D9A733; --warn-soft:#332A15; --danger:#FF7A63;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 22px -12px rgba(0,0,0,.7);
+  --focus:#FF8248;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:"Source Sans 3",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 56px;display:flex;flex-direction:column;gap:18px}
+
+.masthead{display:flex;flex-direction:column;gap:10px;padding-bottom:14px;border-bottom:2px solid var(--ink)}
+.brandrow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+h1{font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-weight:700;font-size:clamp(28px,7vw,42px);line-height:.95;letter-spacing:.01em;text-transform:uppercase;margin:0;text-wrap:balance}
+.brandrow .sub{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.deck{margin:0;color:var(--ink-2);max-width:66ch;font-size:15px}
+
+/* tabs */
+.tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--rule)}
+.tab{
+  font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-weight:600;font-size:16px;letter-spacing:.1em;text-transform:uppercase;
+  background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);
+  padding:9px 16px;cursor:pointer;margin-bottom:-1px;
+}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabpanel[hidden]{display:none!important}
+
+.grid{display:grid;grid-template-columns:1fr;gap:18px}
+@media (min-width:980px){ .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start} }
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:4px;box-shadow:var(--shadow);overflow:hidden}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;border-bottom:1px solid var(--rule);background:var(--surface-2)}
+.panel-hd h2{margin:0;font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-weight:600;font-size:13px;letter-spacing:.17em;text-transform:uppercase;color:var(--ink-2)}
+.panel-bd{padding:14px;display:flex;flex-direction:column;gap:12px}
+
+.drop{border:1.5px dashed var(--rule-strong);border-radius:4px;background:var(--surface-2);padding:20px 16px;text-align:center;cursor:pointer;display:flex;flex-direction:column;gap:5px;align-items:center;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop strong{font-size:16px}
+.drop span{font-size:13px;color:var(--muted)}
+.filebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.fchip{display:flex;align-items:center;gap:9px;min-width:0;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;background:var(--pine-soft);color:var(--ink);border:1px solid var(--rule);border-radius:3px;padding:6px 10px}
+.fchip .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(52vw,320px)}
+.tag{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--warn);border:1px solid currentColor;border-radius:2px;padding:1px 5px;flex:none}
+
+.mapbox{background:var(--surface-2);border:1px solid var(--rule);border-radius:3px;padding:6px}
+.mapbox svg{display:block;width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+@media (min-width:520px){ .stats{grid-template-columns:repeat(4,minmax(0,1fr))} }
+.stat{background:var(--surface);padding:9px 11px;display:flex;flex-direction:column;gap:1px}
+.stat dt{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+.stat dd{margin:0;font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-weight:600;font-size:21px;font-variant-numeric:tabular-nums;line-height:1.15}
+.stat dd small{font-family:"Source Sans 3",sans-serif;font-weight:400;font-size:12px;color:var(--muted);margin-left:5px}
+
+.field{display:flex;flex-direction:column;gap:7px}
+.field + .field{margin-top:14px;padding-top:14px;border-top:1px solid var(--rule)}
+.flabel{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.flabel b{font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-weight:600;font-size:13px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2)}
+.flabel em{font-style:normal;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;color:var(--accent);font-variant-numeric:tabular-nums}
+.hint{font-size:13px;color:var(--muted);margin:0}
+input[type=range]{width:100%;accent-color:var(--accent);height:24px}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-size:14px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;background:var(--surface-2);border:1px solid var(--rule);color:var(--ink-2);padding:6px 13px;border-radius:3px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.chip:disabled{opacity:.42;cursor:not-allowed}
+.switch{display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.switch input{margin-top:4px;accent-color:var(--accent);width:17px;height:17px;flex:none}
+.switch span{font-size:14px;color:var(--ink-2)}
+.switch b{display:block;color:var(--ink);font-size:15px;font-weight:600}
+
+.btn{font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-weight:600;font-size:14.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--rule-strong);background:var(--surface-2);color:var(--ink);padding:7px 13px;border-radius:3px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--ink-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.rec{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.sm{font-size:13px;padding:5px 10px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btnrow{display:flex;flex-wrap:wrap;gap:7px}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+input[type=text],textarea,select{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13.5px;
+  background:var(--surface-2);color:var(--ink);border:1px solid var(--rule-strong);
+  border-radius:3px;padding:8px 10px;width:100%;
+}
+textarea{resize:vertical;min-height:70px;line-height:1.45}
+
+.legs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.leg{display:grid;grid-template-columns:44px minmax(0,1fr);border-bottom:1px solid var(--rule)}
+.leg:last-child{border-bottom:0}
+.leg-no{display:flex;flex-direction:column;align-items:center;padding:13px 0 0;border-right:1px solid var(--rule);background:var(--surface-2)}
+.leg-no b{font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-size:23px;font-weight:700;line-height:1;color:var(--accent)}
+.leg-no i{display:block;width:3px;flex:1;margin-top:8px;background:var(--rule)}
+.leg-bd{padding:12px 14px;display:flex;flex-direction:column;gap:9px;min-width:0}
+.leg-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.leg-dist{font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-weight:600;font-size:18px;font-variant-numeric:tabular-nums}
+.leg-meta{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--muted)}
+.coords{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:2px;overflow-x:auto}
+.coords span{white-space:nowrap}
+.coords u{text-decoration:none;color:var(--muted);margin-right:6px}
+.leg-act{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.qr{margin-top:4px;background:#fff;padding:8px;border-radius:3px;border:1px solid var(--rule);width:max-content}
+.qr svg{display:block;width:158px;height:158px}
+.qr-cap{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;color:#444;text-align:center;margin-top:5px}
+
+.note{display:flex;gap:11px;padding:12px 14px;border-radius:3px;background:var(--accent-soft);border:1px solid var(--rule);font-size:14px;color:var(--ink-2);line-height:1.45}
+.note b{color:var(--ink)}
+.note.alert{background:var(--warn-soft);border-color:var(--warn)}
+
+/* point list */
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+.plist:empty{display:none}
+.prow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--rule);background:var(--surface)}
+.prow:last-child{border-bottom:0}
+.prow b{font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-size:15px;color:var(--accent);text-align:center}
+.prow .pv{min-width:0;display:flex;flex-direction:column;gap:1px}
+.prow .pv strong{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .pv span{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;color:var(--muted)}
+.prow .pa{display:flex;gap:3px}
+.icb{border:1px solid var(--rule);background:var(--surface-2);color:var(--ink-2);border-radius:3px;width:27px;height:27px;line-height:1;cursor:pointer;font-size:14px;padding:0}
+.icb:hover{border-color:var(--ink-2);color:var(--ink)}
+
+.live{display:flex;align-items:center;gap:9px;font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--rule-strong);flex:none}
+.dot.on{background:var(--danger);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+.howto{font-size:14.5px;color:var(--ink-2)}
+.howto h3{font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin:0 0 5px}
+.howto ol,.howto ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.howto .two{display:grid;grid-template-columns:1fr;gap:18px}
+@media (min-width:640px){ .howto .two{grid-template-columns:1fr 1fr} }
+.colophon{font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px;max-width:72ch;margin-top:4px}
+
+.fmt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 14px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--rule)}
+.fmt:last-child{border-bottom:0}
+.fmt .ft{min-width:0;display:flex;flex-direction:column;gap:2px}
+.fmt .ft strong{font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-size:17px;font-weight:600;letter-spacing:.03em}
+.fmt .ft span{font-size:13.5px;color:var(--muted);line-height:1.4}
+.fmt .ft em{font-style:normal;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--pine)}
+.fmt.best{background:var(--pine-soft)}
+.steps{counter-reset:st;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.steps li{counter-increment:st;display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;font-size:14.5px;color:var(--ink-2);line-height:1.45}
+.steps li::before{content:counter(st);font-family:"Archivo Narrow",Arial Narrow,sans-serif;font-weight:700;font-size:13px;color:var(--on-accent);background:var(--accent);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.steps b{color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(8px);background:var(--ink);color:var(--ground);padding:9px 16px;border-radius:3px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:50;box-shadow:var(--shadow);max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="brandrow">
+      <h1>Roadbook GPX</h1>
+      <p class="sub">Convertir · Crear · Navegar</p>
+    </div>
+    <p class="deck">Un GPX es un recorrido; Google Maps es un calculador de rutas. No son lo mismo, y para rondas que repiten calles &mdash; recogida, reparto, inspecci&oacute;n &mdash; la respuesta no es convertir a Maps, sino <b>ense&ntilde;arle al conductor la l&iacute;nea exacta con su posici&oacute;n encima</b>. Aqu&iacute; exportas a los formatos que hacen eso, conviertes a enlaces de Maps cuando la ruta s&iacute; es de un punto a otro, y creas GPX desde cero grabando con el GPS. Todo ocurre en tu dispositivo.</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-exp" aria-controls="p-exp" aria-selected="true" type="button">Para el conductor</button>
+    <button class="tab" role="tab" id="tab-conv" aria-controls="p-conv" aria-selected="false" type="button">Enlaces de Maps</button>
+    <button class="tab" role="tab" id="tab-make" aria-controls="p-make" aria-selected="false" type="button">Crear GPX</button>
+    <button class="tab" role="tab" id="tab-help" aria-controls="p-help" aria-selected="false" type="button">Guía</button>
+  </div>
+
+  <!-- ============ PARA EL CONDUCTOR ============ -->
+  <section class="tabpanel" id="p-exp" role="tabpanel" aria-labelledby="tab-exp">
+    <div class="grid">
+      <div class="col">
+
+        <section class="panel">
+          <div class="panel-hd"><h2>Qu&eacute; se exporta</h2><span class="leg-meta" id="srcmeta"></span></div>
+          <div class="panel-bd">
+            <div class="chips" id="srcs" role="group" aria-label="Origen de los datos">
+              <button class="chip" type="button" data-src="track" aria-pressed="true">Traza cargada</button>
+              <button class="chip" type="button" data-src="rec" aria-pressed="false">Grabaci&oacute;n GPS</button>
+              <button class="chip" type="button" data-src="pts" aria-pressed="false">Ruta por puntos</button>
+            </div>
+            <div class="mapbox"><svg id="expmap" viewBox="0 0 600 400" role="img" aria-label="Recorrido con el sentido de la marcha"></svg></div>
+            <div class="legend">
+              <span><i style="background:var(--accent)"></i>Recorrido</span>
+              <span>&#9656; sentido de la marcha</span>
+              <span><i style="background:var(--pine)"></i>tramos alternos</span>
+            </div>
+            <dl class="stats" id="expstats"></dl>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-hd"><h2>Opciones</h2></div>
+          <div class="panel-bd" style="gap:0">
+            <div class="field">
+              <label class="flabel" for="arrowevery"><b>Marcas de sentido</b></label>
+              <select id="arrowevery">
+                <option value="0">Ninguna</option>
+                <option value="100">Una cada 100 m</option>
+                <option value="200" selected>Una cada 200 m</option>
+                <option value="500">Una cada 500 m</option>
+              </select>
+              <p class="hint">Chinchetas numeradas en los puntos disponibles, aproximadamente a la distancia elegida y sin duplicarlas. En una calle que se hace de subida y de bajada son lo que le dice al conductor en qu&eacute; pasada va.</p>
+            </div>
+            <div class="field">
+              <label class="flabel" for="nseg"><b>Trocear en tramos</b></label>
+              <select id="nseg">
+                <option value="0">Una sola l&iacute;nea</option>
+                <option value="4">4 tramos numerados</option>
+                <option value="8" selected>8 tramos numerados</option>
+                <option value="16">16 tramos numerados</option>
+              </select>
+              <p class="hint">Cada tramo sale con su color y su n&uacute;mero, as&iacute; que en el mapa se lee el orden del recorrido de un vistazo. Solo afecta a KML y GeoJSON.</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="col">
+
+        <section class="panel">
+          <div class="panel-hd"><h2>Formato</h2></div>
+          <div>
+            <div class="fmt best">
+              <div class="ft"><em>Recomendado para el cami&oacute;n</em><strong>KML para Google My&nbsp;Maps</strong>
+                <span>La l&iacute;nea exacta, con los tramos numerados y las marcas de sentido. Se sube a My&nbsp;Maps y aparece como capa dentro de la app de Google Maps del conductor, con su punto azul encima.</span></div>
+              <button class="btn primary sm" type="button" data-exp2="kml">Guardar</button>
+            </div>
+            <div class="fmt">
+              <div class="ft"><em>Para OsmAnd, Organic Maps, Locus</em><strong>GPX de la traza</strong>
+                <span>El recorrido completo, punto por punto. Es el formato que entienden las apps que s&iacute; siguen una traza y avisan si te sales de ella.</span></div>
+              <button class="btn primary sm" type="button" data-exp2="gpx">Guardar</button>
+            </div>
+            <div class="fmt">
+              <div class="ft"><strong>GPX simplificado</strong>
+                <span>Solo los puntos gu&iacute;a que calcula la pesta&ntilde;a de enlaces. Archivo peque&ntilde;o, &uacute;til si la app se atraganta con miles de puntos.</span></div>
+              <button class="btn sm" type="button" data-exp2="gpxs">Guardar</button>
+            </div>
+            <div class="fmt">
+              <div class="ft"><strong>GeoJSON</strong>
+                <span>Para QGIS, Leaflet o cualquier sistema propio de la empresa. Lleva los tramos y las marcas como propiedades.</span></div>
+              <button class="btn sm" type="button" data-exp2="geojson">Guardar</button>
+            </div>
+            <div class="fmt">
+              <div class="ft"><strong>CSV de puntos</strong>
+                <span>Orden, latitud, longitud, hora y distancia acumulada. Para Excel, para control horario o para subirlo a My&nbsp;Maps como tabla.</span></div>
+              <button class="btn sm" type="button" data-exp2="csv">Guardar</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-hd"><h2>Ponerlo en el m&oacute;vil del conductor</h2></div>
+          <div class="panel-bd howto">
+            <div>
+              <h3>Opci&oacute;n A &middot; El Google Maps que ya conoce</h3>
+              <ol class="steps">
+                <li>Guarda el <b>KML</b> y entra en <b>mymaps.google.com</b> con la cuenta de la empresa.</li>
+                <li><b>Crear un mapa nuevo</b> &rarr; <b>Importar</b> &rarr; sube el archivo. Si sale en .zip, descompr&iacute;melo antes.</li>
+                <li>Comparte el mapa con la cuenta de Google del conductor.</li>
+                <li>En el m&oacute;vil: app de Google Maps &rarr; <b>Guardados</b> &rarr; <b>Mapas</b> &rarr; abre el mapa.</li>
+                <li>La l&iacute;nea queda dibujada sobre el mapa normal y su posici&oacute;n se ve encima. Sin voz ni giro a giro: &eacute;l ve por d&oacute;nde va y qu&eacute; le queda.</li>
+              </ol>
+            </div>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--rule)">
+              <h3>Opci&oacute;n B &middot; OsmAnd, la buena de verdad</h3>
+              <ol class="steps">
+                <li>Instala <b>OsmAnd</b> y desc&aacute;rgate el mapa de la zona, para que funcione sin datos.</li>
+                <li>P&aacute;sale el <b>GPX</b> y &aacute;brelo con OsmAnd.</li>
+                <li>Men&uacute; &rarr; <b>Mis lugares</b> &rarr; <b>Tracks</b> &rarr; activa el recorrido y enciende las <b>flechas de direcci&oacute;n</b>.</li>
+                <li>Para guiado: <b>Navegaci&oacute;n</b> &rarr; <b>Seguir track</b>. OsmAnd s&iacute; respeta las calles repetidas y avisa cuando se sale de la l&iacute;nea.</li>
+                <li>Organic Maps y Locus Map funcionan casi igual con el mismo GPX.</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <div class="note">
+          <span aria-hidden="true">&#9888;</span>
+          <div><b>Por qu&eacute; aqu&iacute; no sirve la navegaci&oacute;n de Google Maps.</b> Maps calcula la ruta m&aacute;s r&aacute;pida entre puntos y nunca repite una calle. Una ronda de recogida es justo lo contrario: sube una calle, baja la siguiente y vuelve a pasar. Maps la &laquo;arreglar&iacute;a&raquo; salt&aacute;ndose pasadas. Por eso la respuesta es la l&iacute;nea dibujada, no el guiado por voz.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CONVERTIR ============ -->
+  <section class="tabpanel" id="p-conv" role="tabpanel" aria-labelledby="tab-conv" hidden>
+    <div class="grid">
+      <div class="col">
+
+        <section class="panel">
+          <div class="panel-hd"><h2>Archivo</h2><span id="trkcount" class="leg-meta"></span></div>
+          <div class="panel-bd">
+            <div id="drop" class="drop" tabindex="0" role="button" aria-label="Seleccionar archivo GPX">
+              <strong>Elegir un archivo .gpx</strong><span>o arrástralo aquí</span>
+            </div>
+            <input id="file" type="file" accept=".gpx,application/gpx+xml,text/xml" hidden>
+            <div class="filebar">
+              <div class="fchip"><span class="nm" id="fname">—</span><span class="tag" id="ftag" hidden>ejemplo</span></div>
+              <div style="display:flex;gap:7px;flex-wrap:wrap">
+                <select id="trksel" class="btn sm" hidden style="text-transform:none;letter-spacing:0;width:auto"></select>
+                <button id="rev" class="btn sm" type="button">Invertir sentido</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div id="diag"></div>
+
+        <section class="panel">
+          <div class="panel-hd"><h2>Traza</h2><span class="leg-meta" id="bboxlbl"></span></div>
+          <div class="panel-bd">
+            <div class="mapbox"><svg id="map" viewBox="0 0 600 400" role="img" aria-label="Vista de la traza GPX y los puntos guía"></svg></div>
+            <div class="legend">
+              <span><i style="background:var(--rule-strong)"></i>Traza original</span>
+              <span><i style="background:var(--accent)"></i>Tramo impar</span>
+              <span><i style="background:var(--pine)"></i>Tramo par</span>
+            </div>
+            <dl class="stats" id="stats"></dl>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="col">
+
+        <section class="panel">
+          <div class="panel-hd"><h2>Ajustes</h2></div>
+          <div class="panel-bd" style="gap:0">
+            <div class="field">
+              <label class="flabel" for="legs"><b>Tramos</b><em id="legslbl"></em></label>
+              <input id="legs" type="range" min="1" max="12" step="1" value="3">
+              <p class="hint">Cada tramo es un enlace de Google Maps con 9 puntos intermedios, el máximo que admite. Más tramos = la ruta se ciñe mejor al GPX, pero abres un enlace nuevo al acabar cada uno.</p>
+            </div>
+            <div class="field">
+              <span class="flabel"><b>Reparto de puntos</b></span>
+              <div class="chips" id="modes" role="group" aria-label="Reparto de puntos guía">
+                <button class="chip" type="button" data-mode="curv" aria-pressed="false">Curvas</button>
+                <button class="chip" type="button" data-mode="bal" aria-pressed="true">Equilibrado</button>
+                <button class="chip" type="button" data-mode="dist" aria-pressed="false">Regular</button>
+                <button class="chip" type="button" data-mode="stop" aria-pressed="false">Paradas</button>
+              </div>
+              <p class="hint" id="modehint"></p>
+            </div>
+            <div class="field">
+              <span class="flabel"><b>Al abrir el enlace</b></span>
+              <label class="switch"><input id="nav" type="checkbox" checked><span><b>Arrancar la navegación</b>Salta directo al modo guiado. Desactívalo si prefieres ver antes la ruta completa en pantalla.</span></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-hd"><h2>Roadbook</h2><button id="copyall" class="btn sm" type="button">Copiar todos</button></div>
+          <ol class="legs" id="legsout"></ol>
+        </section>
+
+        <div class="note">
+          <span aria-hidden="true">⚠</span>
+          <div><b>Maps recalcula por carretera.</b> Los puntos guía fuerzan el trazado, pero si tu GPX va por pistas, sendas o carriles cerrados al tráfico, Google buscará el asfalto más cercano y el recorrido cambiará. Revisa cada tramo en pantalla antes de arrancar.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CREAR ============ -->
+  <section class="tabpanel" id="p-make" role="tabpanel" aria-labelledby="tab-make" hidden>
+    <div class="grid">
+      <div class="col">
+
+        <section class="panel">
+          <div class="panel-hd"><h2>Grabar con el GPS</h2><span class="live"><span class="dot" id="recdot"></span><span id="recstate">Parado</span></span></div>
+          <div class="panel-bd">
+            <dl class="stats" id="recstats"></dl>
+            <div class="btnrow">
+              <button id="recstart" class="btn rec" type="button">Empezar a grabar</button>
+              <button id="recstop" class="btn" type="button" disabled>Parar</button>
+              <button id="recclear" class="btn sm" type="button">Borrar</button>
+            </div>
+            <p class="hint" id="rechint">Pon el móvil en el soporte, dale a grabar y conduce. Va anotando una posición cada pocos segundos. Si cierras la pestaña se guarda lo grabado hasta ese momento; al volver lo recuperas.</p>
+            <div class="btnrow" id="recout" hidden>
+              <button class="btn primary sm" type="button" data-exp="rec">Guardar como GPX</button>
+              <button class="btn sm" type="button" id="rec2conv">Abrir en Convertir</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-hd"><h2>Ruta por puntos</h2><span class="leg-meta" id="ptcount"></span></div>
+          <div class="panel-bd">
+            <label for="ptin" class="hint" style="margin:0">Pega coordenadas (<code>41.97680, 1.87315</code>) o un enlace de Google Maps. Admite varias líneas de golpe.</label>
+            <textarea id="ptin" spellcheck="false" placeholder="41.97680, 1.87315&#10;https://maps.app.goo.gl/… (pega el enlace ya abierto, con /@lat,lon)&#10;Casa de Hicham  41.9769, 1.8731"></textarea>
+            <div class="btnrow">
+              <button id="ptadd" class="btn primary sm" type="button">Añadir puntos</button>
+              <button id="ptgeo" class="btn sm" type="button">Mi ubicación</button>
+              <button id="ptclear" class="btn sm" type="button">Vaciar</button>
+            </div>
+            <ol class="plist" id="plist"></ol>
+            <div class="btnrow" id="ptout" hidden>
+              <button class="btn primary sm" type="button" data-exp="pts">Guardar como GPX</button>
+              <button class="btn sm" type="button" id="pt2conv">Abrir en Convertir</button>
+              <a class="btn sm" id="ptmaps" href="#" target="_blank" rel="noopener">Abrir en Maps</a>
+            </div>
+            <p class="hint" id="pthint"></p>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="col">
+
+        <section class="panel">
+          <div class="panel-hd"><h2>Vista</h2><span class="leg-meta" id="mkmeta"></span></div>
+          <div class="panel-bd">
+            <div class="mapbox"><svg id="mkmap" viewBox="0 0 600 400" role="img" aria-label="Vista de la ruta en construcción"></svg></div>
+            <p class="hint">Sin fondo de mapa: esta página no puede cargar teselas de ningún servidor externo. Se dibuja la forma de la ruta y la escala, que es lo que necesitas para comprobar que los puntos van en el orden correcto.</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-hd"><h2>Cómo sale el archivo</h2></div>
+          <div class="panel-bd" id="dlinfo">
+            <p class="hint">Comprobando cómo puede entregar archivos este navegador…</p>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AYUDA ============ -->
+  <section class="tabpanel" id="p-help" role="tabpanel" aria-labelledby="tab-help" hidden>
+    <section class="panel">
+      <div class="panel-hd"><h2>Instalación y uso</h2></div>
+      <div class="panel-bd howto">
+        <div class="two">
+          <div>
+            <h3>Ponerla en el móvil</h3>
+            <ul>
+              <li><b>iPhone:</b> abre la página en Safari, toca Compartir y luego «Añadir a pantalla de inicio».</li>
+              <li><b>Android:</b> ábrela en Chrome, menú ⋮ y «Añadir a pantalla de inicio».</li>
+              <li>Queda como un icono más. Necesita conexión para cargar; el GPX se procesa en el propio teléfono.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Convertir desde el ordenador</h3>
+            <ol>
+              <li>Carga el GPX en el PC, donde suelen estar los archivos.</li>
+              <li>Ajusta los tramos y pulsa <b>QR</b> en el tramo que vayas a conducir.</li>
+              <li>Escanea el código con la cámara del móvil: Google Maps se abre con la ruta puesta.</li>
+            </ol>
+          </div>
+        </div>
+        <div class="two">
+          <div>
+            <h3>Qué traza funciona bien</h3>
+            <ul>
+              <li>Un recorrido de un sitio a otro, por carretera abierta al tráfico.</li>
+              <li>Sin pasar dos veces por el mismo punto: Maps no sabe reproducir un bucle repetido.</li>
+              <li>Si tu GPX es una ronda con paradas, usa el reparto <b>Paradas</b>: convierte cada alto en un punto intermedio, que es justo para lo que sirve Maps.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Seguir la traza exacta</h3>
+            <ul>
+              <li>Google Maps siempre recalcula por carretera. No existe forma de que siga un GPX al milímetro.</li>
+              <li>Para eso hacen falta apps que naveguen la traza: OsmAnd, Organic Maps o Guru Maps.</li>
+              <li>Exporta «Traza completa» desde la pestaña Convertir y ábrela con una de ellas.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="colophon">Los puntos guía se eligen con un Douglas&ndash;Peucker por presupuesto: se parte de la recta origen&ndash;destino y se inserta, una a una, la coordenada que más se desvía de la línea actual, hasta agotar los puntos disponibles. En <b>Equilibrado</b> la desviación se pondera por la longitud del tramo, para que un puerto lleno de curvas no se quede con todo el presupuesto y deje la autovía sin vigilar. En <b>Paradas</b> se detectan primero los altos (40 m de radio durante 3 minutos o más), se fijan como puntos obligados y el presupuesto sobrante se reparte con el mismo criterio.</p>
+      </div>
+    </section>
+  </section>
+
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+
+/* ============ shared geo ============ */
+function hav(a, b){
+  var R = 6371000, t = Math.PI/180;
+  var dLat = (b.lat-a.lat)*t, dLon = (b.lon-a.lon)*t;
+  var s1 = Math.sin(dLat/2), s2 = Math.sin(dLon/2);
+  return 2*R*Math.asin(Math.min(1, Math.sqrt(s1*s1 + Math.cos(a.lat*t)*Math.cos(b.lat*t)*s2*s2)));
+}
+function fmtKm(m){
+  if(m < 1000) return Math.round(m) + " m";
+  return (m/1000).toFixed(m < 10000 ? 1 : 0).replace(".", ",") + " km";
+}
+function fmtDur(s){
+  s = Math.max(0, Math.round(s));
+  var h = Math.floor(s/3600), m = Math.floor(s%3600/60);
+  return h ? h + " h " + (m<10?"0":"") + m : m + " min";
+}
+function coord(p){ return p.lat.toFixed(5) + "," + p.lon.toFixed(5); }
+function pathLen(pts){ var d=0,i; for(i=1;i<pts.length;i++) d += hav(pts[i-1], pts[i]); return d; }
+
+var toastT;
+function toast(msg){
+  var t = $("toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove("on"); }, 2600);
+}
+function copy(text, msg){
+  function fb(){
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast(msg); }
+    catch(e){ toast("No se pudo copiar. Selecciona el texto y cópialo a mano."); }
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(text).then(function(){ toast(msg); }, fb);
+  else fb();
+}
+
+/* ============ generic track drawing ============ */
+function drawTrack(svg, pts, opts){
+  opts = opts || {};
+  var n = pts.length;
+  if(!n){ svg.innerHTML = ""; return; }
+  if(n === 1){
+    svg.setAttribute("viewBox","0 0 600 200");
+    svg.innerHTML = '<circle cx="300" cy="100" r="8" fill="var(--accent)"/>'
+      + '<text x="300" y="130" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Mono, monospace" font-size="13">'
+      + coord(pts[0]) + '</text>';
+    return;
+  }
+  var lat0 = pts[n>>1].lat * Math.PI/180;
+  var kx = 111320*Math.cos(lat0), ky = 110540, i;
+  var X = new Float64Array(n), Y = new Float64Array(n);
+  var mnx=Infinity,mxx=-Infinity,mny=Infinity,mxy=-Infinity;
+  for(i=0;i<n;i++){
+    X[i]=pts[i].lon*kx; Y[i]=pts[i].lat*ky;
+    if(X[i]<mnx)mnx=X[i]; if(X[i]>mxx)mxx=X[i];
+    if(Y[i]<mny)mny=Y[i]; if(Y[i]>mxy)mxy=Y[i];
+  }
+  var w = Math.max(mxx-mnx, 1), h = Math.max(mxy-mny, 1);
+  var ratio = Math.min(1.4, Math.max(0.42, h/w));
+  var VW = 600, VH = Math.round(VW*ratio), PAD = 26;
+  var sc = Math.min((VW-2*PAD)/w, (VH-2*PAD)/h);
+  var ox = (VW - w*sc)/2 - mnx*sc, oy = (VH - h*sc)/2 + mxy*sc;
+  function px(i){ return (X[i]*sc+ox).toFixed(1); }
+  function py(i){ return (oy-Y[i]*sc).toFixed(1); }
+
+  var out = [];
+  var step = Math.max(1, Math.floor(n/1600)), raw = [];
+  for(i=0;i<n;i+=step) raw.push(px(i)+","+py(i));
+  raw.push(px(n-1)+","+py(n-1));
+  out.push('<polyline points="'+raw.join(" ")+'" fill="none" stroke="var(--rule-strong)" stroke-width="'
+    + (opts.legs ? 5 : 2.6) + '" stroke-linejoin="round" stroke-linecap="round" opacity="'
+    + (opts.legs ? ".55" : (opts.segments || opts.arrows ? ".5" : ".9")) + '"/>');
+
+  if(opts.segments || opts.arrows){
+    var cum = cumArr(pts), total = cum[n-1];
+    if(opts.segments > 1 && total > 0){
+      var bounds = segmentBounds(cum, opts.segments);
+      bounds.forEach(function(b, si){
+        var pl = [], k;
+        for(k=b[0];k<=b[1];k+=Math.max(1,Math.floor((b[1]-b[0])/400))) pl.push(px(k)+","+py(k));
+        pl.push(px(b[1])+","+py(b[1]));
+        out.push('<polyline points="'+pl.join(" ")+'" fill="none" stroke="'
+          + (si%2 ? "var(--pine)" : "var(--accent)") + '" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>');
+      });
+    }else{
+      out.push('<polyline points="'+raw.join(" ")+'" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>');
+    }
+    if(opts.arrows > 0 && total > 0){
+      markerIndices(cum, opts.arrows).forEach(function(k){
+        var a = Math.max(0, k-3), b2 = Math.min(n-1, k+3);
+        var ang = Math.atan2(-(Y[b2]-Y[a]), X[b2]-X[a]) * 180/Math.PI;
+        out.push('<path d="M 5 0 L -3.5 3.4 L -3.5 -3.4 Z" fill="var(--ink)" transform="translate('
+          + px(k) + ',' + py(k) + ') rotate(' + ang.toFixed(1) + ')"/>');
+      });
+    }
+  }
+
+  if(opts.legs) opts.legs.forEach(function(leg, li){
+    var col = li % 2 ? "var(--pine)" : "var(--accent)";
+    out.push('<polyline points="'+leg.idx.map(function(k){return px(k)+","+py(k);}).join(" ")
+      + '" fill="none" stroke="'+col+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>');
+    leg.idx.forEach(function(k, ki){
+      if(ki === 0 && li > 0) return;
+      out.push('<circle cx="'+px(k)+'" cy="'+py(k)+'" r="'
+        + (ki===0||ki===leg.idx.length-1 ? 3.4 : 2.2) + '" fill="'+col+'"/>');
+    });
+  });
+  if(opts.dots) for(i=0;i<n;i++)
+    out.push('<circle cx="'+px(i)+'" cy="'+py(i)+'" r="3.6" fill="var(--accent)"/>');
+
+  function marker(i, label){
+    return '<circle cx="'+px(i)+'" cy="'+py(i)+'" r="9" fill="var(--ink)" stroke="var(--surface)" stroke-width="2.5"/>'
+      + '<text x="'+px(i)+'" y="'+(parseFloat(py(i))+3.9)+'" text-anchor="middle" fill="var(--surface)" '
+      + 'font-family="Archivo Narrow, sans-serif" font-size="12" font-weight="700">'+label+'</text>';
+  }
+  out.push(marker(0,"A"), marker(n-1,"B"));
+
+  var bar = 500*sc, unit = "500 m";
+  if(bar < 44){ bar = 2000*sc; unit = "2 km"; }
+  if(bar < 44){ bar = 10000*sc; unit = "10 km"; }
+  if(bar > VW-2*PAD){ bar = 100*sc; unit = "100 m"; }
+  out.push('<line x1="'+PAD+'" y1="'+(VH-12)+'" x2="'+(PAD+bar).toFixed(1)+'" y2="'+(VH-12)
+    + '" stroke="var(--ink-2)" stroke-width="2"/>');
+  out.push('<text x="'+PAD+'" y="'+(VH-18)+'" fill="var(--muted)" font-family="IBM Plex Mono, monospace" font-size="10">'+unit+'</text>');
+
+  svg.setAttribute("viewBox", "0 0 "+VW+" "+VH);
+  svg.innerHTML = out.join("");
+}
+
+/* ============ route helpers ============ */
+function cumArr(pts){
+  var c = new Float64Array(pts.length), i;
+  for(i=1;i<pts.length;i++) c[i] = c[i-1] + hav(pts[i-1], pts[i]);
+  return c;
+}
+function segmentBounds(cum, nseg){
+  var n = cum.length, total = cum[n-1], out = [], start = 0, k, i;
+  for(k=1;k<=nseg;k++){
+    var target = total*k/nseg, j = start;
+    while(j < n-1 && cum[j] < target) j++;
+    if(k === nseg) j = n-1;
+    if(j > start){ out.push([start, j]); start = j; }
+  }
+  if(!out.length) out.push([0, n-1]);
+  return out;
+}
+function markerIndices(cum, every){
+  var n = cum.length, total = cum[n-1], out = [], d = every, j = 0;
+  if(!(every > 0) || !isFinite(total)) return out;
+  while(d < total){
+    while(j < n-1 && cum[j] < d) j++;
+    if(!out.length || out[out.length-1] !== j) out.push(j);
+    d += every;
+    if(out.length > 600) break;
+  }
+  return out;
+}
+function bearingName(a, b){
+  var t = Math.PI/180;
+  var y = Math.sin((b.lon-a.lon)*t)*Math.cos(b.lat*t);
+  var x = Math.cos(a.lat*t)*Math.sin(b.lat*t) - Math.sin(a.lat*t)*Math.cos(b.lat*t)*Math.cos((b.lon-a.lon)*t);
+  var deg = (Math.atan2(y,x)*180/Math.PI + 360) % 360;
+  return ["N","NE","E","SE","S","SO","O","NO"][Math.round(deg/45) % 8];
+}
+function fmtClock(iso){
+  if(!iso) return "";
+  var d = new Date(iso);
+  return isFinite(d.getTime()) ? d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}) : "";
+}
+
+/* ============ GPX read / write ============ */
+function parseGPX(text){
+  var doc = new DOMParser().parseFromString(text, "application/xml");
+  if(doc.getElementsByTagName("parsererror").length)
+    throw new Error("El archivo no es XML válido. ¿Seguro que es un .gpx?");
+  function all(root, name){ return Array.prototype.slice.call(root.getElementsByTagNameNS("*", name)); }
+  function txt(node, name){ var el = node.getElementsByTagNameNS("*", name)[0]; return el ? el.textContent.trim() : ""; }
+  function toPts(nodes){
+    var out = [], i;
+    for(i=0;i<nodes.length;i++){
+      var lat = parseFloat(nodes[i].getAttribute("lat")), lon = parseFloat(nodes[i].getAttribute("lon"));
+      if(!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180)
+        throw new Error("El GPX contiene coordenadas no válidas.");
+      var e = nodes[i].getElementsByTagNameNS("*","ele")[0], t = nodes[i].getElementsByTagNameNS("*","time")[0];
+      out.push({ lat: lat, lon: lon,
+                 ele: e ? parseFloat(e.textContent) : null,
+                 time: t ? t.textContent.trim() : null });
+    }
+    return out;
+  }
+  var tracks = [], i, trks = all(doc,"trk");
+  for(i=0;i<trks.length;i++){
+    var segments = all(trks[i], "trkseg"), trackName = txt(trks[i], "name") || ("Traza " + (i+1));
+    segments.forEach(function(segment, si){
+      var p = toPts(all(segment, "trkpt"));
+      if(p.length > 1) tracks.push({ name: trackName + (segments.length > 1 ? " · segmento " + (si+1) : ""), pts:p });
+    });
+  }
+  if(!tracks.length){
+    var rtes = all(doc,"rte");
+    for(i=0;i<rtes.length;i++){
+      var r = toPts(all(rtes[i],"rtept"));
+      if(r.length > 1) tracks.push({ name: txt(rtes[i],"name") || ("Ruta "+(tracks.length+1)), pts: r });
+    }
+  }
+  if(!tracks.length){
+    var w = toPts(all(doc,"wpt"));
+    if(w.length > 1) tracks.push({ name: "Waypoints sueltos", pts: w });
+  }
+  if(!tracks.length) throw new Error("No hay ninguna traza, ruta ni waypoint con coordenadas dentro del archivo.");
+  return tracks;
+}
+function xesc(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function buildGPX(name, pts, kind){
+  var isRte = kind === "rte";
+  var tag = isRte ? "rtept" : "trkpt";
+  var body = pts.map(function(p){
+    var s = '\t\t\t<' + tag + ' lat="' + p.lat.toFixed(7) + '" lon="' + p.lon.toFixed(7) + '">\n';
+    if(p.ele != null && isFinite(p.ele)) s += '\t\t\t\t<ele>' + p.ele.toFixed(2) + '</ele>\n';
+    if(p.time) s += '\t\t\t\t<time>' + xesc(p.time) + '</time>\n';
+    if(p.name) s += '\t\t\t\t<name>' + xesc(p.name) + '</name>\n';
+    return s + '\t\t\t</' + tag + '>\n';
+  }).join("");
+  return '<?xml version="1.0" encoding="UTF-8"?>\n'
+    + '<gpx version="1.1" creator="Roadbook GPX" xmlns="http://www.topografix.com/GPX/1/1" '
+    + 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+    + 'xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">\n'
+    + '\t<metadata>\n\t\t<name>' + xesc(name) + '</name>\n\t\t<time>' + new Date().toISOString() + '</time>\n\t</metadata>\n'
+    + (isRte
+        ? '\t<rte>\n\t\t<name>' + xesc(name) + '</name>\n' + body.replace(/\t\t\t/g,"\t\t") + '\t</rte>\n'
+        : '\t<trk>\n\t\t<name>' + xesc(name) + '</name>\n\t\t<trkseg>\n' + body + '\t\t</trkseg>\n\t</trk>\n')
+    + '</gpx>\n';
+}
+
+function buildKML(name, pts, nseg, every){
+  var cum = cumArr(pts), n = pts.length, i;
+  var COLORS = ["ff1848c2","ff50621c"];
+  function coords(a, b){
+    var o = [];
+    for(i=a;i<=b;i++){
+      o.push(pts[i].lon.toFixed(6) + "," + pts[i].lat.toFixed(6)
+             + ((pts[i].ele != null && isFinite(pts[i].ele)) ? "," + pts[i].ele.toFixed(1) : ",0"));
+    }
+    return o.join(" ");
+  }
+  var out = [];
+  out.push('<?xml version="1.0" encoding="UTF-8"?>');
+  out.push('<kml xmlns="http://www.opengis.net/kml/2.2"><Document>');
+  out.push('<name>' + xesc(name) + '</name>');
+  out.push('<description>' + xesc("Recorrido de " + fmtKm(cum[n-1]) + " con " + n + " puntos. Generado con Roadbook GPX.") + '</description>');
+  COLORS.forEach(function(c, k){
+    out.push('<Style id="t' + k + '"><LineStyle><color>' + c + '</color><width>5</width></LineStyle></Style>');
+  });
+  out.push('<Folder><name>Recorrido</name>');
+  var bounds = (nseg > 1) ? segmentBounds(cum, nseg) : [[0, n-1]];
+  bounds.forEach(function(b, si){
+    out.push('<Placemark><name>' + (nseg > 1 ? "Tramo " + (si+1) : "Recorrido completo") + '</name>');
+    out.push('<description>' + xesc(fmtKm(cum[b[0]]) + " a " + fmtKm(cum[b[1]])
+      + (pts[b[0]].time ? "  ·  " + fmtClock(pts[b[0]].time) + "–" + fmtClock(pts[b[1]].time) : "")) + '</description>');
+    out.push('<styleUrl>#t' + (si % 2) + '</styleUrl>');
+    out.push('<LineString><tessellate>1</tessellate><coordinates>' + coords(b[0], b[1]) + '</coordinates></LineString></Placemark>');
+  });
+  out.push('</Folder>');
+  function pin(idx, label, desc){
+    return '<Placemark><name>' + xesc(label) + '</name><description>' + xesc(desc)
+      + '</description><Point><coordinates>' + pts[idx].lon.toFixed(6) + "," + pts[idx].lat.toFixed(6)
+      + ',0</coordinates></Point></Placemark>';
+  }
+  out.push('<Folder><name>Inicio y final</name>');
+  out.push(pin(0, "INICIO", fmtClock(pts[0].time)));
+  out.push(pin(n-1, "FINAL", fmtKm(cum[n-1]) + "  " + fmtClock(pts[n-1].time)));
+  out.push('</Folder>');
+  if(every > 0){
+    var idxs = markerIndices(cum, every);
+    out.push('<Folder><name>Sentido de la marcha</name>');
+    idxs.forEach(function(k, mi){
+      var a = Math.max(0, k-4), b = Math.min(n-1, k+4);
+      out.push(pin(k, String(mi+1),
+        "hacia " + bearingName(pts[a], pts[b]) + "  ·  km " + (cum[k]/1000).toFixed(2).replace(".", ",")
+        + (pts[k].time ? "  ·  " + fmtClock(pts[k].time) : "")));
+    });
+    out.push('</Folder>');
+  }
+  out.push('</Document></kml>');
+  return out.join("\n") + "\n";
+}
+function buildGeoJSON(name, pts, nseg, every){
+  var cum = cumArr(pts), n = pts.length;
+  function c(i){ return [ +pts[i].lon.toFixed(6), +pts[i].lat.toFixed(6) ]; }
+  var feats = [];
+  var bounds = (nseg > 1) ? segmentBounds(cum, nseg) : [[0, n-1]];
+  bounds.forEach(function(b, si){
+    var line = [], i;
+    for(i=b[0];i<=b[1];i++) line.push(c(i));
+    feats.push({ type:"Feature",
+      properties:{ tipo:"tramo", tramo:si+1, color: si%2 ? "#1C6250" : "#C24818",
+                   km_inicio:+(cum[b[0]]/1000).toFixed(3), km_fin:+(cum[b[1]]/1000).toFixed(3),
+                   hora_inicio: pts[b[0]].time || null, hora_fin: pts[b[1]].time || null },
+      geometry:{ type:"LineString", coordinates: line } });
+  });
+  if(every > 0) markerIndices(cum, every).forEach(function(k, mi){
+    var a = Math.max(0, k-4), b = Math.min(n-1, k+4);
+    feats.push({ type:"Feature",
+      properties:{ tipo:"sentido", orden:mi+1, rumbo:bearingName(pts[a], pts[b]),
+                   km:+(cum[k]/1000).toFixed(3), hora: pts[k].time || null },
+      geometry:{ type:"Point", coordinates:c(k) } });
+  });
+  return JSON.stringify({ type:"FeatureCollection", name:name, features:feats }, null, 1);
+}
+function buildCSV(pts){
+  var cum = cumArr(pts);
+  var rows = ["orden,latitud,longitud,altitud,hora,km_acumulado"];
+  for(var i=0;i<pts.length;i++){
+    rows.push([ i+1, pts[i].lat.toFixed(6), pts[i].lon.toFixed(6),
+      (pts[i].ele != null && isFinite(pts[i].ele)) ? pts[i].ele.toFixed(1) : "",
+      pts[i].time || "", (cum[i]/1000).toFixed(3) ].join(","));
+  }
+  return rows.join("\r\n") + "\r\n";
+}
+
+/* ============ minimal STORE zip (so a real .gpx can leave the sandbox) ============ */
+function crc32(bytes){
+  var t = crc32.T, c, n, k;
+  if(!t){
+    t = crc32.T = new Int32Array(256);
+    for(n=0;n<256;n++){ c=n; for(k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1); t[n]=c; }
+  }
+  var crc = -1;
+  for(var i=0;i<bytes.length;i++) crc = (crc>>>8) ^ t[(crc ^ bytes[i]) & 0xFF];
+  return (crc ^ -1) >>> 0;
+}
+function zipOne(name, text){
+  var enc = new TextEncoder();
+  var data = enc.encode(text), nm = enc.encode(name), crc = crc32(data);
+  var d = new Date();
+  var dosT = (d.getHours()<<11) | (d.getMinutes()<<5) | (d.getSeconds()>>1);
+  var dosD = ((d.getFullYear()-1980)<<9) | ((d.getMonth()+1)<<5) | d.getDate();
+  function u16(v){ return [v&255, (v>>>8)&255]; }
+  function u32(v){ return [v&255, (v>>>8)&255, (v>>>16)&255, (v>>>24)&255]; }
+  var lfh = [80,75,3,4].concat(u16(20),u16(0),u16(0),u16(dosT),u16(dosD),
+             u32(crc),u32(data.length),u32(data.length),u16(nm.length),u16(0));
+  var off = lfh.length + nm.length + data.length;
+  var cdh = [80,75,1,2].concat(u16(20),u16(20),u16(0),u16(0),u16(dosT),u16(dosD),
+             u32(crc),u32(data.length),u32(data.length),
+             u16(nm.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(0));
+  var cdLen = cdh.length + nm.length;
+  var eocd = [80,75,5,6].concat(u16(0),u16(0),u16(1),u16(1),u32(cdLen),u32(off),u16(0));
+  return new Blob([new Uint8Array(lfh), nm, data, new Uint8Array(cdh), nm, new Uint8Array(eocd)],
+                  { type: "application/zip" });
+}
+
+/* ============ file delivery ============ */
+var DL = null, DL_READY = false;
+function anchorSave(filename, blob){
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = filename; a.style.display = "none";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+}
+function slug(s){
+  return (String(s).normalize ? String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"") : String(s))
+    .replace(/[^A-Za-z0-9]+/g,"-").replace(/^-+|-+$/g,"").toLowerCase().slice(0,50) || "ruta";
+}
+var PLAIN = { json:1, csv:1, txt:1, md:1, html:1, svg:1 };
+function deliver(base, ext, text, okMsg){
+  if(!DL_READY){ toast("Un momento, todavía estoy comprobando cómo guardar archivos aquí."); return; }
+  if(!DL){
+    anchorSave(base + "." + ext, new Blob([text], { type: "text/plain;charset=utf-8" }));
+    toast("Guardado " + base + "." + ext);
+    return;
+  }
+  if(PLAIN[ext]){
+    DL.save({ filename: base + "." + ext, data: text }).then(function(){
+      toast(okMsg || ("Descargado " + base + "." + ext));
+    }, function(err){
+      if(!err || err.code !== "declined") copy(text, "No se pudo descargar; el contenido está en el portapapeles");
+    });
+    return;
+  }
+  var inner = ext === "kml" ? "doc.kml" : base + "." + ext;
+  DL.save({ filename: base + "-" + ext + ".zip", data: zipOne(inner, text) }).then(function(){
+    toast(ext === "kml"
+      ? "Descargado el zip. Renómbralo a .kmz y súbelo tal cual a My Maps, o descomprímelo."
+      : "Descargado el zip — dentro está " + inner);
+  }, function(err){
+    if(err && err.code === "declined") return;
+    DL.save({ filename: base + "-" + ext + ".txt", data: text }).then(function(){
+      toast("Guardado como .txt — renómbralo a " + base + "." + ext);
+    }, function(){ copy(text, "No se pudo descargar; el contenido está en el portapapeles"); });
+  });
+}
+function exportGPX(name, pts, kind){
+  if(!pts || pts.length < 1){ toast("No hay puntos que guardar."); return; }
+  deliver(slug(name), "gpx", buildGPX(name, pts, kind || "trk"));
+}
+function renderDlInfo(){
+  var el = $("dlinfo");
+  el.innerHTML = DL
+    ? '<p class="hint">Esta página corre dentro del visor de Claude, que solo deja salir una lista corta de extensiones. <b>CSV y GeoJSON salen tal cual</b>; <b>GPX y KML no están en la lista</b>, así que salen envueltos en un <b>.zip</b>. El zip del KML ya es un KMZ válido: renómbralo a <code>.kmz</code> y My Maps lo traga directo, o descomprímelo.</p>'
+      + '<p class="hint">Para descargas limpias sin intermediarios, guarda esta página como archivo <code>.html</code> y ábrela desde el propio dispositivo: entonces todos los formatos bajan con su extensión real.</p>'
+    : '<p class="hint">Este navegador descarga archivos directamente: cada formato baja con su extensión real, <code>.gpx</code> y <code>.kml</code> incluidos.</p>';
+}
+(function initDl(){
+  var done = function(ns){ DL = ns; DL_READY = true; renderDlInfo(); };
+  if(!window.claude || !window.claude.use){ done(null); return; }
+  var settled = false;
+  var t = setTimeout(function(){ if(!settled){ settled = true; done(null); } }, 11000);
+  try{
+    window.claude.use("downloads").then(function(ns){
+      if(settled) return; settled = true; clearTimeout(t); done(ns || null);
+    }, function(){ if(settled) return; settled = true; clearTimeout(t); done(null); });
+  }catch(e){ clearTimeout(t); done(null); }
+})();
+
+/* ============================================================
+   TAB 1 — CONVERTIR
+   ============================================================ */
+var S = { fileName:"", isSample:true, tracks:[], ti:0, pts:[], reversed:false,
+          cum:null, legs:3, mode:"bal", nav:true, anchors:[], X:null, Y:null, diag:null };
+
+var MODE_HINT = {
+  curv: "Concentra los puntos donde la carretera gira. Máxima fidelidad en puertos y revueltas; puede dejar los tramos rectos sin vigilar.",
+  bal:  "Prioriza las curvas pero reparte algo de presupuesto por kilómetros. Es la opción que mejor funciona en rutas mixtas.",
+  dist: "Un punto cada X kilómetros, ignorando la forma. Útil cuando hay varias carreteras paralelas posibles y quieres cobertura pareja.",
+  stop: "Fija un punto en cada alto de 3 minutos o más y reparte el resto por forma. Es lo que hay que usar cuando el GPX es una ronda de recogidas, entregas o visitas."
+};
+
+function project(){
+  var n = S.pts.length, i;
+  var lat0 = S.pts[n>>1].lat * Math.PI/180;
+  var kx = 111320*Math.cos(lat0), ky = 110540;
+  S.X = new Float64Array(n); S.Y = new Float64Array(n);
+  for(i=0;i<n;i++){ S.X[i] = S.pts[i].lon*kx; S.Y[i] = S.pts[i].lat*ky; }
+  S.cum = new Float64Array(n);
+  for(i=1;i<n;i++) S.cum[i] = S.cum[i-1] + hav(S.pts[i-1], S.pts[i]);
+}
+function worstPoint(i, j){
+  var x1=S.X[i], y1=S.Y[i], dx=S.X[j]-x1, dy=S.Y[j]-y1, L2=dx*dx+dy*dy;
+  var bi=-1, bd=-1, k, t, d;
+  for(k=i+1;k<j;k++){
+    if(L2 === 0) d = Math.hypot(S.X[k]-x1, S.Y[k]-y1);
+    else{
+      t = ((S.X[k]-x1)*dx + (S.Y[k]-y1)*dy)/L2;
+      t = t<0 ? 0 : (t>1 ? 1 : t);
+      d = Math.hypot(S.X[k]-(x1+t*dx), S.Y[k]-(y1+t*dy));
+    }
+    if(d > bd){ bd = d; bi = k; }
+  }
+  return { bi: bi, bd: bd };
+}
+function midPoint(i, j){
+  var target = (S.cum[i]+S.cum[j])/2, lo=i+1, hi=j-1, m;
+  if(hi < lo) return -1;
+  while(lo < hi){ m = (lo+hi)>>1; if(S.cum[m] < target) lo = m+1; else hi = m; }
+  return lo;
+}
+function detectStops(radius, minSecs){
+  var pts = S.pts, n = pts.length, out = [], i = 0;
+  if(!n) return out;
+  var reversed = Date.parse(pts[0].time) > Date.parse(pts[n-1].time);
+  if(reversed) pts = pts.slice().reverse();
+  if(!pts[0].time) return out;
+  var T = pts.map(function(p){ var t = p.time ? Date.parse(p.time) : NaN; return isFinite(t) ? t/1000 : NaN; });
+  if(!isFinite(T[0])) return out;
+  while(i < n){
+    var j = i;
+    while(j+1 < n && hav(pts[i], pts[j+1]) < radius) j++;
+    var secs = Math.abs(T[j]-T[i]);
+    if(isFinite(secs) && secs >= minSecs){ out.push({ i:i, j:j, mid:(i+j)>>1, secs:secs }); i = j+1; }
+    else i++;
+  }
+  if(reversed) out = out.map(function(s){
+    return { i:n-1-s.j, j:n-1-s.i, mid:n-1-s.mid, secs:s.secs };
+  }).reverse();
+  return out;
+}
+function selectAnchors(K, mode){
+  var n = S.pts.length, i;
+  if(n <= K){ var a=[]; for(i=0;i<n;i++) a.push(i); return a; }
+  var byDist = mode === "dist";
+  var w = (mode === "bal" || mode === "stop") ? 0.02 : 0;
+
+  function make(i, j){
+    var seg = { i:i, j:j, bi:-1, score:-1 };
+    if(j-i < 2) return seg;
+    if(byDist){ seg.bi = midPoint(i,j); seg.score = S.cum[j]-S.cum[i]; return seg; }
+    var r = worstPoint(i,j);
+    seg.bi = r.bi; seg.score = r.bd + w*(S.cum[j]-S.cum[i]);
+    return seg;
+  }
+
+  var seed = [0, n-1];
+  if(mode === "stop"){
+    var st = detectStops(40, 180);
+    st.sort(function(a,b){ return b.secs-a.secs; });
+    st = st.slice(0, Math.max(0, K-2));
+    var ids = st.map(function(s){ return s.mid; }).concat([0, n-1]);
+    ids.sort(function(a,b){ return a-b; });
+    seed = ids.filter(function(v,k){ return k===0 || v !== ids[k-1]; });
+  }
+
+  var segs = [], count = seed.length;
+  for(i=0;i<seed.length-1;i++) segs.push(make(seed[i], seed[i+1]));
+  while(count < K){
+    var best=-1, bs=-1;
+    for(i=0;i<segs.length;i++)
+      if(segs[i].bi > segs[i].i && segs[i].bi < segs[i].j && segs[i].score > bs){ bs = segs[i].score; best = i; }
+    if(best < 0) break;
+    var s = segs[best];
+    segs.splice(best, 1, make(s.i, s.bi), make(s.bi, s.j));
+    count++;
+  }
+  var idx = [seed[0]];
+  for(i=0;i<segs.length;i++) idx.push(segs[i].j);
+  idx.sort(function(p,q){ return p-q; });
+  var out = [idx[0]];
+  for(i=1;i<idx.length;i++) if(idx[i] !== idx[i-1]) out.push(idx[i]);
+  return out;
+}
+function buildLegs(){
+  var A = S.anchors, raw = [], i;
+  for(i=0;i<A.length-1;i+=10){
+    var sl = A.slice(i, Math.min(i+11, A.length));
+    if(sl.length < 2) break;
+    raw.push(sl);
+  }
+  if(raw.length > 1){
+    var last = raw[raw.length-1];
+    if(last.length === 2 && raw[raw.length-2].length < 11){
+      raw[raw.length-2] = raw[raw.length-2].concat(last.slice(1));
+      raw.pop();
+    }
+  }
+  return raw.map(function(sl){
+    var pts = sl.map(function(k){ return S.pts[k]; });
+    return { idx: sl, origin: pts[0], dest: pts[pts.length-1], via: pts.slice(1,-1),
+             dist: S.cum[sl[sl.length-1]] - S.cum[sl[0]], url: mapsUrl(pts, S.nav) };
+  });
+}
+function mapsUrl(pts, nav){
+  var o = pts[0], d = pts[pts.length-1], via = pts.slice(1,-1);
+  var u = "https://www.google.com/maps/dir/?api=1&origin=" + coord(o)
+        + "&destination=" + coord(d) + "&travelmode=driving";
+  if(via.length) u += "&waypoints=" + encodeURIComponent(via.map(coord).join("|"));
+  if(nav) u += "&dir_action=navigate";
+  return u;
+}
+
+function diagnose(){
+  var n = S.pts.length, i;
+  var total = S.cum[n-1];
+  var lats = [], lons = [];
+  for(i=0;i<n;i++){ lats.push(S.pts[i].lat); lons.push(S.pts[i].lon); }
+  var mnla=Infinity, mxla=-Infinity, mnlo=Infinity, mxlo=-Infinity;
+  for(i=0;i<n;i++){
+    mnla=Math.min(mnla,lats[i]); mxla=Math.max(mxla,lats[i]);
+    mnlo=Math.min(mnlo,lons[i]); mxlo=Math.max(mxlo,lons[i]);
+  }
+  var diag = hav({lat:mnla,lon:mnlo}, {lat:mxla,lon:mxlo});
+  var closure = hav(S.pts[0], S.pts[n-1]);
+
+  var grid = {}, revisit = 0;
+  for(i=0;i<n;i++){
+    var gx = Math.round(S.pts[i].lat*4000), gy = Math.round(S.pts[i].lon*4000), hit = false;
+    for(var dx=-1;dx<=1&&!hit;dx++) for(var dy=-1;dy<=1&&!hit;dy++){
+      var cell = grid[(gx+dx)+"|"+(gy+dy)];
+      if(cell) for(var c=0;c<cell.length;c++)
+        if(i-cell[c] > 200 && hav(S.pts[i], S.pts[cell[c]]) < 25){ hit = true; break; }
+    }
+    if(hit) revisit++;
+    var key = gx+"|"+gy;
+    (grid[key] || (grid[key] = [])).push(i);
+  }
+  var secs = null;
+  if(S.pts[0].time && S.pts[n-1].time){
+    var a = Date.parse(S.pts[0].time), b = Date.parse(S.pts[n-1].time);
+    if(isFinite(a) && isFinite(b) && b > a) secs = (b-a)/1000;
+  }
+  return { total: total, diag: diag, closure: closure,
+           revisit: revisit/n, sprawl: total/Math.max(diag,1),
+           secs: secs, stops: detectStops(40,180).length };
+}
+function renderDiag(){
+  var d = S.diag, box = $("diag"), msgs = [];
+  if(!d){ box.innerHTML = ""; return; }
+  if(d.revisit > 0.12 || d.sprawl > 4)
+    msgs.push("<b>Esto no es una ruta de un punto a otro.</b> La traza se repisa a sí misma ("
+      + Math.round(d.revisit*100) + "% de los puntos vuelven a pasar por donde ya estuviste) y recorre "
+      + fmtKm(d.total) + " dentro de una zona de solo " + fmtKm(d.diag)
+      + ". Google Maps no sabe reproducir un recorrido que pasa dos veces por el mismo sitio.");
+  if(d.stops >= 3)
+    msgs.push("Se detectan <b>" + d.stops + " paradas</b> de 3 minutos o más. Si el GPX es una ronda de visitas o entregas, usa el reparto <b>Paradas</b>: convierte cada alto en un punto intermedio, que es exactamente lo que Maps sabe hacer.");
+  if(d.closure < 300 && d.total > 3000)
+    msgs.push("Empieza y acaba casi en el mismo sitio (" + Math.round(d.closure)
+      + " m). En un circuito cerrado conviene partirlo en varios tramos, o Maps propondrá el camino corto entre origen y destino.");
+  box.innerHTML = msgs.length
+    ? '<div class="note alert"><span aria-hidden="true">◆</span><div>' + msgs.join("<br><br>") + '</div></div>'
+    : "";
+}
+
+function renderStats(legs){
+  var n = S.pts.length, up = 0, prev = null, i;
+  for(i=0;i<n;i++){
+    var e = S.pts[i].ele;
+    if(e == null || !isFinite(e)) continue;
+    if(prev != null && e-prev > 1.5) up += e-prev;
+    prev = e;
+  }
+  var guides = legs.reduce(function(a,l){ return a + Math.max(0, l.idx.length-2); }, 0);
+  var rows = [
+    ["Distancia", fmtKm(S.cum[n-1]), ""],
+    ["Puntos GPX", n.toLocaleString("es-ES"), ""],
+    ["Puntos guía", String(guides), "de " + n.toLocaleString("es-ES")],
+    S.diag && S.diag.secs
+      ? ["Duración", fmtDur(S.diag.secs), ""]
+      : ["Desnivel +", up > 0 ? Math.round(up).toLocaleString("es-ES") : "—", up > 0 ? "m" : ""]
+  ];
+  $("stats").innerHTML = rows.map(function(r){
+    return '<div class="stat"><dt>'+r[0]+'</dt><dd>'+r[1]+(r[2]?'<small>'+r[2]+'</small>':'')+'</dd></div>';
+  }).join("");
+  $("bboxlbl").textContent = S.diag ? "extensión " + fmtKm(S.diag.diag) : "";
+}
+function renderLegs(legs){
+  $("legsout").innerHTML = legs.map(function(leg, i){
+    var via = leg.via.length;
+    return '<li class="leg"><div class="leg-no"><b>'+(i+1)+'</b><i></i></div><div class="leg-bd">'
+      + '<div class="leg-top"><span class="leg-dist">'+fmtKm(leg.dist)+'</span>'
+      + '<span class="leg-meta">'+via+' punto'+(via===1?'':'s')+' intermedio'+(via===1?'':'s')+'</span></div>'
+      + '<div class="coords"><span><u>DE</u>'+coord(leg.origin)+'</span><span><u>A&nbsp;</u>'+coord(leg.dest)+'</span></div>'
+      + '<div class="leg-act">'
+        + '<a class="btn primary sm" href="'+leg.url+'" target="_blank" rel="noopener">Abrir en Maps</a>'
+        + '<button class="btn sm" type="button" data-copy="'+i+'">Copiar</button>'
+        + '<button class="btn sm" type="button" data-qr="'+i+'" aria-expanded="false">QR</button>'
+      + '</div><div data-qrbox="'+i+'"></div></div></li>';
+  }).join("");
+}
+
+var CURRENT = [];
+function recompute(){
+  if(!S.pts.length) return;
+  S.anchors = selectAnchors(S.legs*10+1, S.mode);
+  CURRENT = buildLegs();
+  drawTrack($("map"), S.pts, { legs: CURRENT });
+  renderStats(CURRENT);
+  renderLegs(CURRENT);
+  var g = CURRENT.reduce(function(a,l){ return a + Math.max(0, l.idx.length-2); }, 0);
+  $("legslbl").textContent = CURRENT.length + (CURRENT.length===1 ? " tramo · " : " tramos · ") + g + " puntos guía";
+  $("modehint").textContent = MODE_HINT[S.mode];
+  save();
+}
+function loadTracks(tracks, name, isSample){
+  S.tracks = tracks; S.ti = 0; S.reversed = false;
+  S.fileName = name; S.isSample = !!isSample;
+  $("fname").textContent = name;
+  $("ftag").hidden = !isSample;
+  $("rev").textContent = "Invertir sentido";
+  var sel = $("trksel");
+  if(tracks.length > 1){
+    sel.hidden = false;
+    sel.innerHTML = tracks.map(function(t,i){
+      return '<option value="'+i+'">'+xesc(t.name)+' ('+t.pts.length+' pts)</option>';
+    }).join("");
+    $("trkcount").textContent = tracks.length + " trazas o segmentos; se exporta el seleccionado";
+  }else{ sel.hidden = true; $("trkcount").textContent = ""; }
+  applyTrack();
+}
+function applyTrack(){
+  var pts = S.tracks[S.ti].pts.slice();
+  if(S.reversed) pts.reverse();
+  S.pts = pts;
+  project();
+  S.diag = diagnose();
+  renderDiag();
+  if(!$("p-exp").hidden) renderExport();
+  var st = document.querySelector('#modes .chip[data-mode="stop"]');
+  st.disabled = S.diag.stops < 2;
+  if(st.disabled && S.mode === "stop") setMode("bal");
+  recompute();
+}
+function setMode(m){
+  S.mode = m;
+  Array.prototype.forEach.call(document.querySelectorAll("#modes .chip"), function(c){
+    c.setAttribute("aria-pressed", c.dataset.mode === m ? "true" : "false");
+  });
+}
+function save(){
+  try{ localStorage.setItem("roadbook-gpx", JSON.stringify({ legs:S.legs, mode:S.mode, nav:S.nav })); }catch(e){}
+}
+function restore(){
+  try{
+    var v = JSON.parse(localStorage.getItem("roadbook-gpx") || "{}");
+    if(v.legs >= 1 && v.legs <= 12) S.legs = v.legs;
+    if(MODE_HINT[v.mode]) S.mode = v.mode;
+    if(typeof v.nav === "boolean") S.nav = v.nav;
+  }catch(e){}
+  $("legs").value = S.legs; $("nav").checked = S.nav;
+  setMode(S.mode);
+}
+
+function sampleGPX(){
+  var A = [
+    [42.3582,1.4593,692],[42.3651,1.4712,701],[42.3724,1.4778,714],[42.3812,1.4836,730],
+    [42.3901,1.4862,748],[42.4015,1.4879,769],[42.4122,1.4894,792],[42.4231,1.4908,824],
+    [42.4346,1.4924,861],[42.4452,1.4881,894],[42.4561,1.4899,921],[42.4682,1.4952,955],
+    [42.4791,1.5021,981],[42.4881,1.5093,1002],[42.4971,1.5158,1016],[42.5063,1.5218,1023]
+  ];
+  function cr(p0,p1,p2,p3,t){
+    var t2=t*t, t3=t2*t;
+    return 0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);
+  }
+  var pts=[], i, j, seg=34;
+  for(i=0;i<A.length-1;i++){
+    var p0=A[Math.max(0,i-1)], p1=A[i], p2=A[i+1], p3=A[Math.min(A.length-1,i+2)];
+    for(j=0;j<seg;j++){
+      var t=j/seg;
+      var la=cr(p0[0],p1[0],p2[0],p3[0],t), lo=cr(p0[1],p1[1],p2[1],p3[1],t), el=cr(p0[2],p1[2],p2[2],p3[2],t);
+      var dx=p2[1]-p1[1], dy=p2[0]-p1[0], L=Math.hypot(dx,dy)||1;
+      var amp=0.00058*Math.sin((i*seg+j)/3.1) + 0.00022*Math.sin((i*seg+j)/1.27);
+      pts.push({ lat: la+amp*(dx/L), lon: lo-amp*(dy/L), ele: el+2*Math.sin((i*seg+j)/5), time: null });
+    }
+  }
+  var L2 = A[A.length-1];
+  pts.push({ lat:L2[0], lon:L2[1], ele:L2[2], time:null });
+  return [{ name:"La Seu d'Urgell → Andorra la Vella", pts: pts }];
+}
+
+function readFile(f){
+  if(!f) return;
+  if(!/\.gpx$/i.test(f.name) && String(f.type).indexOf("xml") < 0){
+    toast("Ese archivo no es un .gpx. Exporta la ruta en formato GPX y vuelve a intentarlo."); return;
+  }
+  var r = new FileReader();
+  r.onload = function(){
+    try{
+      var tracks = parseGPX(String(r.result));
+      loadTracks(tracks, f.name, false);
+      toast("Cargado: " + tracks[0].pts.length.toLocaleString("es-ES") + " puntos");
+    }catch(err){ toast(err.message); }
+  };
+  r.onerror = function(){ toast("No se pudo leer el archivo."); };
+  r.readAsText(f);
+}
+
+$("drop").addEventListener("click", function(){ $("file").click(); });
+$("drop").addEventListener("keydown", function(e){
+  if(e.key === "Enter" || e.key === " "){ e.preventDefault(); $("file").click(); }
+});
+$("file").addEventListener("change", function(e){ readFile(e.target.files[0]); e.target.value = ""; });
+["dragenter","dragover"].forEach(function(ev){
+  $("drop").addEventListener(ev, function(e){ e.preventDefault(); $("drop").classList.add("over"); });
+});
+["dragleave","drop"].forEach(function(ev){
+  $("drop").addEventListener(ev, function(e){ e.preventDefault(); $("drop").classList.remove("over"); });
+});
+$("drop").addEventListener("drop", function(e){ if(e.dataTransfer && e.dataTransfer.files) readFile(e.dataTransfer.files[0]); });
+
+$("legs").addEventListener("input", function(e){ S.legs = parseInt(e.target.value,10); recompute(); });
+$("nav").addEventListener("change", function(e){ S.nav = e.target.checked; recompute(); });
+$("modes").addEventListener("click", function(e){
+  var b = e.target.closest(".chip");
+  if(!b || b.disabled) return;
+  setMode(b.dataset.mode); recompute();
+});
+$("rev").addEventListener("click", function(){
+  S.reversed = !S.reversed;
+  this.textContent = S.reversed ? "Sentido invertido" : "Invertir sentido";
+  applyTrack();
+});
+$("trksel").addEventListener("change", function(e){ S.ti = parseInt(e.target.value,10); S.reversed = false; applyTrack(); });
+$("copyall").addEventListener("click", function(){
+  if(!CURRENT.length) return;
+  copy(CURRENT.map(function(l,i){ return "Tramo "+(i+1)+" ("+fmtKm(l.dist)+")\n"+l.url; }).join("\n\n"),
+       CURRENT.length + " enlaces copiados");
+});
+$("legsout").addEventListener("click", function(e){
+  var c = e.target.closest("[data-copy]");
+  if(c){ copy(CURRENT[+c.dataset.copy].url, "Enlace del tramo "+(+c.dataset.copy+1)+" copiado"); return; }
+  var q = e.target.closest("[data-qr]");
+  if(!q) return;
+  var i = +q.dataset.qr, box = $("legsout").querySelector('[data-qrbox="'+i+'"]');
+  if(box.firstChild){ box.innerHTML = ""; q.setAttribute("aria-expanded","false"); return; }
+  if(typeof qrcode === "undefined"){ toast("El generador de QR no cargó. Usa «Copiar» y pega el enlace."); return; }
+  try{
+    var qr = qrcode(0,"L"); qr.addData(CURRENT[i].url); qr.make();
+    box.innerHTML = '<div class="qr">' + qr.createSvgTag({ cellSize:4, margin:0, scalable:true })
+                  + '<div class="qr-cap">Tramo '+(i+1)+' · escanear con el móvil</div></div>';
+    q.setAttribute("aria-expanded","true");
+  }catch(err){ toast("El enlace es demasiado largo para un QR. Usa «Copiar»."); }
+});
+
+/* ============================================================
+   TAB 2 — CREAR
+   ============================================================ */
+var R = { on:false, pts:[], watch:null, lock:null, t0:null, session:0 };
+var M = { pts:[] };
+
+function recSave(){ try{ localStorage.setItem("roadbook-rec", JSON.stringify(R.pts)); }catch(e){} }
+function recRestore(){
+  try{ var v = JSON.parse(localStorage.getItem("roadbook-rec") || "[]"); if(Array.isArray(v)) R.pts = v; }catch(e){}
+}
+function renderRec(){
+  var n = R.pts.length, d = n > 1 ? pathLen(R.pts) : 0;
+  var secs = 0;
+  if(n > 1){
+    var a = Date.parse(R.pts[0].time), b = Date.parse(R.pts[n-1].time);
+    if(isFinite(a) && isFinite(b)) secs = (b-a)/1000;
+  }
+  var acc = n ? R.pts[n-1].acc : null;
+  $("recstats").innerHTML = [
+    ["Puntos", n.toLocaleString("es-ES"), ""],
+    ["Distancia", fmtKm(d), ""],
+    ["Tiempo", secs ? fmtDur(secs) : "—", ""],
+    ["Precisión", acc != null ? Math.round(acc) : "—", acc != null ? "m" : ""]
+  ].map(function(r){
+    return '<div class="stat"><dt>'+r[0]+'</dt><dd>'+r[1]+(r[2]?'<small>'+r[2]+'</small>':'')+'</dd></div>';
+  }).join("");
+  $("recout").hidden = n < 2;
+  $("recdot").classList.toggle("on", R.on);
+  $("recstate").textContent = R.on ? "Grabando" : (n ? "Parado · " + n + " pts" : "Parado");
+  if(!R.on && n > 1) drawTrack($("mkmap"), R.pts, {});
+  if(!$("p-exp").hidden) renderExport();
+}
+function recStart(){
+  if(R.on) return;
+  var session = ++R.session;
+  if(!navigator.geolocation){ toast("Este navegador no da acceso al GPS."); return; }
+  R.on = true;
+  $("recstart").disabled = true; $("recstop").disabled = false;
+  R.watch = navigator.geolocation.watchPosition(function(pos){
+    if(!R.on || session !== R.session) return;
+    var c = pos.coords;
+    if(c.accuracy != null && c.accuracy > 100) return;
+    var p = { lat:c.latitude, lon:c.longitude,
+              ele: (c.altitude != null && isFinite(c.altitude)) ? c.altitude : null,
+              time: new Date(pos.timestamp).toISOString(), acc: c.accuracy };
+    var last = R.pts[R.pts.length-1];
+    if(last && hav(last, p) < 3 && pos.timestamp - Date.parse(last.time) < 15000){
+      last.acc = c.accuracy; renderRec(); return;
+    }
+    R.pts.push(p);
+    recSave();
+    renderRec();
+    if(R.pts.length > 1) drawTrack($("mkmap"), R.pts, {});
+  }, function(err){
+    if(!R.on || session !== R.session) return;
+    recStop();
+    $("rechint").textContent = err.code === 1
+      ? "El navegador ha denegado el acceso a la ubicación. Dentro del visor de Claude el GPS suele estar bloqueado: guarda esta página como archivo .html, ábrela directamente en el móvil y vuelve a intentarlo."
+      : "No se pudo leer el GPS (" + err.message + ").";
+    toast("Sin acceso al GPS.");
+  }, { enableHighAccuracy:true, maximumAge:0, timeout:20000 });
+
+  if(navigator.wakeLock && navigator.wakeLock.request)
+    navigator.wakeLock.request("screen").then(function(l){
+      if(R.on && session === R.session) R.lock = l;
+      else l.release().catch(function(){});
+    }, function(){});
+  renderRec();
+  toast("Grabando. Deja la pantalla encendida si puedes.");
+}
+function recStop(){
+  R.on = false; R.session++;
+  if(R.watch != null){ navigator.geolocation.clearWatch(R.watch); R.watch = null; }
+  if(R.lock){ try{ R.lock.release().catch(function(){}); }catch(e){} R.lock = null; }
+  $("recstart").disabled = false; $("recstop").disabled = true;
+  recSave(); renderRec();
+}
+$("recstart").addEventListener("click", recStart);
+$("recstop").addEventListener("click", recStop);
+$("recclear").addEventListener("click", function(){
+  if(R.on) recStop();
+  R.pts = []; recSave(); renderRec(); drawTrack($("mkmap"), M.pts, { dots:true });
+  toast("Grabación borrada.");
+});
+$("rec2conv").addEventListener("click", function(){
+  if(R.pts.length < 2) return;
+  loadTracks([{ name:"Grabación GPS", pts:R.pts.slice() }], "grabacion.gpx", false);
+  showTab("conv"); toast("Grabación cargada en Convertir.");
+});
+
+/* -- manual points -- */
+var GMAPS_RE = [
+  /@(-?\d+\.\d+),\s*(-?\d+\.\d+)/,
+  /[?&]q=(-?\d+\.\d+),\s*(-?\d+\.\d+)/,
+  /[?&](?:ll|sll|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/,
+  /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,
+  /\/(-?\d+\.\d+),(-?\d+\.\d+)(?:[/,?]|$)/
+];
+function parseLine(line){
+  line = line.trim();
+  if(!line) return null;
+  var i, m;
+  if(/^https?:\/\//i.test(line) || line.indexOf("google.") >= 0){
+    for(i=0;i<GMAPS_RE.length;i++){
+      m = line.match(GMAPS_RE[i]);
+      if(m){
+        var la = Number(m[1]), lo = Number(m[2]);
+        if(Math.abs(la) > 90 || Math.abs(lo) > 180) return { error:"coordenadas fuera de rango" };
+        return { lat:la, lon:lo, name:"" };
+      }
+    }
+    return { error: "enlace sin coordenadas" };
+  }
+  m = line.match(/(-?\d{1,3}[.,]\d{3,})\s*[,;\s]\s*(-?\d{1,3}[.,]\d{3,})/);
+  if(!m) return { error: "no encuentro coordenadas" };
+  var lat = parseFloat(m[1].replace(",", ".")), lon = parseFloat(m[2].replace(",", "."));
+  if(!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180)
+    return { error: "coordenadas fuera de rango" };
+  var label = line.slice(0, m.index).replace(/[\s,;:-]+$/,"").trim();
+  return { lat:lat, lon:lon, name:label };
+}
+function renderPts(){
+  var n = M.pts.length;
+  $("plist").innerHTML = M.pts.map(function(p,i){
+    return '<li class="prow"><b>'+(i+1)+'</b><div class="pv">'
+      + '<strong>'+(p.name ? xesc(p.name) : "Punto "+(i+1))+'</strong>'
+      + '<span>'+coord(p)+'</span></div><div class="pa">'
+      + '<button class="icb" type="button" data-up="'+i+'" title="Subir" aria-label="Subir punto '+(i+1)+'">&#8593;</button>'
+      + '<button class="icb" type="button" data-down="'+i+'" title="Bajar" aria-label="Bajar punto '+(i+1)+'">&#8595;</button>'
+      + '<button class="icb" type="button" data-del="'+i+'" title="Quitar" aria-label="Quitar punto '+(i+1)+'">&#215;</button>'
+      + '</div></li>';
+  }).join("");
+  $("ptcount").textContent = n ? n + (n===1?" punto":" puntos") : "";
+  $("ptout").hidden = n < 2;
+  if(n >= 2){
+    var d = pathLen(M.pts);
+    $("pthint").textContent = "Distancia en línea recta encadenando los puntos: " + fmtKm(d)
+      + ". Maps la convertirá en kilómetros reales de carretera."
+      + (n > 11 ? " Ojo: son más de 11 puntos, así que «Abrir en Maps» solo usará los 11 primeros; guarda el GPX y pásalo por la pestaña Convertir para trocearlo." : "");
+    $("ptmaps").href = mapsUrl(M.pts.slice(0,11), true);
+  }else $("pthint").textContent = "";
+  drawTrack($("mkmap"), M.pts.length ? M.pts : (R.pts.length ? R.pts : []), { dots: M.pts.length > 0 });
+  try{ localStorage.setItem("roadbook-pts", JSON.stringify(M.pts)); }catch(e){}
+}
+$("ptadd").addEventListener("click", function(){
+  var lines = $("ptin").value.split(/\r?\n/), added = 0, bad = 0;
+  lines.forEach(function(l){
+    if(!l.trim()) return;
+    var r = parseLine(l);
+    if(!r || r.error){ bad++; return; }
+    M.pts.push(r); added++;
+  });
+  if(added){ $("ptin").value = ""; renderPts(); }
+  toast(added ? (added + (added===1?" punto añadido":" puntos añadidos") + (bad ? " · " + bad + " línea(s) sin coordenadas" : ""))
+              : "No encontré coordenadas. Pega algo como 41.97680, 1.87315 o un enlace de Maps con /@lat,lon.");
+});
+$("ptgeo").addEventListener("click", function(){
+  if(!navigator.geolocation){ toast("Este navegador no da acceso al GPS."); return; }
+  toast("Buscando tu posición…");
+  navigator.geolocation.getCurrentPosition(function(pos){
+    M.pts.push({ lat:pos.coords.latitude, lon:pos.coords.longitude, name:"Mi posición" });
+    renderPts(); toast("Punto añadido.");
+  }, function(err){
+    toast(err.code === 1 ? "Permiso de ubicación denegado." : "No se pudo obtener la posición.");
+  }, { enableHighAccuracy:true, timeout:15000 });
+});
+$("ptclear").addEventListener("click", function(){ M.pts = []; renderPts(); });
+$("plist").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  var i;
+  if(b.dataset.up !== undefined){ i = +b.dataset.up; if(i > 0){ var t = M.pts[i-1]; M.pts[i-1] = M.pts[i]; M.pts[i] = t; } }
+  else if(b.dataset.down !== undefined){ i = +b.dataset.down; if(i < M.pts.length-1){ var u = M.pts[i+1]; M.pts[i+1] = M.pts[i]; M.pts[i] = u; } }
+  else if(b.dataset.del !== undefined){ M.pts.splice(+b.dataset.del, 1); }
+  else return;
+  renderPts();
+});
+$("pt2conv").addEventListener("click", function(){
+  if(M.pts.length < 2) return;
+  loadTracks([{ name:"Ruta por puntos", pts:M.pts.slice() }], "ruta-puntos.gpx", false);
+  showTab("conv"); toast("Ruta cargada en Convertir.");
+});
+
+/* -- export buttons -- */
+document.addEventListener("click", function(e){
+  var b = e.target.closest("[data-exp]"); if(!b) return;
+  var what = b.dataset.exp;
+  if(what === "rec"){ exportGPX("Grabacion " + new Date().toLocaleDateString("es-ES"), R.pts, "trk"); return; }
+  if(what === "pts"){ exportGPX("Ruta por puntos", M.pts, "rte"); return; }
+  if(!S.pts.length){ toast("Carga antes un GPX."); return; }
+  var base = S.fileName.replace(/\.gpx$/i, "");
+  if(what === "full"){ exportGPX(base + (S.reversed ? " invertida" : ""), S.pts, "trk"); return; }
+  if(what === "simp"){
+    exportGPX(base + " simplificada", S.anchors.map(function(k){ return S.pts[k]; }), "rte"); return;
+  }
+  if(what === "leg"){
+    if(!CURRENT.length) return;
+    var ans = prompt("¿Qué tramo quieres guardar? (1 – " + CURRENT.length + ")", "1");
+    if(ans == null) return;
+    var k = parseInt(ans, 10);
+    if(!(k >= 1 && k <= CURRENT.length)){ toast("Ese tramo no existe."); return; }
+    var leg = CURRENT[k-1];
+    exportGPX(base + " tramo " + k, S.pts.slice(leg.idx[0], leg.idx[leg.idx.length-1]+1), "trk");
+  }
+});
+
+/* ============================================================
+   TAB 0 — PARA EL CONDUCTOR (exportación multiformato)
+   ============================================================ */
+var E = { src:"track", every:200, nseg:8 };
+
+function srcPts(){
+  if(E.src === "rec") return R.pts;
+  if(E.src === "pts") return M.pts;
+  return S.pts;
+}
+function srcName(){
+  if(E.src === "rec") return "Grabacion " + new Date().toLocaleDateString("es-ES");
+  if(E.src === "pts") return "Ruta por puntos";
+  return S.fileName.replace(/\.gpx$/i, "") + (S.reversed ? " invertida" : "");
+}
+function renderExport(){
+  Array.prototype.forEach.call(document.querySelectorAll("#srcs .chip"), function(c){
+    var k = c.dataset.src;
+    var n = k === "rec" ? R.pts.length : (k === "pts" ? M.pts.length : S.pts.length);
+    c.disabled = n < 2;
+    c.setAttribute("aria-pressed", k === E.src ? "true" : "false");
+  });
+  var chip = document.querySelector('#srcs .chip[data-src="' + E.src + '"]');
+  if(chip && chip.disabled){
+    var available = ["track", "rec", "pts"].find(function(k){
+      return (k === "track" ? S.pts : k === "rec" ? R.pts : M.pts).length >= 2;
+    });
+    if(available && available !== E.src){ E.src = available; renderExport(); return; }
+  }
+
+  var pts = srcPts();
+  $("srcmeta").textContent = pts.length ? pts.length.toLocaleString("es-ES") + " puntos" : "";
+  if(pts.length < 2){
+    $("expmap").innerHTML = "";
+    $("expstats").innerHTML = "";
+    return;
+  }
+  drawTrack($("expmap"), pts, { segments: E.nseg, arrows: E.every });
+  var cum = cumArr(pts), total = cum[pts.length-1];
+  var secs = null;
+  if(pts[0].time && pts[pts.length-1].time){
+    var a = Date.parse(pts[0].time), b = Date.parse(pts[pts.length-1].time);
+    if(isFinite(a) && isFinite(b) && b > a) secs = (b-a)/1000;
+  }
+  var marks = E.every > 0 ? markerIndices(cum, E.every).length : 0;
+  $("expstats").innerHTML = [
+    ["Recorrido", fmtKm(total), ""],
+    ["Tramos", String(E.nseg > 1 ? E.nseg : 1), ""],
+    ["Marcas", String(marks), ""],
+    secs ? ["Duración", fmtDur(secs), ""] : ["Puntos", pts.length.toLocaleString("es-ES"), ""]
+  ].map(function(r){
+    return '<div class="stat"><dt>'+r[0]+'</dt><dd>'+r[1]+(r[2]?'<small>'+r[2]+'</small>':'')+'</dd></div>';
+  }).join("");
+}
+$("srcs").addEventListener("click", function(e){
+  var b = e.target.closest(".chip");
+  if(!b || b.disabled) return;
+  E.src = b.dataset.src;
+  renderExport();
+});
+$("arrowevery").addEventListener("change", function(e){ E.every = parseInt(e.target.value,10) || 0; renderExport(); });
+$("nseg").addEventListener("change", function(e){ E.nseg = parseInt(e.target.value,10) || 0; renderExport(); });
+
+document.addEventListener("click", function(e){
+  var b = e.target.closest("[data-exp2]");
+  if(!b) return;
+  var pts = srcPts(), name = srcName(), base = slug(name), what = b.dataset.exp2;
+  if(pts.length < 2){ toast("No hay recorrido que exportar. Carga un GPX o graba uno."); return; }
+  if(what === "kml")      deliver(base, "kml", buildKML(name, pts, E.nseg, E.every));
+  else if(what === "gpx") deliver(base, "gpx", buildGPX(name, pts, "trk"));
+  else if(what === "gpxs"){
+    if(E.src !== "track" || !S.anchors.length){ toast("La versión simplificada sale de la traza cargada en «Enlaces de Maps»."); return; }
+    deliver(base + "-simplificada", "gpx", buildGPX(name + " simplificada", S.anchors.map(function(k){ return S.pts[k]; }), "rte"));
+  }
+  else if(what === "geojson") deliver(base, "json", buildGeoJSON(name, pts, E.nseg, E.every));
+  else if(what === "csv")     deliver(base, "csv", buildCSV(pts));
+});
+
+/* ============ tabs ============ */
+function showTab(which){
+  ["exp","conv","make","help"].forEach(function(k){
+    var sel = k === which;
+    $("tab-"+k).setAttribute("aria-selected", sel ? "true" : "false");
+    $("p-"+k).hidden = !sel;
+  });
+  if(which === "make") renderPts();
+  if(which === "exp") renderExport();
+}
+["exp","conv","make","help"].forEach(function(k){
+  $("tab-"+k).addEventListener("click", function(){ showTab(k); });
+});
+
+/* ============ boot ============ */
+restore();
+loadTracks(sampleGPX(), "ejemplo-valira.gpx", true);
+recRestore();
+try{
+  var sp = JSON.parse(localStorage.getItem("roadbook-pts") || "[]");
+  if(Array.isArray(sp)) M.pts = sp.filter(function(p){ return p && isFinite(p.lat) && isFinite(p.lon); });
+}catch(e){}
+renderRec();
+renderPts();
+showTab("exp");
+})();
+</script>
+
+</html>
