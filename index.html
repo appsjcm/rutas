@@ -808,8 +808,8 @@ function parseGPX(text){
       var p = toPts(all(segment, "trkpt"));
       if(p.length > 1) parsedSegments.push(p);
     });
-    if(parsedSegments.length > 1) tracks.push({ name: trackName + " · recorrido completo", pts:[].concat.apply([],parsedSegments) });
-    parsedSegments.forEach(function(p,si){ tracks.push({ name: trackName + (parsedSegments.length > 1 ? " · segmento " + (si+1) : ""), pts:p }); });
+    if(parsedSegments.length > 1) tracks.push({ name: trackName + " · recorrido completo", pts:[].concat.apply([],parsedSegments), parts:parsedSegments });
+    parsedSegments.forEach(function(p,si){ tracks.push({ name: trackName + (parsedSegments.length > 1 ? " · segmento " + (si+1) : ""), pts:p, parts:[p] }); });
   }
   if(!tracks.length){
     var rtes = all(doc,"rte");
@@ -1283,9 +1283,10 @@ function loadTracks(tracks, name, isSample){
   applyTrack();
 }
 function applyTrack(){
-  var pts = S.tracks[S.ti].pts.slice();
-  if(S.reversed) pts.reverse();
-  S.pts = pts;
+  var selected = S.tracks[S.ti], parts = (selected.parts || [selected.pts]).map(function(part){ return part.slice(); });
+  if(S.reversed) parts = parts.reverse().map(function(part){ return part.reverse(); });
+  S.parts = parts;
+  S.pts = [].concat.apply([], parts);
   project();
   S.diag = diagnose();
   renderDiag();
@@ -1714,7 +1715,7 @@ function showTab(which){
   $("tab-"+k).addEventListener("click", function(){ showTab(k); });
 });
 
-window.Roadbook = { getRoute:function(){ return { pts:S.pts, name:S.fileName, sample:S.isSample, tracks:S.tracks, selected:S.ti }; }, readFile:readFile, restoreRoute:function(tracks,name){ loadTracks(tracks,name,false); }, selectTrack:function(i){ S.ti=i; S.reversed=false; applyTrack(); } };
+window.Roadbook = { getRoute:function(){ return { pts:S.pts, parts:S.parts || [S.pts], name:S.fileName, sample:S.isSample, tracks:S.tracks, selected:S.ti }; }, readFile:readFile, restoreRoute:function(tracks,name){ loadTracks(tracks,name,false); }, selectTrack:function(i){ S.ti=i; S.reversed=false; applyTrack(); } };
 /* ============ boot ============ */
 restore();
 loadTracks(sampleGPX(), "ejemplo-ronda.gpx", true);
@@ -1772,3 +1773,6 @@ showTab("nav");
 
 <link rel="stylesheet" href="street-match.css">
 <script src="street-match.js"></script>
+
+<link rel="stylesheet" href="segments.css">
+<script src="segments.js"></script>
