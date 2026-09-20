@@ -27,6 +27,13 @@ test('el contador de paradas avanza con el recorrido',()=>{const s=[{d:100,start
  assert.equal(N.stopProgress(s,0).next.d,100);
  assert.equal(N.stopProgress(s,0).gap,100);
  assert.equal(N.stopProgress(s,1000).next,null);});
+test('el tiempo restante sale de las horas del propio recorrido',()=>{const stamp=k=>new Date(Date.UTC(2024,0,1,0,0,k)).toISOString();
+ const pts=[{lat:41,lon:2,time:stamp(0)},{lat:41.002,lon:2,time:stamp(600)},{lat:41.004,lon:2,time:stamp(1800)}];
+ const r=N.prepare(pts);
+ assert.equal(N.remainingSeconds(r,0),1800);
+ assert.equal(N.remainingSeconds(r,r.total),0);
+ assert(N.remainingSeconds(r,r.total/2)<1800);
+ assert.equal(N.remainingSeconds(N.prepare([{lat:41,lon:2},{lat:41.002,lon:2}]),0),null);});
 test('huella distingue ruta invertida para no recuperar otra pasada',()=>{const pts=[{lat:41,lon:2},{lat:41.001,lon:2}];assert.notEqual(N.fingerprint(N.prepare(pts)),N.fingerprint(N.prepare(pts.slice().reverse())));});
 test('buscar pasada ofrece distintos puntos del recorrido repetido',()=>{const r=N.prepare([{lat:41,lon:2},{lat:41.003,lon:2},{lat:41,lon:2}]);const c=N.nearbyPasses(r,{lat:41.001,lon:2});assert.equal(c.length,2);assert(c[1].d-c[0].d>100);});
 test('rumbo diferencia ida y vuelta coincidentes',()=>{const r=N.prepare([{lat:41,lon:2},{lat:41.001,lon:2},{lat:41,lon:2}]),p={lat:41.0008,lon:2};const north=N.match(r,p,100,150,111,0),south=N.match(r,p,100,150,111,180);assert(north.d<r.cum[1]);assert(south.d>r.cum[1]);});

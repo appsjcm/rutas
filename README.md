@@ -43,7 +43,11 @@ Si el servidor público falla, Cargar datos de calles permite importar un JSON d
 
 ## Vista de conducción
 
-Iniciar navegación abre automáticamente el mapa a pantalla completa, con el próximo giro, posición orientada por el GPS, velocidad, distancia restante y progreso. La cámara sigue el GPS y ajusta el zoom según la velocidad; el mapa permanece orientado al norte. Arrastrar el mapa suspende el centrado hasta pulsar Volver a seguir. La vista incluye controles de voz, repetir indicación y Finalizar. Los avisos de sentido contrario permanecen visibles. Al detenerse, llegar al final o denegarse el GPS, se vuelve a la vista normal.
+Iniciar navegación abre el mapa a pantalla completa con una franja superior negra: flecha del giro, distancia en grande y nombre de la calle de destino cuando OpenStreetMap lo ha podido identificar. Abajo, una hoja con el tiempo que queda, la hora de llegada y la distancia, la barra de avance y la siguiente parada de la ronda. El velocímetro es el círculo de la esquina inferior izquierda.
+
+El tiempo restante no se estima por velocidad sino con las horas del propio GPX: el recorrido grabado ya sabe cuánto se tarda desde cada punto hasta el final, incluidas las paradas. Si el GPX no trae horas se recurre a la velocidad del GPS.
+
+El botón N orienta el mapa a la marcha en vez de al norte. Al girar teselas de imagen giran también sus rótulos, así que los nombres de calle salen inclinados: por eso es un interruptor y no el comportamiento fijo. La cámara sigue el GPS y ajusta el zoom según la velocidad. Arrastrar el mapa suspende el centrado hasta pulsar Volver a seguir. La vista incluye controles de voz, repetir indicación y Finalizar. Los avisos de sentido contrario permanecen visibles y se apoderan de la franja superior. Al detenerse, llegar al final o denegarse el GPS, se vuelve a la vista normal.
 
 ## Continuidad del recorrido
 
