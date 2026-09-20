@@ -4,10 +4,11 @@ const C=window.RutasNav,S=window.RutasStreetCore,stage=document.getElementById('
 const bar=document.createElement('section');bar.id='street-match';bar.hidden=true;bar.innerHTML='<span class="street-match-dot" aria-hidden="true"></span><div><strong>Calles del recorrido</strong><p id="street-match-text" role="status" aria-live="polite"></p><small>Se consultan los puntos del GPX en servicios de OpenStreetMap; el GPX original no se modifica.</small></div><button type="button" class="btn sm" id="street-match-retry" hidden>Reintentar</button>';
 stage.after(bar);
 const text=document.getElementById('street-match-text'),retry=document.getElementById('street-match-retry');
-let controller=null,routeRef=null,layer=null,path=[],run=0,cortesVisibles=0;
+let controller=null,routeRef=null,layer=null,path=[],run=0,cortesVisibles=0,matchState='idle',navigable=false;
 function mapKey(matched=false){document.querySelector('.nav-map-key').textContent=matched?'Dorado: calles · gris: GPX · verde: hecho · azul: siguiente':'Gris: recorrido · verde: completado · azul: siguiente tramo';}
-function clear(){if(controller)controller.abort();controller=null;run++;const state=RutasMap.get();if(layer&&state.map)state.map.removeLayer(layer);layer=null;path=[];cortesVisibles=0;mapKey();window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:[]}}));}
-function status(kind,message,canRetry=false){bar.hidden=false;bar.dataset.state=kind;text.textContent=message;retry.hidden=!canRetry;}
+function waiting(value){const current=RutasMap.get(),sample=Roadbook.getRoute().sample;for(const id of ['nav-start','nav-play']){const button=document.getElementById(id);if(!button)continue;button.disabled=value||(id==='nav-start'&&sample)||current.active;button.toggleAttribute('aria-busy',value);}const button=document.getElementById('map-3d');if(button){button.disabled=value;button.toggleAttribute('aria-busy',value);button.title=value?'Preparando el recorrido por calles…':'Calles y edificios en perspectiva · necesita conexión';}}
+function clear(){if(controller)controller.abort();controller=null;run++;const state=RutasMap.get();if(layer&&state.map)state.map.removeLayer(layer);layer=null;path=[];cortesVisibles=0;navigable=false;matchState='idle';waiting(false);mapKey();window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:[]}}));window.dispatchEvent(new CustomEvent('rutas:street-state',{detail:{state:matchState,navigable}}));}
+function status(kind,message,canRetry=false){matchState=kind;bar.hidden=false;bar.dataset.state=kind;text.textContent=message;retry.hidden=!canRetry;waiting(kind==='loading');window.dispatchEvent(new CustomEvent('rutas:street-state',{detail:{state:kind,navigable}}));}
 
 // Emparejar la traza solo lo hace Valhalla: el OSRM publico limita /match a 10 coordenadas,
 // asi que servir de reserva ahi costaria unas 200 peticiones por ruta. Para enlazar cortes,
@@ -100,7 +101,7 @@ async function match(force=false){
   layer=L.featureGroup().addTo(state.map);
   for(const pieza of piezas)L.polyline(pieza.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(layer);
   layer.bringToBack();
-  const used=fiable?RutasMap.useStreetPath(path):false;mapKey(true);
+  const used=fiable?RutasMap.useStreetPath(path):false;navigable=used;mapKey(true);
   const reserva=puentesDe.has(BRIDGES[1].name);
   status(fiable?'ready':'warn',
    (continuo?'Trazado vial continuo · ':'Trazado vial con interrupciones · ')+pct+' % de los puntos quedan cerca de una calle reconocida.'
@@ -116,6 +117,6 @@ async function match(force=false){
  finally{if(own===run)controller=null;}
 }
 retry.onclick=()=>match(true);window.addEventListener('rutas:check-route',()=>match());window.addEventListener('pagehide',clear);
-window.RutasStreetMatch={get:()=>({pts:path.slice(),active:!!layer,gaps:cortesVisibles})};
+window.RutasStreetMatch={get:()=>({pts:path.slice(),active:!!layer,gaps:cortesVisibles,state:matchState,navigable})};
 match();
 })();
