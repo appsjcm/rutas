@@ -1,0 +1,40 @@
+/* Optional 3D renderer: all navigation decisions remain in navigation.js. */
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id),C=window.RutasNav,stage=$('nav-stage');
+const container=document.createElement('div');container.id='nav-map3d';container.setAttribute('aria-label','Mapa 3D de calles y edificios');container.hidden=true;stage.append(container);
+const controls=document.createElement('div');controls.className='map-dimension';controls.innerHTML='<button type="button" id="map-2d" aria-pressed="true">2D</button><button type="button" id="map-3d" aria-pressed="false">3D</button>';stage.append(controls);$('map-3d').title='Calles y edificios en perspectiva · necesita conexión';$('map-2d').title='Mapa de calles en plano';
+const info=document.createElement('p');info.className='hint';info.textContent='Vista 3D: calles con nombres y edificios donde hay datos. Requiere conexión; no son fotografías de Street View.';stage.after(info);
+const notice=document.createElement('p');notice.id='map3d-notice';notice.role='status';notice.hidden=true;stage.append(notice);
+let map=null,ready=false,wanted=false,timer=null,library=null,lastRoute=null,marker=null,signs=[],endpoints=[],signKey='',latest=0;
+const state=()=>window.RutasMap.get();
+const coord=p=>[p.lon??p.lng,p.lat];
+const line=pts=>({type:'Feature',properties:{},geometry:{type:'LineString',coordinates:pts.map(coord)}});
+function status(text){notice.textContent=text;notice.hidden=!text;}
+function selectMode(active){stage.classList.toggle('view-3d',active);container.hidden=!active;$('map-2d').setAttribute('aria-pressed',String(!active));$('map-3d').setAttribute('aria-pressed',String(active));}
+function fallback(text){wanted=false;clearTimeout(timer);selectMode(false);status(text);state().map.invalidateSize();if(map){map.remove();map=null;}ready=false;lastRoute=null;marker=null;signs=[];endpoints=[];signKey='';}
+function loadLibrary(){if(window.maplibregl)return Promise.resolve();if(library)return library;library=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='vendor/maplibre-gl.js';script.onload=resolve;script.onerror=()=>{library=null;script.remove();reject(Error('No se pudo cargar el motor 3D.'));};document.head.append(script);});return library;}
+function fit(){const s=state();if(!map||!ready||!s.route)return;const bounds=new maplibregl.LngLatBounds();s.route.pts.forEach(p=>bounds.extend(coord(p)));map.fitBounds(bounds,{padding:{top:125,bottom:90,left:45,right:45},pitch:55,bearing:0,maxZoom:17.5,duration:0});}
+function camera(force=false){if(!map||!ready||!wanted)return;const s=state();if(!s.route||(!s.follow&&!force))return;const p=s.location||C.at(s.route,s.progress),q=C.at(s.route,Math.min(s.route.total,s.progress+25));const bearing=s.active?(s.headingUp?s.bearing:0):C.heading(p,q);map.easeTo({center:coord(p),zoom:s.active?(s.speed>20?16.5:18):17.5,pitch:55,bearing,offset:[0,stage.classList.contains('driving')?65:35],duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:450});}
+function warnings(){if(!ready)return;const issues=window.RutasChecks?.getIssues()||[],key=JSON.stringify(issues);if(key===signKey)return;signKey=key;signs.forEach(m=>m.remove());signs=[];for(const i of issues){const el=document.createElement('button');el.type='button';el.className='map3d-warning'+(i.muted?' reviewed':'');el.textContent=i.hard?'⛔':'⚠';el.setAttribute('aria-label',i.description+' · '+i.name+(i.muted?' · revisado':''));const text=document.createElement('div');text.textContent=i.description+' · '+i.name+(i.muted?' · revisado':' · Comprueba la señalización.');const popup=new maplibregl.Popup({offset:20}).setDOMContent(text);signs.push(new maplibregl.Marker({element:el}).setLngLat(coord(i.p)).setPopup(popup).addTo(map));}}
+function render(){if(!ready||!wanted)return;const s=state();if(!s.route)return;if(lastRoute!==s.route){lastRoute=s.route;map.getSource('rutas-line').setData(line(s.route.pts));endpoints.forEach(m=>m.remove());endpoints=[];for(const [p,label] of [[s.route.pts[0],'A'],[s.route.pts.at(-1),'B']]){const el=document.createElement('span');el.className='map3d-endpoint';el.textContent=label;endpoints.push(new maplibregl.Marker({element:el}).setLngLat(coord(p)).addTo(map));}fit();}
+map.getSource('rutas-done').setData(line(C.section(s.route,0,s.progress)));map.getSource('rutas-next').setData(line(C.section(s.route,s.progress,Math.min(s.route.total,s.progress+200))));const p=s.location||C.at(s.route,s.progress);marker.setLngLat(coord(p));marker.setRotation(s.active?s.bearing:C.heading(p,C.at(s.route,Math.min(s.route.total,s.progress+20))));warnings();}
+function schedule(){if(!wanted||!ready||latest)return;latest=requestAnimationFrame(()=>{latest=0;render();camera();});}
+async function enable(){wanted=true;status('Cargando calles y edificios 3D…');$('map-3d').setAttribute('aria-busy','true');clearTimeout(timer);timer=setTimeout(()=>{if(wanted&&!ready)fallback('No se pudo cargar el mapa 3D. Continúa en 2D o vuelve a intentarlo.');$('map-3d').removeAttribute('aria-busy');},20000);
+try{await loadLibrary();if(!wanted)return;if(map&&ready){clearTimeout(timer);selectMode(true);map.resize();render();camera(true);status('');return;}if(map)return;container.hidden=false;const s=state(),p=C.at(s.route,s.progress);
+map=new maplibregl.Map({container,style:'https://tiles.openfreemap.org/styles/liberty',center:coord(p),zoom:17,pitch:55,maxPitch:65,attributionControl:true});map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-left');
+map.on('load',()=>{if(!map)return;ready=true;clearTimeout(timer);$('map-3d').removeAttribute('aria-busy');for(const [id,color,width] of [['line','#61788e',5],['done','#188563',6],['next','#087bed',7]]){map.addSource('rutas-'+id,{type:'geojson',data:line(state().route.pts)});map.addLayer({id:'rutas-'+id,source:'rutas-'+id,type:'line',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':color,'line-width':width}});}
+const el=document.createElement('div');el.className='map3d-position';el.textContent='▲';marker=new maplibregl.Marker({element:el,rotationAlignment:'map'}).setLngLat(coord(p)).addTo(map);selectMode(wanted);if(wanted){map.resize();render();camera(true);status('');}});
+map.on('dragstart',()=>window.RutasMap.setFollow(false));map.on('error',()=>{if(ready&&wanted)status('No se han cargado algunas calles 3D. Comprueba la conexión o vuelve a 2D.');});map.getCanvas().addEventListener('webglcontextlost',()=>fallback('El mapa 3D se ha detenido. Puedes continuar en 2D.'));
+}catch(e){fallback('Este dispositivo no ha podido iniciar el mapa 3D. Puedes continuar en 2D.');}finally{$('map-3d').removeAttribute('aria-busy');}}
+$('map-3d').onclick=()=>{if(!wanted)enable();};$('map-2d').onclick=()=>{wanted=false;clearTimeout(timer);selectMode(false);status('');state().map.invalidateSize();};
+window.addEventListener('rutas:progress',schedule);window.addEventListener('rutas:gps',schedule);window.addEventListener('rutas:check-route',()=>{lastRoute=null;schedule();});window.addEventListener('rutas:visible',()=>{if(map&&wanted){map.resize();render();}});
+window.addEventListener('rutas:preview-pan',()=>camera(true));
+$('nav-start').addEventListener('click',()=>{if(wanted&&!state().headingUp)$('drive-heading').click();schedule();});
+$('nav-fit').addEventListener('click',()=>{if(wanted)fit();});for(const id of ['nav-center','drive-center','drive-heading'])$(id).addEventListener('click',()=>camera(true));
+new ResizeObserver(()=>{if(map&&wanted)map.resize();}).observe(stage);
+new MutationObserver(()=>{if(map&&wanted){map.resize();schedule();}}).observe(stage,{attributes:true,attributeFilter:['class']});
+new MutationObserver(()=>{if(wanted)warnings();}).observe($('road-issues'),{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+// Read-only renderer access supports diagnostics without storing or sending the GPX.
+window.Rutas3D={get:()=>({map,ready,active:wanted&&ready})};
+})();
