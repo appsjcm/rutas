@@ -1036,7 +1036,7 @@ function renderDlInfo(){
 /* ============================================================
    TAB 1 — CONVERTIR
    ============================================================ */
-var S = { fileName:"", isSample:true, tracks:[], ti:0, pts:[], reversed:false,
+var S = { fileName:"", isSample:true, routeSource:"sample", tracks:[], ti:0, pts:[], reversed:false,
           cum:null, legs:3, mode:"bal", nav:true, anchors:[], X:null, Y:null, diag:null };
 
 var MODE_HINT = {
@@ -1269,9 +1269,9 @@ function recompute(){
   $("modehint").textContent = MODE_HINT[S.mode];
   save();
 }
-function loadTracks(tracks, name, isSample){
+function loadTracks(tracks, name, isSample, source){
   S.tracks = tracks; S.ti = 0; S.reversed = false;
-  S.fileName = name; S.isSample = !!isSample;
+  S.fileName = name; S.isSample = !!isSample; S.routeSource = source || (isSample ? "sample" : "file");
   $("fname").textContent = name;
   $("ftag").hidden = !isSample;
   $("rev").textContent = "Invertir sentido";
@@ -1365,7 +1365,7 @@ function readFile(f){
   r.onload = function(){
     try{
       var tracks = parseGPX(String(r.result));
-      loadTracks(tracks, f.name, false);
+      loadTracks(tracks, f.name, false, "file");
       toast("Cargado: " + tracks[0].pts.length.toLocaleString("es-ES") + " puntos");
     }catch(err){ toast(err.message); }
   };
@@ -1506,7 +1506,7 @@ $("recclear").addEventListener("click", function(){
 });
 $("rec2conv").addEventListener("click", function(){
   if(R.pts.length < 2) return;
-  loadTracks([{ name:"Grabación GPS", pts:R.pts.slice() }], "grabacion.gpx", false);
+  loadTracks([{ name:"Grabación GPS", pts:R.pts.slice() }], "grabacion.gpx", false, "created");
   showTab("conv"); toast("Grabación cargada en Convertir.");
 });
 
@@ -1598,7 +1598,7 @@ $("plist").addEventListener("click", function(e){
 });
 $("pt2conv").addEventListener("click", function(){
   if(M.pts.length < 2) return;
-  loadTracks([{ name:"Ruta por puntos", pts:M.pts.slice() }], "ruta-puntos.gpx", false);
+  loadTracks([{ name:"Ruta por puntos", pts:M.pts.slice() }], "ruta-puntos.gpx", false, "created");
   showTab("conv"); toast("Ruta cargada en Convertir.");
 });
 
@@ -1718,10 +1718,10 @@ function showTab(which){
   $("tab-"+k).addEventListener("click", function(){ showTab(k); });
 });
 
-window.Roadbook = { getRoute:function(){ return { pts:S.pts, parts:S.parts || [S.pts], name:S.fileName, sample:S.isSample, tracks:S.tracks, selected:S.ti }; }, readFile:readFile, restoreRoute:function(tracks,name){ loadTracks(tracks,name,false); }, selectTrack:function(i){ S.ti=i; S.reversed=false; applyTrack(); } };
+window.Roadbook = { getRoute:function(){ return { pts:S.pts, parts:S.parts || [S.pts], name:S.fileName, sample:S.isSample, source:S.routeSource, tracks:S.tracks, selected:S.ti }; }, readFile:readFile, restoreRoute:function(tracks,name){ loadTracks(tracks,name,false,"saved"); }, selectTrack:function(i){ S.ti=i; S.reversed=false; applyTrack(); } };
 /* ============ boot ============ */
 restore();
-loadTracks(sampleGPX(), "ejemplo-ronda.gpx", true);
+loadTracks(sampleGPX(), "ejemplo-ronda.gpx", true, "sample");
 recRestore();
 try{
   var sp = JSON.parse(localStorage.getItem("roadbook-pts") || "[]");

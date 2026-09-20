@@ -1,10 +1,14 @@
 (()=>{
 'use strict';
 const C=window.RutasNav,S=window.RutasStreetCore,stage=document.getElementById('nav-stage');
-const bar=document.createElement('section');bar.id='street-match';bar.hidden=true;bar.innerHTML='<span class="street-match-dot" aria-hidden="true"></span><div><strong>Calles del recorrido</strong><p id="street-match-text" role="status" aria-live="polite"></p><small>Se consultan los puntos del GPX en servicios de OpenStreetMap; el GPX original no se modifica.</small></div><button type="button" class="btn sm" id="street-match-retry" hidden>Reintentar</button>';
+const bar=document.createElement('section');bar.id='street-match';bar.hidden=true;bar.innerHTML='<span class="street-match-dot" aria-hidden="true"></span><div><strong>Calles del recorrido</strong><p id="street-match-text" role="status" aria-live="polite"></p><small>Se reconocen al cargar un GPX nuevo y se guardan solo en este dispositivo.</small></div><button type="button" class="btn sm" id="street-match-retry" hidden>Reconocer ahora</button>';
 stage.after(bar);
 const text=document.getElementById('street-match-text'),retry=document.getElementById('street-match-retry');
 let controller=null,routeRef=null,layer=null,path=[],run=0,cortesVisibles=0,matchState='idle',navigable=false;
+const CACHE_PREFIX='rutas-street-path-v1:';
+function cacheKey(data){return CACHE_PREFIX+C.fingerprint(C.prepare(data.pts));}
+function loadCache(data){try{const value=JSON.parse(localStorage.getItem(cacheKey(data)));if(!value||!Array.isArray(value.path)||value.path.length<2||!value.path.every(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180))return null;return value;}catch{return null;}}
+function saveCache(data,value){try{localStorage.setItem(cacheKey(data),JSON.stringify({...value,saved:Date.now()}));const rows=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k?.startsWith(CACHE_PREFIX)){let saved=0;try{saved=JSON.parse(localStorage.getItem(k)).saved||0;}catch{}rows.push({k,saved});}}rows.sort((a,b)=>b.saved-a.saved);rows.slice(3).forEach(r=>localStorage.removeItem(r.k));}catch{}}
 function mapKey(matched=false){document.querySelector('.nav-map-key').textContent=matched?'Dorado: calles · gris: GPX · verde: hecho · azul: siguiente':'Gris: recorrido · verde: completado · azul: siguiente tramo';}
 function waiting(value){const current=RutasMap.get(),sample=Roadbook.getRoute().sample;for(const id of ['nav-start','nav-play']){const button=document.getElementById(id);if(!button)continue;button.disabled=value||(id==='nav-start'&&sample)||current.active;button.toggleAttribute('aria-busy',value);}const button=document.getElementById('map-3d');if(button){button.disabled=value;button.toggleAttribute('aria-busy',value);button.title=value?'Preparando el recorrido por calles…':'Calles y edificios en perspectiva · necesita conexión';}}
 function clear(){if(controller)controller.abort();controller=null;run++;const state=RutasMap.get();if(layer&&state.map)state.map.removeLayer(layer);layer=null;path=[];cortesVisibles=0;navigable=false;matchState='idle';waiting(false);mapKey();window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:[]}}));window.dispatchEvent(new CustomEvent('rutas:street-state',{detail:{state:matchState,navigable}}));}
@@ -73,6 +77,8 @@ async function match(force=false){
  if(!state.route||data.sample||state.mode==='access'){clear();bar.hidden=true;routeRef=state.route?.pts||null;return;}
  if(!force&&routeRef===data.pts)return;clear();routeRef=data.pts;const own=++run,input=S.input(data.pts,null);
  if(input.length<2){status('error','No hay puntos suficientes para reconocer las calles.');return;}
+ if(!force){const saved=loadCache(data);if(saved){const medida=S.usable(S.length(saved.path,C.distance),S.length(data.pts,C.distance));if(medida.ok){path=saved.path;layer=L.featureGroup().addTo(state.map);L.polyline(path.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(layer);layer.bringToBack();navigable=RutasMap.useStreetPath(path);mapKey(true);status('ready','Calles recuperadas del dispositivo · '+(saved.coverage||'—')+' % de coincidencia. No se ha repetido el reconocimiento.');window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:saved.coverage,navigation:navigable,bridges:saved.bridges||0,gaps:0,pieces:1,lengthPct:medida.pct,source:'dispositivo',cached:true}}));return;}}
+  if(data.source==='saved'){status('warn','Este recorrido guardado aún no tiene calles reconocidas. Carga el GPX una vez o pulsa Reconocer ahora.',true);return;}}
  const chunks=S.chunks(input,60);status('loading','Buscando las calles y carreteras que pasan por los puntos del GPX…');controller=new AbortController();
  try{
   const piezasVia=[];
@@ -112,6 +118,7 @@ async function match(force=false){
    +(fiable?' Simulación y navegación preparadas sobre estas calles.':' La navegación sigue el GPX original.'),
    !fiable);
   cortesVisibles=breaks.length;
+  if(fiable)saveCache(data,{path,coverage:pct,bridges:enlazados,gaps:0,lengthPct:medida.pct,navigable:true});
   window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:pct,navigation:used,bridges:enlazados,gaps:breaks.length,pieces:piezas.length,lengthPct:medida.pct,source:MATCHER.name,bridgedBy:[...puentesDe]}}));
  }catch(error){if(error.name!=='AbortError'&&own===run)status('error','No se pudo dibujar el trazado por calles. '+error.message+' El GPX original sigue disponible.',true);}
  finally{if(own===run)controller=null;}
