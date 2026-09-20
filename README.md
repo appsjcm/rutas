@@ -98,3 +98,11 @@ La cabecera de conducción distingue preparación, cercanía y maniobra inmediat
 El mapa 3D oculta inicialmente las capas de lugares y comercios; el botón Lugares permite recuperarlas y conserva la elección en el dispositivo. Los nombres de calles y las flechas de sentido siguen presentes. El recorrido lleva un contorno blanco y los edificios son más suaves. La posición de los controles se adapta a la altura real de la cabecera.
 
 Verificado con las 39 pruebas del motor, GPS simulado, dos giros próximos, voz, GPS impreciso, visibilidad de etiquetas, seguimiento 3D, restricciones y cambio de ruta.
+
+## Biblioteca privada de rutas
+
+Mis rutas permite guardar explícitamente varios recorridos en IndexedDB, buscar por nombre, renombrar, abrir y eliminar con opción de deshacer mientras permanece abierta la sesión. Los archivos no se envían a servidores. El navegador puede borrar su almacenamiento; hay que conservar los GPX originales como copia. Olvidar la última ruta y eliminar una copia de la biblioteca son acciones distintas.
+
+Se conservan todos los segmentos, el segmento seleccionado, los tiempos y el sentido actual de ese segmento. Una huella SHA-256 de los puntos completos evita duplicar exactamente la misma ruta. Volver a guardarla actualiza la copia y conserva el nombre elegido. La distancia mostrada corresponde al segmento guardado como seleccionado. Cambiar de ruta desde la biblioteca está bloqueado mientras el GPS de navegación está activo.
+
+Verificado en navegador: guardar, deduplicar, renombrar, buscar, abrir la geometría original, recargar y recuperar, eliminar y deshacer; también un archivo con varios segmentos, seleccionado e invertido, conservando sus marcas de tiempo.
