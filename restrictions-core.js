@@ -43,6 +43,16 @@ function analyze(pts,elements,profile){const route=C.prepare(pts),index=indexWay
  const solid=g=>ONEWAY.has(g.kind)?g.count>=3&&g.end-g.start>=16:g.count>=2&&g.end-g.start>=8;
  return {issues:groups.filter(solid).sort((a,b)=>a.start-b.start).map(g=>({...g,start:Math.max(0,g.start-4),end:Math.min(route.total,g.end+4)})),sampled,matched,ambiguous,total:route.total};
 }
+function roadContext(pts,elements){const route=C.prepare(pts),index=indexWays(elements,pts[0].lat),runs=[];
+ function at(d){const p=C.at(route,d),a=C.at(route,Math.max(0,d-8)),b=C.at(route,Math.min(route.total,d+8));if(C.distance(a,b)<3)return null;const h=C.heading(a,b),q=index.xy(p),byWay=new Map();
+  for(const s of index.near(q)){const t=Math.max(0,Math.min(1,((q.x-s.a.x)*s.dx+(q.y-s.a.y)*s.dy)/(s.len||1))),dist=Math.hypot(q.x-s.a.x-t*s.dx,q.y-s.a.y-t*s.dy);if(dist>16)continue;const delta=Math.abs(((h-s.heading+540)%360)-180),axis=Math.min(delta,180-delta);if(axis>35)continue;const score=dist+axis*.08,c={s,dist,delta,score};if(!byWay.has(s.way.id)||byWay.get(s.way.id).score>score)byWay.set(s.way.id,c);}
+  const list=[...byWay.values()].sort((x,y)=>x.score-y.score);if(!list.length)return null;const best=list[0],tags=best.s.way.tags||{},opposed=best.s.rule.direction===1?best.delta>140:best.s.rule.direction===-1?best.delta<40:false,uncertain=!!(list[1]&&list[1].score-best.score<5);
+  const flow=opposed?(uncertain?'ambiguous':'opposed'):best.s.rule.conditional?'conditional':best.s.rule.direction?'oneway':'twoway';
+  return {d,way:best.s.way.id,name:tags.name||tags.ref||'Vía sin nombre',ref:tags.ref||'',highway:tags.highway||'',flow,uncertain,maxspeed:tags.maxspeed||'',lanes:tags.lanes||'',surface:tags.surface||'',p};}
+ const step=12,distances=[0];for(let d=step;d<route.total;d+=step)distances.push(d);distances.push(route.total);
+ for(const d of distances){const hit=at(d);if(!hit)continue;const last=runs.at(-1);if(last&&last.way===hit.way&&last.flow===hit.flow&&d-last.end<=step*2){last.end=d;last.p=hit.p;}else runs.push({...hit,start:d,end:d});}
+ return runs.map(r=>({...r,start:Math.max(0,r.start-step/2),end:Math.min(route.total,r.end+step/2)}));
+}
 function enrichTurns(route,turns,elements){
  if(!turns.length)return [];
  const index=indexWays(elements,route.pts[0].lat);
@@ -58,5 +68,5 @@ function enrichTurns(route,turns,elements){
   return sorted.length&&(!sorted[1]||sorted[1].score-sorted[0].score>4)?sorted[0].way:null;}
  return turns.map(t=>{const before=roadAt(Math.max(0,t.d-30)),after=roadAt(Math.min(route.total,t.d+30));if(!before||!after)return {...t};const from=before.tags.name||before.tags.ref,to=after.tags.name||after.tags.ref;if(!from||!to)return {...t};const same=from===to,label=same&&Math.abs(t.angle)<120?(t.angle>0?'Curva a la derecha':'Curva a la izquierda'):t.label;return {...t,label,fromRoad:from,toRoad:to,roadContext:true};});
 }
-const api={rule,analyze,enrichTurns,vehicle,metresOf,tonnesOf,indexWays};if(typeof module!=='undefined')module.exports=api;else root.RutasRestrictions=api;
+const api={rule,analyze,roadContext,enrichTurns,vehicle,metresOf,tonnesOf,indexWays};if(typeof module!=='undefined')module.exports=api;else root.RutasRestrictions=api;
 })(typeof window!=='undefined'?window:globalThis);

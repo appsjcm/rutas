@@ -114,6 +114,11 @@ h1{letter-spacing:-.028em;font-weight:800}
  .route-overview h2{letter-spacing:-.03em}
  .panel{border-radius:var(--r-lg)}
 }
+
+/* La alerta vial vive debajo de la maniobra para no tapar el siguiente giro. */
+#nav-stage.driving #nav-road-alert{top:calc(var(--drive-banner-height,112px) + 78px);left:12px;right:58px;border-radius:14px;font-size:inherit}
+@media(min-width:760px) and (min-height:551px){#nav-stage.driving #nav-road-alert{left:50%;right:auto;width:540px;max-width:540px;transform:translateX(-50%)}}
+@media(max-height:550px){#nav-stage.driving #nav-road-alert{top:calc(var(--drive-banner-height,72px) + 52px);left:12px;right:auto;max-width:55%;transform:none}}
 @media(prefers-reduced-motion:reduce){.btn{transition:none}.btn:active{transform:none}}
 
 /* El selector de tema llevaba un ancho fijo de 91 px que ya no cabe con la flecha propia. */
