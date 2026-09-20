@@ -135,3 +135,29 @@ h1{letter-spacing:-.028em;font-weight:800}
 /* Un control con [hidden] pero con class="btn" seguia dibujandose, porque .btn fija
    display:inline-flex y gana al atributo. Pasaba con el selector de traza. */
 [hidden]{display:none!important}
+
+/* Mobile app shell: safe areas, compact departure controls and a calmer map. */
+html{background:var(--ground);-webkit-text-size-adjust:100%}body{overscroll-behavior-y:none}button,.btn,.tab,summary{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+@media(max-width:700px){
+ .wrap{padding-top:calc(14px + env(safe-area-inset-top));padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+ .nav-shell .panel-bd>.btnrow:has(#nav-file){grid-template-columns:1fr 1fr;gap:9px}
+ .nav-shell .panel-bd>.btnrow:has(#nav-file) label{grid-column:auto}
+ .nav-shell .panel-bd>.btnrow:has(#nav-file) #library-open{grid-column:auto}
+ .nav-shell .panel-bd>.btnrow:has(#nav-file) #nav-approach{grid-column:1/-1}
+ .nav-shell .panel-bd>.btnrow:has(#nav-file) .btn{min-width:0;white-space:normal;line-height:1.25}
+ .route-selector{display:grid;grid-template-columns:1fr;gap:5px;align-items:stretch}
+ .route-selector select{width:100%;max-width:none}
+ .gps-setup{padding:13px;gap:11px}
+ .gps-setup-copy>small{font-size:9px}.gps-setup h3{font-size:16px;margin-top:0}.gps-setup p{line-height:1.4}
+ #gps-setup .gps-setup-actions{display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center;gap:10px;margin-top:10px}
+ #gps-setup .gps-setup-actions .btn{width:auto;min-width:0}#gps-setup .gps-setup-actions span{width:auto;text-align:left;line-height:1.35}
+ #segment-order{gap:7px}#segment-order p{line-height:1.35}
+ #nav-repeat,#nav-focus{min-height:40px;padding:9px 12px;font-size:11px;border-radius:999px}
+ .map-dimension{right:9px;padding:3px}.map-dimension button{min-width:42px;min-height:40px}
+ .nav-map-key{max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+@media(max-width:360px){
+ .brandrow h1{font-size:23px}.theme-control select{font-size:12px;padding-left:11px}
+ #gps-setup .gps-setup-actions{grid-template-columns:1fr}#gps-setup .gps-setup-actions .btn{width:100%}#gps-setup .gps-setup-actions span{text-align:center}
+ .tabs{padding-left:3px;padding-right:3px}.tab{font-size:9px}
+}
