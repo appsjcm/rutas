@@ -26,3 +26,11 @@ Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap c
 `node --test tests/navigation.test.cjs`
 
 Publicación mediante GitHub Pages desde main.
+
+## Comprobación de sentidos
+
+En Navegar, Comprobar mi recorrido compara muestras de la traza con vías de OpenStreetMap, incluyendo oneway=yes, oneway=-1, rotondas y excepciones para vehículos a motor. Las restricciones variables y las vías cercanas ambiguas se señalan aparte. No es una validación legal ni sustituye la señalización. No revisa accesos, obras, prohibiciones de giro ni restricciones específicas de camiones.
+
+Se muestra la fecha de los datos, cobertura de coincidencia, señales sobre el mapa, enlaces a las fuentes y un informe CSV descargable. Un posible conflicto tiene prioridad sobre el aviso de giro. La consulta envía a Overpass solamente el rectángulo de la zona, sin puntos ni tiempos del GPX. Los datos se guardan durante 24 horas en el navegador para evitar consultas repetidas. Servicio: Overpass de Private.coffee (dominio histórico overpass.kumi.systems); datos © OpenStreetMap contributors, ODbL. Las rutas personales y sus informes no están incluidos en el repositorio.
+
+Si el servidor público falla, Cargar datos de calles permite importar un JSON de Overpass (out tags geom) y realizar la misma comprobación local, mostrando siempre la fecha de sus datos. El JSON también permanece en el dispositivo.

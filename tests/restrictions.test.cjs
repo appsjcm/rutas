@@ -1,0 +1,8 @@
+const test=require('node:test'),assert=require('node:assert/strict'),A=require('../restrictions-core');
+const line=[{lat:41,lon:2},{lat:41.002,lon:2}],way=(tags,geometry=line,id=1)=>({type:'way',id,tags:{highway:'residential',...tags},geometry});
+test('sentido permitido y contrario yes',()=>{assert.equal(A.analyze(line,[way({oneway:'yes'})]).issues.length,0);assert.equal(A.analyze(line.slice().reverse(),[way({oneway:'yes'})]).issues[0].kind,'opposed');});
+test('oneway inverso y excepción para motor',()=>{assert.equal(A.analyze(line,[way({oneway:'-1'})]).issues[0].kind,'opposed');assert.equal(A.analyze(line.slice().reverse(),[way({oneway:'-1'})]).issues.length,0);assert.equal(A.rule({oneway:'yes','oneway:motor_vehicle':'no'}).direction,0);});
+test('doble sentido y ausencia de etiqueta no generan infracción',()=>{for(const tags of [{oneway:'no'},{}])assert.equal(A.analyze(line.slice().reverse(),[way(tags)]).issues.length,0);});
+test('rotonda implícita y restricción horaria',()=>{assert.equal(A.rule({junction:'roundabout'}).direction,1);assert.equal(A.analyze(line,[way({'oneway:conditional':'yes @ (08:00-18:00)'})]).issues[0].kind,'conditional');});
+test('vía paralela cercana rebaja a coincidencia dudosa',()=>{const parallel=line.map(p=>({...p,lon:p.lon+.000025}));assert.equal(A.analyze(line.slice().reverse(),[way({oneway:'yes'}),way({oneway:'no'},parallel,2)]).issues[0].kind,'ambiguous');});
+test('una vía lejana no se asigna a la ruta',()=>{assert.equal(A.analyze(line.slice().reverse(),[way({oneway:'yes'},line.map(p=>({...p,lon:p.lon+.001})))]).issues.length,0);});
