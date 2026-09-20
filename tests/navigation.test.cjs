@@ -55,3 +55,37 @@ test('buscar pasada ofrece distintos puntos del recorrido repetido',()=>{const r
 test('rumbo diferencia ida y vuelta coincidentes',()=>{const r=N.prepare([{lat:41,lon:2},{lat:41.001,lon:2},{lat:41,lon:2}]),p={lat:41.0008,lon:2};const north=N.match(r,p,100,150,111,0),south=N.match(r,p,100,150,111,180);assert(north.d<r.cum[1]);assert(south.d>r.cum[1]);});
 test('la ronda invertida conserva paradas y duración disponible',()=>{const pts=[{lat:41,lon:2,time:'2026-01-01T10:00:00Z'},{lat:41,lon:2,time:'2026-01-01T10:04:00Z'},{lat:41.002,lon:2,time:'2026-01-01T10:08:00Z'}],a=N.prepare(pts),b=N.prepare(pts.slice().reverse());assert.equal(N.stops(a).length,1);assert.equal(N.stops(b).length,1);assert.equal(N.remainingSeconds(a,0),480);assert.equal(N.remainingSeconds(b,0),480);assert.equal(N.remainingSeconds(b,b.total),0);});
 test('un enlace con símbolos inválidos no se interpreta como una ruta',()=>{assert.throws(()=>N.unpackRoute(JSON.stringify({v:1,p:'!!??'})),/inválidos/);});
+test('solo la denegación de permiso termina la navegación',()=>{
+ assert.equal(N.gpsFatal(1),true);                 // PERMISSION_DENIED
+ assert.equal(N.gpsFatal(2),false);                // POSITION_UNAVAILABLE: tunel, valle
+ assert.equal(N.gpsFatal(3),false);                // TIMEOUT
+ assert.equal(N.gpsFatal(undefined),false);
+ assert.match(N.gpsPause(3),/tarda en responder/);
+ assert.match(N.gpsPause(2),/recorrido sigue activo/);
+});
+test('el trazado por calles hereda las horas del GPX',()=>{
+ const en=k=>new Date(Date.UTC(2026,0,1,0,0,k)).toISOString();
+ // el original para 600 s a mitad de camino: esa parada debe notarse en el traslado
+ const gpx=[{lat:41,lon:2,time:en(0)},{lat:41.001,lon:2,time:en(60)},{lat:41.001,lon:2,time:en(660)},{lat:41.002,lon:2,time:en(720)}];
+ const calles=[{lat:41,lon:2},{lat:41.0005,lon:2},{lat:41.001,lon:2},{lat:41.0015,lon:2},{lat:41.002,lon:2}];
+ const out=N.transferTimes(gpx,calles);
+ assert.equal(out.length,5);
+ assert.equal(out[0].time,en(0));
+ assert.equal(Date.parse(out[4].time),Date.parse(en(720)));
+ for(let i=1;i<out.length;i++)assert(Date.parse(out[i].time)>=Date.parse(out[i-1].time));
+ // a mitad de distancia el camion acaba de llegar a la parada: 60 s transcurridos,
+ // pero le quedan 660 porque la espera de 10 minutos sigue por delante
+ const r=N.prepare(out);
+ assert.equal(Date.parse(out[2].time)-Date.parse(en(0)),60000);
+ assert.equal(N.remainingSeconds(r,r.cum[2]),660);
+ // el resultado sirve para la hora de llegada
+ assert.equal(N.remainingSeconds(r,0),720);
+});
+test('sin horas o con datos raros devuelve el trazado intacto',()=>{
+ const calles=[{lat:41,lon:2},{lat:41.002,lon:2}];
+ assert.equal(N.transferTimes([{lat:41,lon:2},{lat:41.002,lon:2}],calles),calles);
+ assert.equal(N.transferTimes(null,calles),calles);
+ assert.equal(N.transferTimes([{lat:41,lon:2,time:'x'}],calles),calles);
+ assert.deepEqual(N.transferTimes([{lat:41,lon:2,time:'2026-01-01T00:00:00Z'},{lat:41.002,lon:2,time:'2026-01-01T00:00:00Z'}],calles),calles);
+});
+

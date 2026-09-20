@@ -56,7 +56,37 @@ function remainingSeconds(r,d){if(d>=r.total)return 0;const last=r.pts.length-1,
 const STOP_RADIUS=40,STOP_SECONDS=180;
 function stops(r,{radius=STOP_RADIUS,minSeconds=STOP_SECONDS}={}){if(Date.parse(r.pts[0]?.time)>Date.parse(r.pts.at(-1)?.time)){const reversed=prepare(r.pts.slice().reverse());return stops(reversed,{radius,minSeconds}).map(s=>({...s,index:r.pts.length-1-s.index,start:r.total-s.end,end:r.total-s.start,d:r.total-s.d})).reverse();}const out=[];let i=0;while(i<r.pts.length){let j=i;while(j+1<r.pts.length&&distance(r.pts[i],r.pts[j+1])<radius)j++;const a=Date.parse(r.pts[i]?.time),b=Date.parse(r.pts[j]?.time);if(j>i&&Number.isFinite(a)&&Number.isFinite(b)&&(b-a)/1000>=minSeconds){const k=(i+j)>>1;out.push({index:k,start:r.cum[i],end:r.cum[j],d:r.cum[k],seconds:(b-a)/1000,p:{lat:r.pts[k].lat,lon:r.pts[k].lon}});i=j+1;}else i++;}return out;}
 function stopProgress(stops,d){let done=0;while(done<stops.length&&stops[done].end<=d+15)done++;return {done,total:stops.length,next:stops[done]||null,gap:stops[done]?Math.max(0,stops[done].d-d):null};}
+// Solo la denegacion de permiso es definitiva. POSITION_UNAVAILABLE y TIMEOUT pasan a diario
+// en un valle, un tunel o un patio cubierto: pausan las indicaciones, no terminan la ronda.
+// El trazado por calles no trae horas, y sin ellas se pierden la hora de llegada y las
+// paradas. Se trasladan desde el GPX por fraccion de distancia: una parada no avanza
+// kilometros, asi que a la misma fraccion le corresponde el mismo tiempo transcurrido.
+function transferTimes(source,target){
+ if(!Array.isArray(source)||!Array.isArray(target)||target.length<2)return target;
+ const from=prepare(source),to=prepare(target);
+ if(!(from.total>0)||!(to.total>0))return target;
+ const t0=Date.parse(source[0]?.time),tN=Date.parse(source[source.length-1]?.time);
+ if(!Number.isFinite(t0)||!Number.isFinite(tN)||tN<=t0)return target;
+ let j=0;
+ return target.map((p,i)=>{
+  const want=(to.cum[i]/to.total)*from.total;
+  while(j<from.cum.length-1&&from.cum[j+1]<want)j++;
+  const a=Date.parse(source[j]?.time),b=Date.parse(source[j+1]?.time);
+  let ms=a;
+  if(Number.isFinite(a)&&Number.isFinite(b)){
+   const span=from.cum[j+1]-from.cum[j];
+   const f=span>0?Math.max(0,Math.min(1,(want-from.cum[j])/span)):0;
+   ms=a+(b-a)*f;
+  }
+  return Number.isFinite(ms)?{...p,time:new Date(ms).toISOString()}:p;
+ });
+}
+function gpsFatal(code){return code===1;}
+function gpsPause(code){
+ return code===3?'El GPS tarda en responder. Indicaciones pausadas hasta recuperar la posición.'
+                :'Sin cobertura GPS ahora mismo. Indicaciones pausadas; el recorrido sigue activo.';
+}
 function fingerprint(r){let hash=2166136261;for(const p of r.pts){const value=p.lat.toFixed(7)+','+p.lon.toFixed(7)+';';for(let i=0;i<value.length;i++)hash=Math.imul(hash^value.charCodeAt(i),16777619);}return r.pts.length+'-'+(hash>>>0).toString(16);}
 function nearbyPasses(r,p){const hits=[];for(let i=0;i<r.pts.length-1;i++){const lo=r.cum[i],hi=r.cum[i+1],m=match({pts:r.pts.slice(i,i+2),cum:[lo,hi],total:hi},p,lo,hi-lo,lo);if(m&&m.error<60)hits.push(m);}hits.sort((a,b)=>a.error-b.error);const chosen=[];for(const h of hits){if(chosen.every(c=>Math.abs(c.d-h.d)>80))chosen.push(h);if(chosen.length===5)break;}return chosen.sort((a,b)=>a.d-b.d);}
-const api={distance,prepare,at,heading,match,section,turns,guidance,fingerprint,nearbyPasses,speedAt,stops,stopProgress,remainingSeconds,simplify,packRoute,unpackRoute,TURN_MIN_SPEED,TURN_MIN_GAP,STOP_RADIUS,STOP_SECONDS};if(typeof module!=='undefined')module.exports=api;else root.RutasNav=api;
+const api={distance,prepare,at,heading,match,section,turns,guidance,fingerprint,nearbyPasses,speedAt,stops,stopProgress,remainingSeconds,gpsFatal,gpsPause,transferTimes,simplify,packRoute,unpackRoute,TURN_MIN_SPEED,TURN_MIN_GAP,STOP_RADIUS,STOP_SECONDS};if(typeof module!=='undefined')module.exports=api;else root.RutasNav=api;
 })(typeof window!=='undefined'?window:globalThis);
