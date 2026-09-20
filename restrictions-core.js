@@ -12,9 +12,8 @@ function vehicle(tags,profile){const out=[];profile=profile||{};
   if(limit==null||!Number.isFinite(mine)||mine<=0)continue;
   if(mine>limit)out.push({kind:L.kind,detail:L.label+' '+limit+' '+L.unit+'; tu vehículo '+mine+' '+L.unit});}
  const blocked=v=>v==='no'||v==='private';
- if(blocked(tags.hgv))out.push({kind:'access',detail:'Prohibido a camiones (hgv='+tags.hgv+')'});
- else if(blocked(tags.access))out.push({kind:'access',detail:'Acceso restringido (access='+tags.access+')'});
- else if(blocked(tags.motor_vehicle))out.push({kind:'access',detail:'Cerrado a vehículos a motor (motor_vehicle='+tags.motor_vehicle+')'});
+ const accessKey=['hgv','motor_vehicle','vehicle','access'].find(k=>tags[k]!=null);
+ if(accessKey&&blocked(tags[accessKey]))out.push({kind:'access',detail:'Acceso restringido ('+accessKey+'='+tags[accessKey]+')'});
  if(Object.keys(tags).some(k=>/^max(height|weight|width|length)\b/.test(k)&&k.includes('conditional')))out.push({kind:'limit-variable',detail:'Límite dimensional variable según condiciones'});
  return out;}
 function indexWays(elements,lat0,cell=60,pad=20){const kx=111320*Math.cos(lat0*Math.PI/180),ky=110540,grid=new Map();

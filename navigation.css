@@ -64,3 +64,5 @@
 #share-qr{background:#fff;padding:12px;border-radius:8px;width:max-content;max-width:100%}
 #share-qr svg{display:block;width:232px;height:232px;max-width:100%}
 #share-note{margin:0}
+
+#app-update{position:fixed;z-index:950;bottom:18px;left:50%;transform:translateX(-50%);background:var(--pine);color:var(--surface);box-shadow:0 2px 12px #0004;max-width:90vw}#app-update[hidden],body.map-focus #app-update{display:none}

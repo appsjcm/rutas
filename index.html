@@ -1736,7 +1736,11 @@ showTab("nav");
  function net(){if(badge)badge.hidden=navigator.onLine;}
  addEventListener('online',net);addEventListener('offline',net);net();
  if('serviceWorker' in navigator)addEventListener('load',function(){
-  navigator.serviceWorker.register('sw.js').catch(function(){});
+  let pending=null,reloading=false;
+  const update=document.createElement('button');update.id='app-update';update.className='btn';update.type='button';update.hidden=true;update.textContent='Nueva versión · actualizar';document.body.appendChild(update);
+  update.onclick=function(){if(!document.getElementById('nav-stop').disabled){update.textContent='Detén la navegación para actualizar';return;}if(pending){reloading=true;pending.postMessage('skip-waiting');}};
+  navigator.serviceWorker.addEventListener('controllerchange',function(){if(reloading)location.reload();});
+  navigator.serviceWorker.register('sw.js').then(function(reg){function ready(){if(reg.waiting&&navigator.serviceWorker.controller){pending=reg.waiting;update.hidden=false;}}ready();reg.addEventListener('updatefound',function(){const worker=reg.installing;if(worker)worker.addEventListener('statechange',ready);});}).catch(function(){});
  });
 })();
 </script>

@@ -58,3 +58,11 @@ El botón N orienta el mapa a la marcha en vez de al norte. Al girar teselas de 
 El seguimiento tiene en cuenta el rumbo cuando es fiable para distinguir ida y vuelta. El avance se guarda localmente con una huella de las coordenadas y su orden: una ruta invertida no recupera el avance de la original. Continuar desde… selecciona el punto guardado; no inicia el GPS sin pulsar Iniciar navegación. Buscar mi pasada ofrece hasta cinco posiciones cercanas dentro del recorrido para elegir explícitamente cuando se repiten calles.
 
 Ambas comprobaciones -sentidos y nombres de calle- comparten una misma rejilla espacial de las vias descargadas, de modo que cada muestra solo examina las vias de su celda en vez de todas. Al comprobar los datos de calles o importar el JSON de calles, las indicaciones incorporan nombres de vías si hay una coincidencia geométrica suficientemente clara antes y después de la maniobra. Las curvas dentro de la misma calle se distinguen de los giros; las indicaciones sin una correspondencia clara siguen marcadas como estimadas del GPX. No es un motor de rutas sobre la red viaria. Los puntos originales, sus pasadas y los avisos de sentido contrario se conservan: no se recalcula ni se desvía la ruta.
+
+## Revisión de navegación
+
+La cabecera pausa las indicaciones cuando el GPS no es fiable y muestra el tipo concreto de restricción que se aproxima. Al salir de la conducción, el mapa recupera el norte. Invertir una ruta conserva sus paradas y permite estimar la duración a partir del registro original.
+
+Los avisos revisados se guardan por tramo y tipo: silenciar un aviso de sentido no silencia uno de peso en la misma calle. Las marcas antiguas sin tipo deben revisarse de nuevo. Cambiar de ruta descarta los datos de calles asociados a la anterior. Las excepciones de acceso más específicas prevalecen sobre las generales.
+
+Cuando hay una versión preparada aparece «Nueva versión · actualizar». Solo se aplica al pulsar el botón con la navegación detenida. La limpieza de versiones anteriores conserva las cachés de otras aplicaciones del mismo dominio.
