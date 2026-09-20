@@ -2,7 +2,9 @@
 <html lang="es">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Roadbook GPX</title>
+<title>Rutas · Navegador GPX</title>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="navigation.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
 <style>
 :root{
@@ -191,19 +193,35 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
 
   <header class="masthead">
     <div class="brandrow">
-      <h1>Roadbook GPX</h1>
+      <h1>Rutas</h1>
       <p class="sub">Convertir · Crear · Navegar</p>
     </div>
-    <p class="deck">Un GPX es un recorrido; Google Maps es un calculador de rutas. No son lo mismo, y para rondas que repiten calles &mdash; recogida, reparto, inspecci&oacute;n &mdash; la respuesta no es convertir a Maps, sino <b>ense&ntilde;arle al conductor la l&iacute;nea exacta con su posici&oacute;n encima</b>. Aqu&iacute; exportas a los formatos que hacen eso, conviertes a enlaces de Maps cuando la ruta s&iacute; es de un punto a otro, y creas GPX desde cero grabando con el GPS. Todo ocurre en tu dispositivo.</p>
+    <p class="deck">Carga tu GPX, explora las calles y sigue el recorrido con tu posición GPS. Revisa cada punto con Street View o exporta la ruta para otras aplicaciones.</p>
   </header>
 
   <div class="tabs" role="tablist">
+<button class="tab" role="tab" id="tab-nav" aria-controls="p-nav" aria-selected="false" type="button">Navegar</button>
     <button class="tab" role="tab" id="tab-exp" aria-controls="p-exp" aria-selected="true" type="button">Para el conductor</button>
     <button class="tab" role="tab" id="tab-conv" aria-controls="p-conv" aria-selected="false" type="button">Enlaces de Maps</button>
     <button class="tab" role="tab" id="tab-make" aria-controls="p-make" aria-selected="false" type="button">Crear GPX</button>
     <button class="tab" role="tab" id="tab-help" aria-controls="p-help" aria-selected="false" type="button">Guía</button>
   </div>
 
+<section class="tabpanel" id="p-nav" role="tabpanel" aria-labelledby="tab-nav" hidden>
+<div class="panel nav-shell">
+<div class="panel-hd"><h2>Tu recorrido, calle a calle</h2><span id="nav-mode">Vista previa</span></div>
+<div class="panel-bd">
+<div class="btnrow"><label class="btn primary">Cargar GPX<input id="nav-file" type="file" accept=".gpx,application/gpx+xml" hidden></label><button class="btn" id="nav-fit">Ver ruta completa</button><button class="btn" id="nav-center">Seguir mi posición</button></div>
+<label for="nav-track">Traza o segmento</label><select id="nav-track"></select>
+<p class="hint" id="nav-name"></p>
+<div id="nav-map" aria-label="Mapa de calles y recorrido"></div>
+<p class="nav-message" id="nav-message" role="status" aria-live="polite">Carga tu GPX para comenzar.</p>
+<div class="nav-metrics"><div><small>Recorrido</small><strong id="nav-done">0 m</strong></div><div><small>Restante</small><strong id="nav-left">—</strong></div><div><small>Velocidad</small><strong id="nav-speed">—</strong></div><div><small>Precisión GPS</small><strong id="nav-accuracy">—</strong></div></div>
+<div class="btnrow"><button class="btn primary" id="nav-start">Iniciar GPS</button><button class="btn" id="nav-stop" disabled>Parar GPS</button><label class="switch"><input type="checkbox" id="nav-voice"><span>Avisos por voz</span></label></div>
+<div class="nav-preview"><label for="nav-progress">Explorar el recorrido · <span id="nav-preview-distance">0 m</span></label><input id="nav-progress" type="range" min="0" max="1000" value="0" step="1"><div class="btnrow"><button class="btn" id="nav-back">−50 m</button><button class="btn" id="nav-play">Reproducir</button><button class="btn" id="nav-next">+50 m</button><a class="btn" id="nav-street" target="_blank" rel="noopener noreferrer">Street View ↗</a></div></div>
+<p class="hint">Sitúa el control en la pasada por la que quieras empezar y pulsa Iniciar GPS. El seguimiento respeta el orden del GPX; si te desvías, te avisa sin inventar un nuevo camino.</p>
+<p class="hint">Street View abre las imágenes disponibles de Google del punto explorado en otra pestaña. El mapa necesita conexión. Para seguir tu posición, mantén esta página visible y permite la ubicación.</p>
+</div></div></section>
   <!-- ============ PARA EL CONDUCTOR ============ -->
   <section class="tabpanel" id="p-exp" role="tabpanel" aria-labelledby="tab-exp">
     <div class="grid">
@@ -1206,6 +1224,7 @@ function applyTrack(){
   st.disabled = S.diag.stops < 2;
   if(st.disabled && S.mode === "stop") setMode("bal");
   recompute();
+  window.dispatchEvent(new Event("rutas:route"));
 }
 function setMode(m){
   S.mode = m;
@@ -1603,18 +1622,20 @@ document.addEventListener("click", function(e){
 
 /* ============ tabs ============ */
 function showTab(which){
-  ["exp","conv","make","help"].forEach(function(k){
+  ["nav","exp","conv","make","help"].forEach(function(k){
     var sel = k === which;
     $("tab-"+k).setAttribute("aria-selected", sel ? "true" : "false");
     $("p-"+k).hidden = !sel;
   });
   if(which === "make") renderPts();
   if(which === "exp") renderExport();
+  if(which === "nav") window.dispatchEvent(new Event("rutas:visible"));
 }
-["exp","conv","make","help"].forEach(function(k){
+["nav","exp","conv","make","help"].forEach(function(k){
   $("tab-"+k).addEventListener("click", function(){ showTab(k); });
 });
 
+window.Roadbook = { getRoute:function(){ return { pts:S.pts, name:S.fileName, sample:S.isSample, tracks:S.tracks, selected:S.ti }; }, readFile:readFile, selectTrack:function(i){ S.ti=i; S.reversed=false; applyTrack(); } };
 /* ============ boot ============ */
 restore();
 loadTracks(sampleGPX(), "ejemplo-valira.gpx", true);
@@ -1625,8 +1646,11 @@ try{
 }catch(e){}
 renderRec();
 renderPts();
-showTab("exp");
+showTab("nav");
 })();
 </script>
 
+<script src="vendor/leaflet.js"></script>
+<script src="nav-core.js"></script>
+<script src="navigation.js"></script>
 </html>

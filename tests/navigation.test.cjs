@@ -1,0 +1,5 @@
+const test=require('node:test'),assert=require('node:assert/strict'),N=require('../nav-core');
+test('interpolación y límites del recorrido',()=>{const r=N.prepare([{lat:41,lon:2},{lat:41.001,lon:2}]);assert(r.total>110&&r.total<112);assert.equal(N.at(r,-1).lat,41);assert.equal(N.at(r,r.total+1).lat,41.001);assert(Math.abs(N.at(r,r.total/2).lat-41.0005)<1e-9);});
+test('una pasada posterior por la misma calle no adelanta el progreso',()=>{const pts=[{lat:41,lon:2},{lat:41.01,lon:2},{lat:41,lon:2},{lat:41.01,lon:2}],r=N.prepare(pts);const m=N.match(r,{lat:41.0005,lon:2},0);assert(m.d<100);const later=N.match(r,{lat:41.0005,lon:2},r.cum[2]);assert(later.d>=r.cum[2]);});
+test('posición fuera de ruta no se confunde con un punto cercano',()=>{const r=N.prepare([{lat:41,lon:2},{lat:41.001,lon:2}]);assert(N.match(r,{lat:41,lon:2.01},0).error>800);});
+test('puntos duplicados mantienen resultados finitos',()=>{const r=N.prepare([{lat:41,lon:2},{lat:41,lon:2},{lat:41.001,lon:2}]);assert(Number.isFinite(N.at(r,0).lat));assert(Number.isFinite(N.match(r,{lat:41,lon:2},0).d));});
