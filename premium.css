@@ -24,3 +24,114 @@ button,select,input,textarea{font-family:inherit}.theme-control select{font-fami
 @media(max-width:700px){.route-overview{padding:18px}.route-private{font-size:9px}.route-overview-top{gap:8px}.route-overview h2{font-size:25px;margin-top:14px}.route-overview p{font-size:12px}.route-facts{margin-top:14px;gap:16px}.nav-shell .panel-bd>.btnrow:has(#nav-file){display:grid;grid-template-columns:1fr 1fr}.nav-shell .panel-bd>.btnrow:has(#nav-file) label{grid-column:1/-1;margin-right:0}.review-count{font-size:9px}.premium-fold>summary{gap:8px;font-size:12px}.route-files>#nav-share{align-self:stretch}}
 
 .nav-actions #nav-stop:disabled{display:none}@media(max-width:700px){.route-overview.has-route{padding:15px 18px}.route-overview.has-route h2{font-size:23px;margin:10px 0 0}.route-overview.has-route>p{display:none}.route-overview.has-route .route-facts{margin-top:10px}}
+
+
+/* ===================================================================
+   Pasada visual: tipografia real, escala, cifras tabulares y relieve.
+   Hasta ahora el CSS pedia Inter y la pagina nunca la descargaba, asi
+   que todo caia a la fuente del sistema.
+   =================================================================== */
+:root{
+ --font-ui:Manrope,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+ --font-data:'IBM Plex Mono',ui-monospace,monospace;
+ --r-sm:10px;--r-md:14px;--r-lg:18px;--r-xl:22px;
+ --shadow-sm:0 1px 2px #1b365c0e,0 1px 3px #1b365c0a;
+ --shadow:0 2px 4px #1b365c0d,0 12px 28px -14px #1b365c26;
+ --shadow-lg:0 4px 10px #1b365c10,0 28px 56px -24px #1b365c38;
+ --ring:0 0 0 3px #096c8333;
+}
+:root[data-theme=dark]{
+ --shadow-sm:0 1px 2px #0006;
+ --shadow:0 2px 6px #00000055,0 14px 32px -16px #000000aa;
+ --shadow-lg:0 6px 14px #00000055,0 32px 64px -24px #000000cc;
+ --ring:0 0 0 3px #6dd5e744;
+}
+
+body{font-family:var(--font-ui);letter-spacing:-.006em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+button,select,input,textarea{font-family:inherit}
+
+/* Escala: el peso y el interletrado hacen el trabajo, no el tamano solo. */
+h1,h2,h3,.route-overview h2,#library-title{letter-spacing:-.02em;font-weight:700}
+h1{letter-spacing:-.028em;font-weight:800}
+.panel-hd h2,.premium-fold>summary,#segment-order strong,#street-match strong{
+ font-weight:700;letter-spacing:-.012em}
+
+/* Cifras alineadas en columna: en una app llena de kilometros se nota. */
+.stat dd,.drive-eta b,#drive-turn-dist,#drive-speed,.route-overview,.leg-dist,.coords,
+#nav-done,#nav-left,#nav-speed,#nav-accuracy,#nav-stops,.library-route .hint,
+#segment-order-text,#street-match-text,#road-status{font-variant-numeric:tabular-nums}
+
+/* Relieve por capas en vez de una sombra plana. */
+.panel,.tabs,.route-overview,#segment-order,#street-match,.library-route,#drive-panel{box-shadow:var(--shadow)}
+.panel{border-radius:var(--r-xl)}
+.tabs{border-radius:var(--r-lg)}
+
+/* La ficha del recorrido es la pieza principal: merece mas cuidado que las demas. */
+.route-overview{
+ box-shadow:var(--shadow-lg);
+ background:
+  radial-gradient(120% 140% at 88% -10%,#1d6d80 0%,transparent 58%),
+  linear-gradient(118deg,#0f3246 0%,#175668 100%);
+}
+.route-overview::after{
+ content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+ border:1px solid #ffffff1f;
+ -webkit-mask:linear-gradient(#fff,transparent 62%);mask:linear-gradient(#fff,transparent 62%);
+}
+.route-overview h2{font-size:clamp(28px,7vw,40px);letter-spacing:-.034em;line-height:1.02;font-weight:800}
+
+/* Antetitulos: mayuscula pequena con aire, no mayuscula apretada. */
+.library-eyebrow,.route-overview .eyebrow,#gps-setup .eyebrow,.approach-eyebrow{
+ font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+
+/* Tres niveles de accion en vez de seis botones iguales. */
+.btn{border-radius:var(--r-md);font-weight:600;letter-spacing:-.004em;
+ transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .06s ease}
+.btn:active{transform:translateY(1px)}
+.btn.primary{box-shadow:0 1px 0 #ffffff26 inset,0 6px 16px -6px #096c8366}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn:not(.primary){background:var(--surface-2);border-color:transparent;box-shadow:var(--shadow-sm)}
+.btn:not(.primary):hover{background:var(--accent-soft);border-color:transparent}
+
+/* Foco visible y del color de la marca, no el anillo gris del navegador. */
+:where(button,a,select,input,textarea,summary,[tabindex]):focus-visible{
+ outline:2px solid var(--focus);outline-offset:2px;box-shadow:var(--ring)}
+
+/* El selector de tema era un <select> del sistema, y se notaba. */
+.theme-control select{
+ appearance:none;-webkit-appearance:none;padding:10px 38px 10px 14px;border-radius:999px;
+ border:1px solid var(--rule);background-color:var(--surface);color:var(--ink);
+ font-weight:600;font-size:14px;box-shadow:var(--shadow-sm);cursor:pointer;
+ background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+ background-position:calc(100% - 19px) calc(50% + 1px),calc(100% - 14px) calc(50% + 1px);
+ background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+
+/* Menos ruido flotando sobre el mapa. */
+.map-dimension{border-radius:var(--r-md);box-shadow:var(--shadow)}
+.leaflet-control-zoom a,.leaflet-bar a{border-radius:var(--r-sm)!important}
+
+@media(max-width:700px){
+ .route-overview h2{letter-spacing:-.03em}
+ .panel{border-radius:var(--r-lg)}
+}
+@media(prefers-reduced-motion:reduce){.btn{transition:none}.btn:active{transform:none}}
+
+/* El selector de tema llevaba un ancho fijo de 91 px que ya no cabe con la flecha propia. */
+.theme-control select{width:auto;min-width:0;padding:9px 32px 9px 13px;font-size:13px;
+ background-position:calc(100% - 17px) calc(50% + 1px),calc(100% - 12px) calc(50% + 1px)}
+
+/* Una sola accion llena por pantalla: la que se usa cada dia es iniciar la navegacion.
+   Cargar un GPX y dar permiso al GPS son pasos ocasionales, y pasan a tono suave. */
+.btn.primary:has(#nav-file){
+ background:var(--accent-soft);color:var(--accent);border-color:transparent;
+ box-shadow:var(--shadow-sm)}
+/* Dentro de la tarjeta de ubicacion, ya azulada, el tono suave se perderia. */
+#gps-setup .btn.primary{
+ background:var(--surface);color:var(--accent);border:1px solid var(--accent);
+ box-shadow:var(--shadow-sm)}
+.btn.primary:has(#nav-file):hover,#gps-setup .btn.primary:hover{
+ background:var(--accent);color:var(--on-accent);filter:none}
+
+/* Un control con [hidden] pero con class="btn" seguia dibujandose, porque .btn fija
+   display:inline-flex y gana al atributo. Pasaba con el selector de traza. */
+[hidden]{display:none!important}
