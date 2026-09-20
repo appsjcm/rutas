@@ -38,3 +38,9 @@ Si el servidor público falla, Cargar datos de calles permite importar un JSON d
 ## Vista de conducción
 
 Iniciar navegación abre automáticamente el mapa a pantalla completa, con el próximo giro, posición orientada por el GPS, velocidad, distancia restante y progreso. La cámara sigue el GPS y ajusta el zoom según la velocidad; el mapa permanece orientado al norte. Arrastrar el mapa suspende el centrado hasta pulsar Volver a seguir. La vista incluye controles de voz, repetir indicación y Finalizar. Los avisos de sentido contrario permanecen visibles. Al detenerse, llegar al final o denegarse el GPS, se vuelve a la vista normal.
+
+## Continuidad del recorrido
+
+El seguimiento tiene en cuenta el rumbo cuando es fiable para distinguir ida y vuelta. El avance se guarda localmente con una huella de las coordenadas y su orden: una ruta invertida no recupera el avance de la original. Continuar desde… selecciona el punto guardado; no inicia el GPS sin pulsar Iniciar navegación. Buscar mi pasada ofrece hasta cinco posiciones cercanas dentro del recorrido para elegir explícitamente cuando se repiten calles.
+
+Al comprobar los datos de calles o importar el JSON de calles, las indicaciones incorporan nombres de vías si hay una coincidencia geométrica suficientemente clara antes y después de la maniobra. Las curvas dentro de la misma calle se distinguen de los giros; las indicaciones sin una correspondencia clara siguen marcadas como estimadas del GPX. No es un motor de rutas sobre la red viaria. Los puntos originales, sus pasadas y los avisos de sentido contrario se conservan: no se recalcula ni se desvía la ruta.

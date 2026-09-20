@@ -15,5 +15,10 @@ function analyze(pts,elements){const route=C.prepare(pts),lat0=pts[0].lat,kx=111
  const groups=[];for(const h of hits){const last=groups.at(-1);if(last&&last.way===h.way&&last.kind===h.kind&&h.d-last.end<=24){last.end=h.d;last.count++;last.maxOffset=Math.max(last.maxOffset,h.distance);}else groups.push({way:h.way,name:h.name,start:h.d,end:h.d,count:1,p:h.p,kind:h.kind,maxOffset:h.distance,tags:h.tags});}
  return {issues:groups.filter(g=>g.count>=3&&g.end-g.start>=16).map(g=>({...g,start:Math.max(0,g.start-4),end:Math.min(route.total,g.end+4)})),sampled,matched,ambiguous,total:route.total};
 }
-const api={rule,analyze};if(typeof module!=='undefined')module.exports=api;else root.RutasRestrictions=api;
+function enrichTurns(route,turns,elements){
+ const segments=[];for(const w of elements){if(w.type!=='way'||!w.tags?.highway||!w.geometry)continue;for(let i=1;i<w.geometry.length;i++)segments.push({a:w.geometry[i-1],b:w.geometry[i],way:w});}
+ function roadAt(d){const p=C.at(route,d),h=C.heading(C.at(route,Math.max(0,d-8)),C.at(route,Math.min(route.total,d+8))),kx=111320*Math.cos(p.lat*Math.PI/180),byWay=new Map();for(const s of segments){const x=(s.a.lon-p.lon)*kx,y=(s.a.lat-p.lat)*110540,dx=(s.b.lon-s.a.lon)*kx,dy=(s.b.lat-s.a.lat)*110540,t=Math.max(0,Math.min(1,-(x*dx+y*dy)/(dx*dx+dy*dy||1))),error=Math.hypot(x+t*dx,y+t*dy),angle=Math.abs(((C.heading(s.a,s.b)-h+540)%360)-180);if(error>14||Math.min(angle,180-angle)>30)continue;const score=error+Math.min(angle,180-angle)*.08;if(!byWay.has(s.way.id)||byWay.get(s.way.id).score>score)byWay.set(s.way.id,{score,way:s.way});}const sorted=[...byWay.values()].sort((a,b)=>a.score-b.score);return sorted.length&&(!sorted[1]||sorted[1].score-sorted[0].score>4)?sorted[0].way:null;}
+ return turns.map(t=>{const before=roadAt(Math.max(0,t.d-30)),after=roadAt(Math.min(route.total,t.d+30));if(!before||!after)return {...t};const from=before.tags.name||before.tags.ref,to=after.tags.name||after.tags.ref;if(!from||!to)return {...t};const same=from===to,label=same&&Math.abs(t.angle)<120?(t.angle>0?'Curva a la derecha':'Curva a la izquierda'):t.label;return {...t,label,fromRoad:from,toRoad:to,roadContext:true};});
+}
+const api={rule,analyze,enrichTurns};if(typeof module!=='undefined')module.exports=api;else root.RutasRestrictions=api;
 })(typeof window!=='undefined'?window:globalThis);
