@@ -23,7 +23,7 @@ Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap c
 
 ## Comprobaciones
 
-`node --test tests/navigation.test.cjs tests/restrictions.test.cjs`
+`node --test tests/*.cjs`
 
 Compartir ruta genera un enlace que lleva la ronda entera dentro: las coordenadas van codificadas y comprimidas en la parte del enlace que nunca viaja al servidor, asi que no se sube nada a ningun sitio. La ronda de ejemplo con la que se prueba, 26 km y 4933 puntos, cabe en unos 9 KB de enlace. Quien lo abre ve la ronda cargada y guardada en su dispositivo. El codigo QR tiene mucha menos capacidad: si la ronda no cabe se ofrece una version aligerada, diciendo cuantos puntos conserva y con cuanta desviacion, y el enlace sigue llevando la version completa. El codificador redondea a cinco decimales, unos 30 cm, asi que la distancia total puede variar medio punto porcentual.
 
