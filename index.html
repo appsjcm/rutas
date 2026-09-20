@@ -1313,31 +1313,40 @@ function restore(){
 }
 
 function sampleGPX(){
-  var A = [
-    [42.3582,1.4593,692],[42.3651,1.4712,701],[42.3724,1.4778,714],[42.3812,1.4836,730],
-    [42.3901,1.4862,748],[42.4015,1.4879,769],[42.4122,1.4894,792],[42.4231,1.4908,824],
-    [42.4346,1.4924,861],[42.4452,1.4881,894],[42.4561,1.4899,921],[42.4682,1.4952,955],
-    [42.4791,1.5021,981],[42.4881,1.5093,1002],[42.4971,1.5158,1016],[42.5063,1.5218,1023]
-  ];
-  function cr(p0,p1,p2,p3,t){
-    var t2=t*t, t3=t2*t;
-    return 0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);
+  // Ronda de recogida ficticia: cuatro calles que se hacen de subida y de bajada,
+  // con cuatro paradas de contenedor. Ensena giros, paradas y hora de llegada de verdad.
+  var LAT0 = 41.97000, LON0 = 1.87000;
+  var mLat = 1/111320, mLon = 1/(111320*Math.cos(LAT0*Math.PI/180));
+  var CORNERS = [[0,0],[0,220],[60,220],[60,0],[120,0],[120,220],[180,220],[180,0],[240,0]];
+  var STOPS = { 90:210, 330:240, 610:195, 900:225 };   // metro del recorrido -> segundos parado
+  var SPEED = 5, STEP = 5;                              // 18 km/h, un punto cada 5 m
+  var pts = [], t = Date.parse("2026-03-17T06:15:00Z")/1000, done = 0;
+
+  function push(x, y, secs){
+    pts.push({ lat: LAT0 + y*mLat, lon: LON0 + x*mLon,
+               ele: 305 + y*0.01, time: new Date(secs*1000).toISOString() });
   }
-  var pts=[], i, j, seg=34;
-  for(i=0;i<A.length-1;i++){
-    var p0=A[Math.max(0,i-1)], p1=A[i], p2=A[i+1], p3=A[Math.min(A.length-1,i+2)];
-    for(j=0;j<seg;j++){
-      var t=j/seg;
-      var la=cr(p0[0],p1[0],p2[0],p3[0],t), lo=cr(p0[1],p1[1],p2[1],p3[1],t), el=cr(p0[2],p1[2],p2[2],p3[2],t);
-      var dx=p2[1]-p1[1], dy=p2[0]-p1[0], L=Math.hypot(dx,dy)||1;
-      var amp=0.00058*Math.sin((i*seg+j)/3.1) + 0.00022*Math.sin((i*seg+j)/1.27);
-      pts.push({ lat: la+amp*(dx/L), lon: lo-amp*(dy/L), ele: el+2*Math.sin((i*seg+j)/5), time: null });
+  push(CORNERS[0][0], CORNERS[0][1], t);
+  for(var c = 1; c < CORNERS.length; c++){
+    var ax = CORNERS[c-1][0], ay = CORNERS[c-1][1], bx = CORNERS[c][0], by = CORNERS[c][1];
+    var len = Math.hypot(bx-ax, by-ay), steps = Math.max(1, Math.round(len/STEP));
+    for(var i = 1; i <= steps; i++){
+      var f = i/steps;
+      done += len/steps;
+      t += (len/steps)/SPEED;
+      push(ax + (bx-ax)*f, ay + (by-ay)*f, t);
+      for(var key in STOPS){                                  // parada de contenedor
+        var at = Number(key);
+        if(done - len/steps < at && done >= at){
+          var wait = STOPS[key], held = 0;
+          while(held < wait){ held += 15; t += 15; push(ax + (bx-ax)*f, ay + (by-ay)*f, t); }
+        }
+      }
     }
   }
-  var L2 = A[A.length-1];
-  pts.push({ lat:L2[0], lon:L2[1], ele:L2[2], time:null });
-  return [{ name:"La Seu d'Urgell → Andorra la Vella", pts: pts }];
+  return [{ name: "Ronda de ejemplo \u00b7 recogida puerta a puerta", pts: pts }];
 }
+
 
 function readFile(f){
   if(!f) return;
@@ -1704,7 +1713,7 @@ function showTab(which){
 window.Roadbook = { getRoute:function(){ return { pts:S.pts, name:S.fileName, sample:S.isSample, tracks:S.tracks, selected:S.ti }; }, readFile:readFile, restoreRoute:function(tracks,name){ loadTracks(tracks,name,false); }, selectTrack:function(i){ S.ti=i; S.reversed=false; applyTrack(); } };
 /* ============ boot ============ */
 restore();
-loadTracks(sampleGPX(), "ejemplo-valira.gpx", true);
+loadTracks(sampleGPX(), "ejemplo-ronda.gpx", true);
 recRestore();
 try{
   var sp = JSON.parse(localStorage.getItem("roadbook-pts") || "[]");
