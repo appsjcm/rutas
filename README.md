@@ -34,3 +34,7 @@ En Navegar, Comprobar mi recorrido compara muestras de la traza con vías de Ope
 Se muestra la fecha de los datos, cobertura de coincidencia, señales sobre el mapa, enlaces a las fuentes y un informe CSV descargable. Un posible conflicto tiene prioridad sobre el aviso de giro. La consulta envía a Overpass solamente el rectángulo de la zona, sin puntos ni tiempos del GPX. Los datos se guardan durante 24 horas en el navegador para evitar consultas repetidas. Servicio: Overpass de Private.coffee (dominio histórico overpass.kumi.systems); datos © OpenStreetMap contributors, ODbL. Las rutas personales y sus informes no están incluidos en el repositorio.
 
 Si el servidor público falla, Cargar datos de calles permite importar un JSON de Overpass (out tags geom) y realizar la misma comprobación local, mostrando siempre la fecha de sus datos. El JSON también permanece en el dispositivo.
+
+## Vista de conducción
+
+Iniciar navegación abre automáticamente el mapa a pantalla completa, con el próximo giro, posición orientada por el GPS, velocidad, distancia restante y progreso. La cámara sigue el GPS y ajusta el zoom según la velocidad; el mapa permanece orientado al norte. Arrastrar el mapa suspende el centrado hasta pulsar Volver a seguir. La vista incluye controles de voz, repetir indicación y Finalizar. Los avisos de sentido contrario permanecen visibles. Al detenerse, llegar al final o denegarse el GPS, se vuelve a la vista normal.
