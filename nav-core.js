@@ -9,5 +9,11 @@ function match(r,p,progress,forward=200,expected=progress){let best=null;const k
 
 function section(r,from,to){const out=[at(r,from)];for(let i=0;i<r.pts.length;i++)if(r.cum[i]>from&&r.cum[i]<to)out.push(r.pts[i]);out.push(at(r,to));return out;}
 function turns(r){const candidates=[];for(let d=25;d<r.total-25;d+=5){const a=at(r,d-25),b=at(r,d),c=at(r,d+25);if(distance(a,b)<10||distance(b,c)<10)continue;const angle=((heading(b,c)-heading(a,b)+540)%360)-180;if(Math.abs(angle)<48)continue;const item={d,angle,label:Math.abs(angle)>135?'Cambio de sentido':angle>0?'Giro a la derecha':'Giro a la izquierda',symbol:Math.abs(angle)>135?'↶':angle>0?'↱':'↰'};const last=candidates.at(-1);if(last&&d-last.end<40){last.end=d;if(Math.abs(angle)>Math.abs(last.angle))Object.assign(last,item);}else candidates.push({...item,end:d});}return candidates;}
-const api={distance,prepare,at,heading,match,section,turns};if(typeof module!=='undefined')module.exports=api;else root.RutasNav=api;
+function guidance(turns,d,total,speed=0){
+ const index=turns.findIndex(t=>t.d+15>=d),turn=index<0?null:turns[index],gap=turn?Math.max(0,turn.d-d):Math.max(0,total-d);
+ const v=Number.isFinite(speed)?Math.max(0,speed):0;
+ const stage=!turn?'straight':gap<=Math.max(15,Math.min(30,v*2))?'now':gap<=Math.max(50,Math.min(100,v*5))?'near':gap<=Math.max(150,Math.min(300,v*12))?'prepare':'later';
+ return {index,turn,next:turn?turns[index+1]||null:null,gap,stage,completed:index<0?turns.length:index};
+}
+const api={distance,prepare,at,heading,match,section,turns,guidance};if(typeof module!=='undefined')module.exports=api;else root.RutasNav=api;
 })(typeof window!=='undefined'?window:globalThis);
