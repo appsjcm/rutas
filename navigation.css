@@ -80,3 +80,8 @@
 #nav-stage:not(.driving) #nav-road-alert{display:none!important}.driving #nav-road-alert{top:calc(var(--drive-banner-height,112px) + 78px);left:12px;right:58px;max-width:560px;font-size:inherit;border-radius:14px}
 @media(min-width:760px) and (min-height:551px){#nav-stage.driving #drive-road-info:not([hidden]){left:50%;transform:translateX(-50%);width:540px;max-width:540px}.driving #nav-road-alert{width:540px;max-width:540px;left:50%;right:auto;transform:translateX(-50%)}}
 @media(max-height:550px){#nav-stage.driving #drive-road-info:not([hidden]){top:calc(var(--drive-banner-height,72px) + 7px);max-width:46%;padding:6px 9px}#drive-road-icon{width:31px;height:31px;font-size:18px}#drive-road-extra{display:none}.driving #nav-road-alert{top:calc(var(--drive-banner-height,72px) + 52px);left:12px;right:auto;max-width:55%;padding:7px 9px}#nav-road-alert small{display:none}}
+
+/* iOS: las reglas de la portada móvil no pueden volver a reducir el mapa al 55vh. */
+body.map-focus #nav-stage.focus{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:100vh;max-height:none!important;margin:0!important;border:0!important;border-radius:0!important;background:#dfe8da;overflow:hidden}
+body.map-focus #nav-stage.focus #nav-map{position:absolute;inset:0;width:100%;height:100%!important;min-height:100%!important;max-height:none!important;margin:0;border-radius:0}
+body.map-focus #nav-stage.focus.driving{overscroll-behavior:none}
