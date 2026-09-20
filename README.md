@@ -106,3 +106,17 @@ Mis rutas permite guardar explícitamente varios recorridos en IndexedDB, buscar
 Se conservan todos los segmentos, el segmento seleccionado, los tiempos y el sentido actual de ese segmento. Una huella SHA-256 de los puntos completos evita duplicar exactamente la misma ruta. Volver a guardarla actualiza la copia y conserva el nombre elegido. La distancia mostrada corresponde al segmento guardado como seleccionado. Cambiar de ruta desde la biblioteca está bloqueado mientras el GPS de navegación está activo.
 
 Verificado en navegador: guardar, deduplicar, renombrar, buscar, abrir la geometría original, recargar y recuperar, eliminar y deshacer; también un archivo con varios segmentos, seleccionado e invertido, conservando sus marcas de tiempo.
+
+## Compartir un GPX
+
+Compartir archivo GPX genera un documento GPX 1.1 real con todos los puntos del recorrido seleccionado, alturas y horas válidas. En móviles compatibles abre el menú del sistema para enviarlo como archivo por WhatsApp, correo u otra aplicación. Si el navegador no admite compartir archivos, Guardar GPX descarga el mismo documento para adjuntarlo manualmente.
+
+El enlace web permanece como opción secundaria. Algunos servicios de mensajería recortan los enlaces largos, por lo que el archivo GPX es la opción recomendada y conserva mejor el recorrido completo. El nombre se limpia para producir un archivo terminado siempre en `.gpx`; el contenido escapa los caracteres XML y valida las coordenadas antes de compartir.
+
+Validado con HICHAM en el dispositivo: 4.933 puntos y todas sus marcas de tiempo en un XML GPX 1.1 válido. También se verificaron el menú de compartir, la descarga alternativa y la reapertura del enlace web secundario.
+
+## Navegación interna hasta el recorrido
+
+Guiarme en Rutas calcula un acceso temporal para coche desde la posición actual hasta el punto elegido del GPX mediante OSRM / FOSSGIS. Solo salen del dispositivo esas dos coordenadas; el GPX completo no se envía. El acceso aparece en los mapas 2D y 3D con nombres de calles, maniobras y voz. Puede cancelarse o recalcularse, y al llegar se recupera el GPX original en el punto seleccionado.
+
+Este acceso no considera altura, peso ni anchura del vehículo. El GPX guardado y su progreso no se sustituyen por el trayecto calculado. Se conserva Google Maps como alternativa si el servicio de cálculo no responde.

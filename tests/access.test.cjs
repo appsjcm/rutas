@@ -1,0 +1,8 @@
+const test=require('node:test'),assert=require('node:assert/strict'),A=require('../access-core');
+const step=(type,coords,modifier='straight',name='Calle')=>({geometry:{coordinates:coords},maneuver:{type,modifier},name});
+const origin={lat:41,lon:2},target={lat:41.001,lon:2.001};
+const fixture=()=>({code:'Ok',routes:[{duration:90,legs:[{steps:[step('depart',[[2,41],[2,41.001]]),step('turn',[[2,41.001],[2.001,41.001]],'right','Calle final'),step('arrive',[[2.001,41.001]])]}]}]});
+test('acceso conserva geometría, nombre de calle y distancia de giro',()=>{const a=A.parse(fixture(),origin,target);assert.equal(a.pts.length,3);assert.equal(a.turns.length,1);assert.equal(a.turns[0].toRoad,'Calle final');assert.equal(a.turns[0].label,'Giro a la derecha');assert(a.turns[0].d>110&&a.turns[0].d<112);assert.equal(a.duration,90);});
+test('acceso no inventa una línea al destino si no hay carretera cercana',()=>{assert.throws(()=>A.parse(fixture(),origin,{lat:42,lon:3}),/demasiado lejos/);});
+test('acceso rechaza geometría rota, inválida y respuestas sin ruta',()=>{const data=fixture();data.routes[0].legs[0].steps[1].geometry.coordinates[0]=[3,42];assert.throws(()=>A.parse(data,origin,target),/desconectados/);const invalid=fixture();invalid.routes[0].legs[0].steps[0].geometry.coordinates[0]=[2,100];assert.throws(()=>A.parse(invalid,origin,target),/inválidas/);assert.throws(()=>A.parse({code:'NoRoute'},origin,target),/No se encontró/);});
+test('acceso distingue rotondas, incorporaciones y cambios de sentido',()=>{assert.equal(A.action({type:'roundabout',exit:3}).label,'En la rotonda, toma la salida 3');assert.equal(A.action({type:'merge',modifier:'left'}).label,'Incorpórate por la izquierda');assert.equal(A.action({type:'turn',modifier:'uturn'}).symbol,'↶');});
