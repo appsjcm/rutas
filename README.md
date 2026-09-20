@@ -76,3 +76,11 @@ El seguimiento, los giros y las restricciones siguen dependiendo del mismo GPX y
 Fuentes de integración: https://openfreemap.org/quick_start/ y https://maplibre.org/maplibre-gl-js/docs/examples/display-buildings-in-3d/ . El volumen de los edificios es cartográfico, no fotografía ni Street View.
 
 Validación: carga real de calles y edificios, GPS simulado con rumbo, pausa y recuperación de cámara, cambio 2D/3D durante navegación, avisos sobre el mapa y limpieza al cambiar de ruta. Verificado también el retorno a 2D sin WebGL y las 39 pruebas del motor existente. Pendiente la comprobación de rendimiento con GPS real en el teléfono.
+
+## Llegar al comienzo
+
+Al iniciar, la primera posición GPS reciente con precisión de 60 metros o mejor se compara con el punto seleccionado del GPX. Si queda a más de 100 metros en línea recta, se detiene el seguimiento sin avanzar por la traza y se ofrece llegar con Google Maps. El botón Llegar al inicio permite abrir este acceso antes de activar el GPS. Si se ha elegido una pasada posterior, ese punto es el destino.
+
+El enlace usa Maps URLs (https://developers.google.com/maps/architecture/maps-url), modo driving y dir_action=navigate; omite el origen para que Google Maps utilice la ubicación del dispositivo. Solo incluye el destino, nunca el GPX completo. Dependiendo del dispositivo y de la ubicación disponible, Google Maps abre navegación o vista previa. No es un itinerario adaptado a las dimensiones del camión. Al regresar a Rutas hay que pulsar Iniciar navegación; no se inicia automáticamente ni se altera el recorrido.
+
+Comprobado en navegador con GPS simulado: lejos no avanza el GPX, cerca comienza el seguimiento, baja precisión mantiene la espera, cambiar la pasada actualiza el destino y Escape cierra el diálogo. Las 39 pruebas existentes siguen pasando.
