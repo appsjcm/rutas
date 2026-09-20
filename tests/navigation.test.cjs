@@ -34,6 +34,22 @@ test('el tiempo restante sale de las horas del propio recorrido',()=>{const stam
  assert.equal(N.remainingSeconds(r,r.total),0);
  assert(N.remainingSeconds(r,r.total/2)<1800);
  assert.equal(N.remainingSeconds(N.prepare([{lat:41,lon:2},{lat:41.002,lon:2}]),0),null);});
+test('una ruta cabe en un enlace y vuelve igual',()=>{const stamp=k=>new Date(Date.UTC(2024,0,1,0,0,k)).toISOString();
+ const pts=[{lat:41.97680,lon:1.87315,time:stamp(0)},{lat:41.97522,lon:1.87251,time:stamp(45)},{lat:41.98746,lon:1.88545,time:stamp(300)}];
+ const back=N.unpackRoute(N.packRoute('Ronda de prueba',pts));
+ assert.equal(back.name,'Ronda de prueba');
+ assert.equal(back.pts.length,3);
+ for(let i=0;i<3;i++){assert(Math.abs(back.pts[i].lat-pts[i].lat)<1e-5);assert(Math.abs(back.pts[i].lon-pts[i].lon)<1e-5);assert.equal(back.pts[i].time,pts[i].time);}});
+test('sin horas el enlace sigue siendo valido',()=>{const pts=[{lat:41,lon:2},{lat:41.002,lon:2.002}];
+ const back=N.unpackRoute(N.packRoute('',pts));assert.equal(back.pts.length,2);assert.equal(back.pts[0].time,null);});
+test('un enlace manipulado se rechaza en vez de cargarse',()=>{
+ for(const bad of ['','no es json','{}','{"v":9,"p":"abc"}','{"v":1,"p":""}',JSON.stringify({v:1,p:N.packRoute('x',[{lat:41,lon:2},{lat:41.001,lon:2}])})])
+  assert.throws(()=>N.unpackRoute(bad));
+ assert.throws(()=>N.unpackRoute(JSON.stringify({v:1,n:'x',p:'~~~~~~~~'})));});
+test('simplificar respeta los extremos y afloja la traza',()=>{const pts=[];for(let i=0;i<200;i++)pts.push({lat:41+i*0.00002,lon:2+(i%2)*0.0000045});
+ const s=N.simplify(pts,3);
+ assert(s.length<pts.length);assert.equal(s[0],pts[0]);assert.equal(s.at(-1),pts.at(-1));
+ assert.equal(N.simplify(pts,0).length,pts.length);});
 test('huella distingue ruta invertida para no recuperar otra pasada',()=>{const pts=[{lat:41,lon:2},{lat:41.001,lon:2}];assert.notEqual(N.fingerprint(N.prepare(pts)),N.fingerprint(N.prepare(pts.slice().reverse())));});
 test('buscar pasada ofrece distintos puntos del recorrido repetido',()=>{const r=N.prepare([{lat:41,lon:2},{lat:41.003,lon:2},{lat:41,lon:2}]);const c=N.nearbyPasses(r,{lat:41.001,lon:2});assert.equal(c.length,2);assert(c[1].d-c[0].d>100);});
 test('rumbo diferencia ida y vuelta coincidentes',()=>{const r=N.prepare([{lat:41,lon:2},{lat:41.001,lon:2},{lat:41,lon:2}]),p={lat:41.0008,lon:2};const north=N.match(r,p,100,150,111,0),south=N.match(r,p,100,150,111,180);assert(north.d<r.cum[1]);assert(south.d>r.cum[1]);});

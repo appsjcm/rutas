@@ -50,6 +50,50 @@ $('drive-heading').onclick=function(){headingUp=!headingUp;const stage=$('nav-st
  this.title=headingUp?'Mapa orientado a la marcha':'Mapa orientado al norte';
  spin();
  if(map){map.invalidateSize();if(position&&follow)map.setView(position.getLatLng(),map.getZoom());}};
+/* ---- compartir la ronda: la ruta viaja dentro del propio enlace ---- */
+function b64url(bytes){let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function unb64url(str){const pad=str.replace(/-/g,'+').replace(/_/g,'/');const bin=atob(pad+'==='.slice((pad.length+3)%4));const out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out;}
+async function squeeze(text){if(typeof CompressionStream==='undefined')return null;
+ try{const buf=await new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer();return new Uint8Array(buf);}catch{return null;}}
+async function unsqueeze(bytes){const buf=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer();return new TextDecoder().decode(buf);}
+async function shareLink(pts,name){const packed=C.packRoute(name,pts),small=await squeeze(packed);
+ const payload=small?'2'+b64url(small):'1'+b64url(new TextEncoder().encode(packed));
+ return location.origin+location.pathname+'#r='+payload;}
+async function buildShare(){const data=window.Roadbook.getRoute();
+ if(!route||data.sample){$('share-note').textContent='Carga primero tu GPX: el ejemplo no se comparte.';$('share-box').hidden=false;$('share-url').value='';return;}
+ const name=(data.name||'Ronda').replace(/\.gpx$/i,'');
+ const url=await shareLink(data.pts,name);
+ $('share-url').value=url;$('share-box').hidden=false;$('share-qr').replaceChildren();$('share-qr-btn').setAttribute('aria-expanded','false');$('share-qr-btn').textContent='Mostrar QR';
+ $('share-note').textContent='La ronda entera viaja dentro del enlace: '+data.pts.length.toLocaleString('es-ES')+' puntos en '+Math.round(url.length/1024)+' KB. No se sube a ningun servidor. Mandalo por WhatsApp o correo.';
+ return url;}
+async function shareQR(){if(typeof qrcode==='undefined'){$('share-note').textContent='El generador de QR no cargo. Usa Copiar enlace.';return;}
+ const data=window.Roadbook.getRoute(),name=(data.name||'Ronda').replace(/\.gpx$/i,'');
+ for(const eps of [0,2,3,5,10,20,40]){
+  const pts=eps?C.simplify(data.pts,eps):data.pts;
+  if(pts.length<2)continue;
+  const url=await shareLink(pts,name);
+  try{const qr=qrcode(0,'L');qr.addData(url);qr.make();
+   $('share-qr').innerHTML=qr.createSvgTag({cellSize:4,margin:0,scalable:true});
+   $('share-note').textContent=eps?('El QR no admite la ronda completa, asi que este codigo lleva una version aligerada: '+pts.length.toLocaleString('es-ES')+' de '+data.pts.length.toLocaleString('es-ES')+' puntos, con hasta '+eps+' m de desviacion. El enlace de arriba si lleva la ronda entera.')
+    :('La ronda completa cabe en el QR: '+pts.length.toLocaleString('es-ES')+' puntos. Escanealo con la camara del movil.');
+   return;}catch{}}
+ $('share-qr').replaceChildren();
+ $('share-note').textContent='Esta ronda no cabe en un codigo QR ni aligerada. Usa Copiar enlace.';}
+$('nav-share').onclick=()=>{buildShare();};
+$('share-copy').onclick=async()=>{const url=$('share-url').value||await buildShare();if(!url)return;
+ try{await navigator.clipboard.writeText(url);$('share-note').textContent='Enlace copiado. Quien lo abra vera la ronda cargada.';}
+ catch{$('share-url').select();document.execCommand('copy');$('share-note').textContent='Enlace copiado.';}};
+$('share-qr-btn').onclick=function(){if($('share-qr').firstChild){$('share-qr').replaceChildren();this.setAttribute('aria-expanded','false');this.textContent='Mostrar QR';return;}
+ this.setAttribute('aria-expanded','true');this.textContent='Ocultar QR';shareQR();};
+async function importFromHash(){const hash=location.hash||'';if(!hash.startsWith('#r='))return;
+ const payload=hash.slice(3);history.replaceState(null,'',location.pathname);
+ try{const bytes=unb64url(payload.slice(1));
+  const text=payload[0]==='2'?await unsqueeze(bytes):new TextDecoder().decode(bytes);
+  const {name,pts}=C.unpackRoute(text);
+  window.Roadbook.restoreRoute([{name,pts}],name+'.gpx');
+  message('Ronda recibida por enlace: '+name+' ('+pts.length.toLocaleString('es-ES')+' puntos). Queda guardada en este dispositivo.');
+ }catch(err){message('No se pudo abrir la ruta del enlace. '+err.message,true);}}
+importFromHash();
 $('nav-repeat').onclick=()=>{if(!$('nav-voice').checked)$('nav-voice').checked=true;speak(window.RutasChecks?.gpsAlert(explore)||currentInstruction,true);};
 $('nav-voice').onchange=()=>{if(!$('nav-voice').checked&&window.speechSynthesis)window.speechSynthesis.cancel();else if(watch!==null)speak(currentInstruction,true);};
 function drawArrows(){if(arrowLayer)layer.removeLayer(arrowLayer);arrowLayer=L.featureGroup().addTo(layer);const scale=156543.03*Math.cos(route.pts[0].lat*Math.PI/180)/Math.pow(2,map.getZoom()),step=Math.max(60,scale*70,route.total/200),seen=new Set();for(let d=step;d<route.total;d+=step){const p=C.at(route,d),pixel=map.latLngToLayerPoint(ll(p)),key=Math.round(pixel.x/40)+':'+Math.round(pixel.y/40);if(seen.has(key))continue;seen.add(key);const h=C.heading(C.at(route,d-15),C.at(route,Math.min(route.total,d+15)));L.marker(ll(p),{interactive:false,icon:L.divIcon({className:'route-arrow',html:'<span style="transform:rotate('+(h-90)+'deg)">➤</span>',iconSize:[16,16],iconAnchor:[8,8]})}).addTo(arrowLayer);}}

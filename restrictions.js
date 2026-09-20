@@ -9,6 +9,13 @@ function saveProfile(){try{Object.keys(profile).length?localStorage.setItem('rut
 profile=loadProfile();
 function bounds(pts){let s=90,w=180,n=-90,e=-180;for(const p of pts){s=Math.min(s,p.lat);n=Math.max(n,p.lat);w=Math.min(w,p.lon);e=Math.max(e,p.lon);}return [s-.002,w-.002,n+.002,e+.002];}
 function key(pts){return 'rutas-osm-check-v1:'+bounds(pts).join(',');}
+// Cada consulta guardada pesa mas de un megabyte. Sin purga se acumulan para siempre y en
+// Safari de iPhone, con unos 5 MB de tope, acaban impidiendo guardar el avance de la ronda.
+function sweepCache(){try{const mine=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('rutas-osm-check-v1:'))mine.push(k);}
+ const rows=mine.map(k=>{let saved=0;try{saved=JSON.parse(localStorage.getItem(k)).saved||0;}catch{}return {k,saved};});
+ const stale=Date.now()-86400000;
+ rows.sort((a,b)=>b.saved-a.saved);
+ rows.forEach((row,i)=>{if(row.saved<stale||i>=2)localStorage.removeItem(row.k);});}catch{}}
 const ACK_TOLERANCE=60;
 function loadAcks(route){const print=C.fingerprint(route);ackKey='rutas-oneway-ack-v2:'+print;acks=[];try{localStorage.removeItem('rutas-oneway-ack-v1:'+print);const raw=JSON.parse(localStorage.getItem(ackKey));if(Array.isArray(raw))acks=raw.filter(a=>Array.isArray(a)&&Number.isSafeInteger(a[0])&&Number.isFinite(a[1]));}catch{}}
 function saveAcks(){if(!ackKey)return;try{acks.length?localStorage.setItem(ackKey,JSON.stringify(acks)):localStorage.removeItem(ackKey);}catch{}}
@@ -75,7 +82,7 @@ async function check(){const state=RutasMap.get();if(!state.route||Roadbook.getR
   const data=await ask(query,requestController,(i,n,name)=>{$('road-status').textContent='Consultando sentidos de circulación en '+name+(i?' (servidor '+(i+1)+' de '+n+')':'')+'…';});
   if(own!==token)return;
   render(data,route);
-  try{localStorage.setItem(key(route.pts),JSON.stringify({saved:Date.now(),data}));}catch{}
+  sweepCache();try{localStorage.setItem(key(route.pts),JSON.stringify({saved:Date.now(),data}));}catch{}
  }catch(err){
   if(own===token)$('road-status').textContent=err.name==='AbortError'?'Comprobación cancelada.':'No respondió ninguno de los '+MIRRORS.length+' servidores de OpenStreetMap. '+err.message+' Puedes reintentarlo o usar Cargar datos de calles.';
  }finally{if(own===token){$('road-check').disabled=false;controller=null;}}}
