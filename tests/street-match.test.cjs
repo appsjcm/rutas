@@ -11,3 +11,14 @@ test('una recta larga dentro de una pata no es un corte',()=>{const recta=[{lat:
 test('la unión entre dos patas separadas sí es un corte',()=>{const a=[{lat:41,lon:2},{lat:41,lon:2.001}],b=[{lat:41,lon:2.01},{lat:41,lon:2.011}];const cortes=S.joins([a,b],metros);assert.equal(cortes.length,1);assert.equal(cortes[0].leg,1);assert.equal(Math.round(cortes[0].metres),900);assert.equal(S.joins([a,b],metros,1000).length,0);});
 test('con enlace se intercala y sin enlace se anota la interrupción',()=>{const a=[{lat:41,lon:2},{lat:41,lon:2.001}],b=[{lat:41,lon:2.01},{lat:41,lon:2.011}];const enlace=[{lat:41,lon:2.001},{lat:41.0005,lon:2.005},{lat:41,lon:2.01}];const unido=S.assemble([a,b],new Map([[1,enlace]]),metros);assert.equal(unido.breaks.length,0);assert.equal(unido.path.length,5);const roto=S.assemble([a,b],null,metros);assert.deepEqual(roto.breaks,[2]);const piezas=S.split(roto.path,roto.breaks);assert.equal(piezas.length,2);assert.deepEqual(piezas[0],a);assert.deepEqual(piezas[1],b);});
 test('agrupa los cortes para pedirlos de pocas veces',()=>{const list=Array.from({length:45},(_,i)=>i);assert.deepEqual(S.batches(list,20).map(x=>x.length),[20,20,5]);});
+test('mide la longitud de un trazado',()=>{const recta=[{lat:41,lon:2},{lat:41,lon:2.001},{lat:41,lon:2.002}];assert.equal(Math.round(S.length(recta,metros)),200);assert.equal(S.length([],metros),0);assert.equal(S.length(recta,null),0);});
+test('un trazado que pierde kilometros no sirve para navegar',()=>{
+ // el caso real: cobertura alta pero la mitad de los kilometros, porque se colapsaron las pasadas
+ assert.equal(S.usable(12280,26350).ok,false);
+ assert.equal(S.usable(12280,26350).pct,47);
+ assert.equal(S.usable(22970,26350).ok,true);
+ assert.equal(S.usable(22970,26350).pct,87);
+ assert.equal(S.usable(26350,26350).ok,true);
+ assert.equal(S.usable(0,0).ok,false);
+ assert.equal(S.usable(100,0).ok,false);});
+

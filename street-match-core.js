@@ -72,10 +72,20 @@ function split(path,breaks){
  if(cur.length>1)out.push(cur);
  return out;
 }
+function length(pts,distance){let d=0;if(!Array.isArray(pts)||typeof distance!=='function')return 0;for(let i=1;i<pts.length;i++)d+=distance(pts[i-1],pts[i]);return d;}
+// La cobertura mide si el GPX queda cerca del trazado, pero no si el trazado recorre todo el
+// GPX: una ida y vuelta colapsada en una sola pasada da 100 % de cobertura y la mitad de
+// kilometros. Por eso la longitud es la que decide si se puede navegar sobre el.
+const MIN_LENGTH_RATIO=.8;
+function usable(matchedMetres,originalMetres,min=MIN_LENGTH_RATIO){
+ if(!(originalMetres>0)||!(matchedMetres>=0))return {ratio:0,ok:false};
+ const ratio=matchedMetres/originalMetres;
+ return {ratio,pct:Math.round(ratio*100),ok:ratio>=min};
+}
 function coverage(samples,path,radius=45){
  if(!samples.length||path.length<2)return 0;const take=samples.length<=160?samples:Array.from({length:160},(_,i)=>samples[Math.round(i*(samples.length-1)/159)]);let hit=0;
  for(const p of take){const kx=111320*Math.cos(p.lat*Math.PI/180),ky=110540;let best=Infinity;for(let i=0;i<path.length-1;i++){const a=path[i],b=path[i+1],x=(a.lon-p.lon)*kx,y=(a.lat-p.lat)*ky,dx=(b.lon-a.lon)*kx,dy=(b.lat-a.lat)*ky,l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,-(x*dx+y*dy)/l)):0;best=Math.min(best,Math.hypot(x+t*dx,y+t*dy));if(best<=radius)break;}if(best<=radius)hit++;}
  return Math.round(hit/take.length*100);
 }
-const api={decode,extract,legs,input,chunks,merge,joins,assemble,batches,split,coverage};if(typeof module!=='undefined')module.exports=api;else root.RutasStreetCore=api;
+const api={decode,extract,legs,input,chunks,merge,joins,assemble,batches,split,coverage,length,usable,MIN_LENGTH_RATIO};if(typeof module!=='undefined')module.exports=api;else root.RutasStreetCore=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -34,9 +34,9 @@ async function bridgeGaps(list,signal,onProgress){
 async function match(force=false){
  const state=RutasMap.get(),data=Roadbook.getRoute();
  if(!state.route||data.sample||state.mode==='access'){clear();bar.hidden=true;routeRef=state.route?.pts||null;return;}
- if(!force&&routeRef===data.pts)return;clear();routeRef=data.pts;const own=++run,input=S.input(data.pts,C.simplify);
+ if(!force&&routeRef===data.pts)return;clear();routeRef=data.pts;const own=++run,input=S.input(data.pts,null);
  if(input.length<2){status('error','No hay puntos suficientes para reconocer las calles.');return;}
- const chunks=S.chunks(input);status('loading','Buscando las calles y carreteras que pasan por los puntos del GPX…');controller=new AbortController();
+ const chunks=S.chunks(input,60);status('loading','Buscando las calles y carreteras que pasan por los puntos del GPX…');controller=new AbortController();
  try{
   const piezasVia=[];for(let i=0;i<chunks.length;i++){if(chunks.length>1)status('loading','Reconociendo calles · tramo '+(i+1)+' de '+chunks.length+'…');const body={shape:chunks[i],costing:'auto',shape_match:'map_snap',directions_options:{units:'kilometers'},trace_options:{gps_accuracy:20,search_radius:60,breakage_distance:5000}};const response=await fetch('https://valhalla1.openstreetmap.de/trace_route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});const json=await response.json().catch(()=>null);if(!response.ok)throw Error(json?.error||json?.status_message||'El servicio de calles respondió '+response.status+'.');for(const leg of S.legs(json))piezasVia.push(leg);}
   if(own!==run||Roadbook.getRoute().pts!==routeRef)return;
@@ -49,20 +49,22 @@ async function match(force=false){
   const {path:matched,breaks}=S.assemble(piezasVia,connectors,C.distance);
   if(matched.length<2)throw Error('No se obtuvo un trazado continuo por calles.');
   const pct=S.coverage(input,matched);if(pct<25)throw Error('No se pudo asociar esta traza con suficientes calles cercanas.');
-  path=matched;const continuo=breaks.length===0,enlazados=detectados-breaks.length;
+  const medida=S.usable(S.length(matched,C.distance),S.length(data.pts,C.distance));
+  path=matched;const continuo=breaks.length===0,enlazados=detectados-breaks.length,fiable=continuo&&medida.ok;
   // Un corte sin enlazar jamás se cruza con una recta: el camino se dibuja a trozos.
   const piezas=continuo?[matched]:S.split(matched,breaks);
   layer=L.featureGroup().addTo(state.map);
   for(const pieza of piezas)L.polyline(pieza.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(layer);
   layer.bringToBack();
-  const used=continuo?RutasMap.useStreetPath(path):false;mapKey(true);
-  status(continuo?'ready':'warn',
+  const used=fiable?RutasMap.useStreetPath(path):false;mapKey(true);
+  status(fiable?'ready':'warn',
    (continuo?'Trazado vial continuo · ':'Trazado vial con interrupciones · ')+pct+' % de los puntos quedan cerca de una calle reconocida.'
    +(enlazados>0?' '+enlazados+(enlazados===1?' corte enlazado':' cortes enlazados')+' por carretera.':'')
-   +(continuo?(used?' Simulación y navegación preparadas sobre estas calles.':'')
-             :' Quedan '+breaks.length+(breaks.length===1?' corte sin enlazar, dibujado como interrupción en vez de como recta.':' cortes sin enlazar, dibujados como interrupciones en vez de como rectas.')+' La navegación sigue el GPX original.'),
-   !continuo);
-  cortesVisibles=breaks.length;window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:pct,navigation:used,bridges:enlazados,gaps:breaks.length,pieces:piezas.length}}));
+   +(continuo?'':' Quedan '+breaks.length+(breaks.length===1?' corte sin enlazar, dibujado como interrupción en vez de como recta.':' cortes sin enlazar, dibujados como interrupciones en vez de como rectas.'))
+   +(medida.ok?'':' Solo cubre el '+medida.pct+' % de los kilómetros del GPX: al reconocer las calles se han perdido pasadas repetidas.')
+   +(fiable?' Simulación y navegación preparadas sobre estas calles.':' La navegación sigue el GPX original.'),
+   !fiable);
+  cortesVisibles=breaks.length;window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:pct,navigation:used,bridges:enlazados,gaps:breaks.length,pieces:piezas.length,lengthPct:medida.pct}}));
  }catch(error){if(error.name!=='AbortError'&&own===run)status('error','No se pudo dibujar el trazado por calles. '+error.message+' El GPX original sigue disponible.',true);}
  finally{if(own===run)controller=null;}
 }
