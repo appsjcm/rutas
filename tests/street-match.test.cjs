@@ -21,4 +21,14 @@ test('un trazado que pierde kilometros no sirve para navegar',()=>{
  assert.equal(S.usable(26350,26350).ok,true);
  assert.equal(S.usable(0,0).ok,false);
  assert.equal(S.usable(100,0).ok,false);});
+test('lee las patas del servicio de reserva',()=>{const a=[{lat:41,lon:2},{lat:41.001,lon:2}],b=[{lat:41.01,lon:2},{lat:41.011,lon:2}];
+ const data={code:'Ok',matchings:[{geometry:encode(a)},{geometry:encode(b)}]};
+ const out=S.osrmLegs(data);
+ assert.equal(out.length,2);assert(Math.abs(out[1][0].lat-b[0].lat)<1e-6);
+ // cada matching es un trozo continuo: el corte esta entre ellos, y joins lo ve
+ assert.equal(S.joins(out,metros).length,1);
+ for(const mal of [null,{code:'NoMatch',message:'sin calles'},{code:'Ok',matchings:[]},{code:'Ok',matchings:[{}]}])assert.throws(()=>S.osrmLegs(mal));});
+test('lee un enlace del servicio de reserva',()=>{const linea=[{lat:41,lon:2},{lat:41.002,lon:2.001}];
+ assert.equal(S.osrmRoute({code:'Ok',routes:[{geometry:encode(linea)}]}).length,2);
+ for(const mal of [null,{code:'Ok',routes:[]},{code:'Ok',routes:[{}]},{code:'NoRoute'}])assert.throws(()=>S.osrmRoute(mal));});
 

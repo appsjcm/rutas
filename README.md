@@ -29,9 +29,15 @@ Compartir ruta genera un enlace que lleva la ronda entera dentro: las coordenada
 
 Publicación mediante GitHub Pages desde main.
 
+## Servicios de calles
+
+Reconocer las calles del GPX lo hace Valhalla de FOSSGIS. No tiene reserva para esa tarea: el OSRM publico limita el emparejado a diez coordenadas por peticion, asi que cubrir una ronda costaria unas doscientas peticiones. Si Valhalla no responde no hay trazado vial y la navegacion se queda con el GPX original, que es el comportamiento seguro.
+
+Enlazar los cortes si tiene reserva, porque ahi basta con dos puntos por peticion: primero Valhalla en lotes de cinco cortes -admite diez localizaciones y cada corte gasta dos- y, si falla, OSRM uno a uno. Un corte que no logre enlazar ninguno de los dos se dibuja como interrupcion, nunca como recta.
+
 ## Sin conexión
 
-Un service worker guarda la aplicación entera -código, estilos, Leaflet y los iconos- la primera vez que se abre, así que arranca sin cobertura. Las teselas del mapa se guardan solo cuando el mapa las ha pedido de verdad, mientras exploras la ruta o conduces, con un tope de 1500: no hay descarga por lotes, que es lo que desaconseja la política de uso de OpenStreetMap. Preparar la ronda en el depósito, con datos, deja esas calles disponibles después. Una zona que no se haya visto nunca aparecerá vacía, y un aviso en pantalla lo indica mientras no haya conexión. Las consultas a Overpass nunca pasan por ese almacén: tienen su propia caducidad de 24 horas.
+Las teselas del mapa 3D se guardan igual que las del 2D, asi que cambiar de vista sin cobertura ya no deja la pantalla en blanco. Un service worker guarda la aplicación entera -código, estilos, Leaflet y los iconos- la primera vez que se abre, así que arranca sin cobertura. Las teselas del mapa se guardan solo cuando el mapa las ha pedido de verdad, mientras exploras la ruta o conduces, con un tope de 1500: no hay descarga por lotes, que es lo que desaconseja la política de uso de OpenStreetMap. Preparar la ronda en el depósito, con datos, deja esas calles disponibles después. Una zona que no se haya visto nunca aparecerá vacía, y un aviso en pantalla lo indica mientras no haya conexión. Las consultas a Overpass nunca pasan por ese almacén: tienen su propia caducidad de 24 horas.
 
 En pantallas de telefono la cabecera se reduce y la explicacion de portada se oculta -sigue entera en la pestana Guia-, las pestanas se acortan y quedan fijas arriba, y todo lo que se toca mide al menos 44 px. Los campos usan 16 px para que iOS no haga zoom al enfocarlos. Con eso la primera pestana aparece a 61 px del borde en vez de a 178, y el mapa entra en pantalla sin desplazarse.
 

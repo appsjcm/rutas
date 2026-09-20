@@ -18,6 +18,21 @@ function legs(data){
  if(!list.length)throw Error(data?.error||data?.status_message||'No se encontraron calles próximas al recorrido.');
  return list.map(leg=>decode(leg.shape));
 }
+// OSRM devuelve cada trozo continuo como un "matching" propio, que encaja uno a uno con la
+// idea de pata de Valhalla: entre matchings es donde puede haber corte, dentro nunca.
+function osrmLegs(data){
+ if(!data||data.code!=='Ok'||!Array.isArray(data.matchings)||!data.matchings.length)
+  throw Error((data&&data.message)||'El servicio de reserva no reconoció calles próximas.');
+ const out=[];
+ for(const m of data.matchings)if(m&&typeof m.geometry==='string')out.push(decode(m.geometry,6));
+ if(!out.length)throw Error('El servicio de reserva no devolvió ninguna geometría de calles.');
+ return out;
+}
+function osrmRoute(data){
+ if(!data||data.code!=='Ok'||!Array.isArray(data.routes)||!data.routes.length||typeof data.routes[0].geometry!=='string')
+  throw Error((data&&data.message)||'No se pudo enlazar ese corte por carretera.');
+ return decode(data.routes[0].geometry,6);
+}
 function input(pts,simplify,max=1800){
  if(!Array.isArray(pts)||pts.length<2)return [];
  let out=typeof simplify==='function'?simplify(pts,5):pts.slice();
@@ -87,5 +102,5 @@ function coverage(samples,path,radius=45){
  for(const p of take){const kx=111320*Math.cos(p.lat*Math.PI/180),ky=110540;let best=Infinity;for(let i=0;i<path.length-1;i++){const a=path[i],b=path[i+1],x=(a.lon-p.lon)*kx,y=(a.lat-p.lat)*ky,dx=(b.lon-a.lon)*kx,dy=(b.lat-a.lat)*ky,l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,-(x*dx+y*dy)/l)):0;best=Math.min(best,Math.hypot(x+t*dx,y+t*dy));if(best<=radius)break;}if(best<=radius)hit++;}
  return Math.round(hit/take.length*100);
 }
-const api={decode,extract,legs,input,chunks,merge,joins,assemble,batches,split,coverage,length,usable,MIN_LENGTH_RATIO};if(typeof module!=='undefined')module.exports=api;else root.RutasStreetCore=api;
+const api={decode,extract,legs,osrmLegs,osrmRoute,input,chunks,merge,joins,assemble,batches,split,coverage,length,usable,MIN_LENGTH_RATIO};if(typeof module!=='undefined')module.exports=api;else root.RutasStreetCore=api;
 })(typeof window!=='undefined'?window:globalThis);
