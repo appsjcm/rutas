@@ -1,0 +1,21 @@
+#streetview-pane{position:absolute;inset:0;z-index:2;background:#172b3b;overflow:hidden}
+#streetview-pane[hidden]{display:none}
+#streetview-canvas{position:absolute;inset:0}
+#streetview-status{position:absolute;z-index:4;left:50%;top:50%;transform:translate(-50%,-50%);max-width:min(360px,calc(100% - 40px));padding:11px 16px;border-radius:999px;background:#102c42e8;color:#fff;font-size:12px;font-weight:700;text-align:center;box-shadow:0 6px 22px #0004;pointer-events:none}
+#streetview-status:empty{display:none}
+#streetview-map{position:absolute;z-index:5;left:50%;bottom:34px;transform:translateX(-50%);border:1px solid #fff9;background:#102c42ed;color:#fff;box-shadow:0 4px 18px #0005;white-space:nowrap}
+#streetview-notice{position:absolute;z-index:545;left:50%;bottom:64px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 28px);padding:10px 14px;border:1px solid #d6e0e7;border-radius:12px;background:#fffffff0;color:#173047;font-size:12px;font-weight:650;text-align:center;box-shadow:0 5px 18px #10233b30;backdrop-filter:blur(10px)}
+#streetview-notice[hidden]{display:none}
+.streetview-active .map-dimension,.streetview-active .leaflet-control-container,.streetview-active .nav-map-key{display:none!important}
+.driving #streetview-canvas{bottom:145px}
+.driving #streetview-map{bottom:165px}
+.driving #streetview-notice{bottom:165px}
+#drive-streetview[aria-pressed=true]{background:#102c42;color:#fff;border-color:#102c42}
+.streetview-settings{display:grid;gap:12px;padding:16px;border:1px solid var(--rule);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--surface) 93%,#e0f4ff),var(--surface))}
+.streetview-settings-head{display:flex;align-items:center;gap:12px}.streetview-settings-head h3{margin:0;font-size:15px}.streetview-settings-head p{margin:3px 0 0;color:var(--muted);font-size:12px;line-height:1.4}
+.streetview-settings-icon{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:13px;background:#e2f0ff;color:#1263b2;font-size:24px;box-shadow:inset 0 0 0 1px #bad8f4}
+.streetview-settings>label{font-size:12px;font-weight:700;color:var(--ink-2)}
+.streetview-key-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.streetview-key-row input{min-width:0;border:1px solid var(--rule);border-radius:10px;background:var(--surface-2);color:var(--ink);font:inherit;font-size:16px;padding:11px 12px}
+#streetview-key-status{margin:0}#streetview-key-status[data-kind=ok]{color:var(--pine)}#streetview-key-status[data-kind=warn]{color:var(--warn)}
+@media(max-width:600px){#drive-streetview{font-size:0!important;width:44px;padding:0!important}#drive-streetview::before{content:'◉';font-size:20px}.streetview-settings{padding:14px}.streetview-key-row{grid-template-columns:1fr}.streetview-key-row .btn{width:100%}}
+@media(max-height:550px){.driving #streetview-canvas{bottom:76px}.driving #streetview-map,.driving #streetview-notice{bottom:88px}#streetview-map{min-height:38px;padding:7px 11px}}
