@@ -10,7 +10,7 @@ function cacheKey(data){return CACHE_PREFIX+C.fingerprint(C.prepare(data.pts));}
 function loadCache(data){try{const value=JSON.parse(localStorage.getItem(cacheKey(data)));if(!value||!Array.isArray(value.path)||value.path.length<2||!value.path.every(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180))return null;return value;}catch{return null;}}
 function saveCache(data,value){try{localStorage.setItem(cacheKey(data),JSON.stringify({...value,saved:Date.now()}));const rows=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k?.startsWith(CACHE_PREFIX)){let saved=0;try{saved=JSON.parse(localStorage.getItem(k)).saved||0;}catch{}rows.push({k,saved});}}rows.sort((a,b)=>b.saved-a.saved);rows.slice(3).forEach(r=>localStorage.removeItem(r.k));}catch{}}
 function mapKey(matched=false){document.querySelector('.nav-map-key').textContent=matched?'Dorado: calles · gris: GPX · verde: hecho · azul: siguiente':'Gris: recorrido · verde: completado · azul: siguiente tramo';}
-function waiting(value){const current=RutasMap.get(),sample=Roadbook.getRoute().sample;for(const id of ['nav-start','nav-play']){const button=document.getElementById(id);if(!button)continue;button.disabled=value||(id==='nav-start'&&sample)||current.active;button.toggleAttribute('aria-busy',value);}const button=document.getElementById('map-3d');if(button){button.disabled=value;button.toggleAttribute('aria-busy',value);button.title=value?'Preparando el recorrido por calles…':'Calles y edificios en perspectiva · necesita conexión';}}
+function waiting(value){const current=RutasMap.get(),sample=Roadbook.getRoute().sample;for(const id of ['nav-play']){const button=document.getElementById(id);if(!button)continue;button.disabled=value||current.active;button.toggleAttribute('aria-busy',value);}const start=document.getElementById('nav-start');if(start){start.disabled=sample||current.active;start.toggleAttribute('aria-busy',value);}const button=document.getElementById('map-3d');if(button){button.disabled=value;button.toggleAttribute('aria-busy',value);button.title=value?'Preparando el recorrido por calles…':'Calles y edificios en perspectiva · necesita conexión';}}
 function clear(){if(controller)controller.abort();controller=null;run++;const state=RutasMap.get();if(layer&&state.map)state.map.removeLayer(layer);layer=null;path=[];cortesVisibles=0;navigable=false;coverage=null;lengthPct=null;matchState='idle';waiting(false);mapKey();window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:[]}}));window.dispatchEvent(new CustomEvent('rutas:street-state',{detail:{state:matchState,navigable}}));}
 function status(kind,message,canRetry=false){matchState=kind;bar.hidden=false;bar.dataset.state=kind;text.textContent=message;retry.hidden=!canRetry;waiting(kind==='loading');window.dispatchEvent(new CustomEvent('rutas:street-state',{detail:{state:kind,navigable}}));}
 
@@ -84,7 +84,7 @@ async function match(force=false){
   const piezasVia=[];
   for(let i=0;i<chunks.length;i++){
    if(own!==run)return;
-   status('loading','Reconociendo calles · tramo '+(i+1)+' de '+chunks.length+'…');
+   status('loading','Analizando calles… '+Math.round(i/chunks.length*100)+' % · puedes arrancar cuando quieras');
    try{for(const leg of await MATCHER.legs(chunks[i],controller.signal))piezasVia.push(leg);}
    catch(error){if(error.name==='AbortError')throw error;throw Error(MATCHER.name+' '+error.message);}
   }

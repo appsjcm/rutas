@@ -77,7 +77,7 @@ Cuando hay una versión preparada aparece «Nueva versión · actualizar». Solo
 
 ## Mapa 3D de calles
 
-El selector 2D / 3D activa un segundo renderizador con MapLibre GL JS 4.7.1 (licencia BSD incluida) y el estilo Liberty de OpenFreeMap. Ofrece calles rotuladas, edificios con volumen donde existen datos y una cámara a 55 grados. La primera activación carga el motor; los datos de OpenFreeMap se solicitan únicamente al activar esta vista y requieren conexión. No se guarda el mapa vectorial para uso sin conexión ni se envía la traza GPX al proveedor: se piden las teselas del área visible.
+El selector 2D / 3D activa un segundo renderizador con MapLibre GL JS 4.7.1 (licencia BSD incluida) y el estilo Liberty de OpenFreeMap. Ofrece calles rotuladas, edificios con volumen donde existen datos y una cámara a 55 grados. La primera activación carga el motor y las teselas de OpenFreeMap se solicitan solo al abrir esta vista. Se guardan igual que las del 2D, en el mismo almacén y con el mismo tope de 1500: una zona vista con cobertura vuelve a estar disponible sin ella, y las dos vistas compiten por ese tope, así que explorar mucho en 3D puede desalojar teselas del 2D. La traza GPX no se envía al proveedor: solo se piden las teselas del área visible.
 
 El seguimiento, los giros y las restricciones siguen dependiendo del mismo GPX y del mismo motor de navegación. Ambas vistas comparten posición, avance y avisos revisados; cambiar de vista no recalcula la ruta. Al iniciar navegación desde 3D se activa la orientación a la marcha; el botón de orientación permite volver al norte. Arrastrar suspende el seguimiento y Centrar GPS lo recupera. Una falta de soporte gráfico, pérdida del contexto WebGL o carga inicial agotada devuelve al mapa 2D.
 

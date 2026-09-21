@@ -90,3 +90,13 @@ test('sin horas o con datos raros devuelve el trazado intacto',()=>{
  assert.equal(N.transferTimes([{lat:41,lon:2,time:'x'}],calles),calles);
  assert.deepEqual(N.transferTimes([{lat:41,lon:2,time:'2026-01-01T00:00:00Z'},{lat:41.002,lon:2,time:'2026-01-01T00:00:00Z'}],calles),calles);
 });
+test('el avance se conserva al cambiar de trazado a mitad de ronda',()=>{
+ // el trazado por calles mide algo menos que el GPX: la mitad sigue siendo la mitad
+ assert.equal(N.remapProgress(13175,26350,24870),12435);
+ assert.equal(N.remapProgress(0,26350,24870),0);
+ assert.equal(N.remapProgress(26350,26350,24870),24870);
+ assert.equal(N.remapProgress(99999,26350,24870),24870);   // nunca pasa del final
+ assert.equal(N.remapProgress(-5,26350,24870),0);
+ for(const mal of [[1,0,100],[1,100,0],[NaN,100,100]])assert.equal(N.remapProgress(...mal),0);
+});
+

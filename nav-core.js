@@ -81,6 +81,13 @@ function transferTimes(source,target){
   return Number.isFinite(ms)?{...p,time:new Date(ms).toISOString()}:p;
  });
 }
+// Al cambiar de trazado a mitad de ronda el avance se conserva en proporcion: el trazado por
+// calles mide algo menos que el GPX, pero el conductor esta en el mismo punto del recorrido.
+function remapProgress(done,fromTotal,toTotal){
+ if(!(fromTotal>0)||!(toTotal>0)||!Number.isFinite(done))return 0;
+ const f=Math.max(0,Math.min(1,done/fromTotal));
+ return f*toTotal;
+}
 function gpsFatal(code){return code===1;}
 function gpsPause(code){
  return code===3?'El GPS tarda en responder. Indicaciones pausadas hasta recuperar la posición.'
@@ -106,5 +113,5 @@ function rejoin(r,p,progress,{minAhead=100,maxAhead=1500,course=null}={}){
  }
  return best;
 }
-const api={distance,prepare,at,heading,match,section,turns,guidance,fingerprint,nearbyPasses,rejoin,speedAt,stops,stopProgress,remainingSeconds,gpsFatal,gpsPause,transferTimes,simplify,packRoute,unpackRoute,TURN_MIN_SPEED,TURN_MIN_GAP,STOP_RADIUS,STOP_SECONDS};if(typeof module!=='undefined')module.exports=api;else root.RutasNav=api;
+const api={distance,prepare,at,heading,match,section,turns,guidance,fingerprint,nearbyPasses,rejoin,speedAt,stops,stopProgress,remainingSeconds,gpsFatal,gpsPause,transferTimes,remapProgress,simplify,packRoute,unpackRoute,TURN_MIN_SPEED,TURN_MIN_GAP,STOP_RADIUS,STOP_SECONDS};if(typeof module!=='undefined')module.exports=api;else root.RutasNav=api;
 })(typeof window!=='undefined'?window:globalThis);
