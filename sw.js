@@ -1,4 +1,4 @@
-const VERSION='rutas-street-view-follow-v35',TILES='rutas-tiles-v1',FONTS='rutas-fonts-v1',TILE_CAP=1500;
+const VERSION='rutas-street-view-premium-v36',TILES='rutas-tiles-v1',FONTS='rutas-fonts-v1',TILE_CAP=1500;
 const SHELL=['./','index.html','navigation.css','premium.css','premium.js','map3d.js','map3d.css','streetview.js','streetview.css','approach.js','approach.css','library-core.js','library.js','library.css','gps-setup.js','gps-setup.css','street-match-core.js','street-match.js','street-match.css','segments.js','segments.css','access-core.js','access.js','gpx-core.js','vendor/maplibre-gl.js','vendor/maplibre-gl.css','nav-core.js','restrictions-core.js','navigation.js','restrictions.js','manifest.webmanifest','icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png','vendor/leaflet.js','vendor/leaflet.css'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL)))});
 self.addEventListener('activate',e=>{e.waitUntil((async()=>{const keep=[VERSION,TILES,FONTS];for(const k of await caches.keys())if(k.startsWith('rutas-')&&!keep.includes(k))await caches.delete(k);await self.clients.claim();})())});

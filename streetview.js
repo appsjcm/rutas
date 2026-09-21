@@ -4,8 +4,11 @@
 const $=id=>document.getElementById(id),C=window.RutasNav;
 const STORE='rutas-google-maps-key-v1',stage=$('nav-stage'),pane=$('streetview-pane'),canvas=$('streetview-canvas');
 const mapButton=document.createElement('button');mapButton.type='button';mapButton.id='map-streetview';mapButton.textContent='Calle';mapButton.title='Fotografías de la calle siguiendo la ruta';mapButton.setAttribute('aria-pressed','false');document.querySelector('.map-dimension')?.append(mapButton);
+const photoHud=document.createElement('div');photoHud.id='streetview-hud';photoHud.hidden=true;photoHud.innerHTML='<small>VISTA CALLE</small><b id="streetview-place">Siguiendo el recorrido</b><span id="streetview-position"></span>';pane.append(photoHud);
+const actions=document.createElement('div');actions.id='streetview-actions';const recenter=document.createElement('button');recenter.type='button';recenter.id='streetview-recenter';recenter.className='btn';recenter.textContent='Orientar a la marcha';actions.append($('streetview-map'),recenter);pane.append(actions);
 const notice=document.createElement('div');notice.id='streetview-notice';notice.role='status';notice.hidden=true;stage.append(notice);
-let active=false,panorama=null,service=null,loadPromise=null,loadedKey='',lastDistance=NaN,lastRoute=null,request=0,pending=false;
+let active=false,panorama=null,service=null,loadPromise=null,loadedKey='',lastDistance=NaN,lastRoute=null,request=0,pending=false,currentHeading=0;
+const cache=new Map(),prefetching=new Set();
 
 function savedKey(){try{return localStorage.getItem(STORE)||'';}catch{return '';}}
 function storeKey(value){try{if(value)localStorage.setItem(STORE,value);else localStorage.removeItem(STORE);return true;}catch{return false;}}
@@ -18,8 +21,8 @@ function showMap(message=''){
  if(message)showNotice(message);
  window.RutasMap?.get().map?.invalidateSize();
 }
-function showPanorama(){$('streetview-status').textContent='';notice.hidden=true;pane.hidden=false;stage.classList.add('streetview-active');setTimeout(()=>window.google?.maps?.event?.trigger(panorama,'resize'),30);}
-function close(){active=false;request++;pending=false;lastDistance=NaN;lastRoute=null;showMap();showNotice('');buttons(false);panorama?.setVisible(false);}
+function showPanorama(){$('streetview-status').textContent='';notice.hidden=true;pane.hidden=false;photoHud.hidden=false;stage.classList.add('streetview-active');setTimeout(()=>window.google?.maps?.event?.trigger(panorama,'resize'),30);}
+function close(){active=false;request++;pending=false;lastDistance=NaN;lastRoute=null;photoHud.hidden=true;showMap();showNotice('');buttons(false);panorama?.setVisible(false);}
 
 function loadGoogle(key){
  if(window.google?.maps?.importLibrary)return Promise.resolve(window.google.maps);
@@ -60,14 +63,28 @@ function routePose(state,distance){
  const to=d>=state.route.total-2?p:C.at(state.route,Math.min(state.route.total,d+30));
  return {p,heading:C.heading(from,to),distance:d};
 }
+function cacheKey(distance){return Math.round(distance/30);}
+function remember(key,data){cache.set(key,data);if(cache.size>80)cache.delete(cache.keys().next().value);}
+function renderPanorama(data,pose){
+ currentHeading=pose.heading;panorama.setPano(data.location.pano);panorama.setPov({heading:currentHeading,pitch:0});panorama.setZoom(0);panorama.setVisible(true);
+ const road=$('drive-road-name')?.textContent?.trim(),place=data.location.description?.trim();
+ $('streetview-place').textContent=place||(road&&!/buscando/i.test(road)?road:'Siguiendo el recorrido');
+ $('streetview-position').textContent=(pose.distance/1000).toLocaleString('es-ES',{maximumFractionDigits:2})+' km desde el inicio';
+ showPanorama();
+}
+function prefetch(state,distance){
+ if(!active||!service||distance>=state.route.total)return;const routeRef=state.route,pose=routePose(state,distance),key=cacheKey(pose.distance);if(cache.has(key)||prefetching.has(key))return;prefetching.add(key);
+ service.getPanorama({location:{lat:pose.p.lat,lng:pose.p.lon},radius:60,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},(data,result)=>{prefetching.delete(key);if(!active||window.RutasMap.get().route!==routeRef)return;remember(key,result===google.maps.StreetViewStatus.OK&&data?.location?.pano?data:null);});
+}
 function findPanorama(pose,token){
+ const key=cacheKey(pose.distance);if(cache.has(key)){const data=cache.get(key);if(data){renderPanorama(data,pose);prefetch(window.RutasMap.get(),pose.distance+30);}else{panorama.setVisible(false);showMap('No hay imágenes aquí. Se muestra el mapa y Vista calle volverá a buscar más adelante.');}return;}
  pending=true;
  service.getPanorama({location:{lat:pose.p.lat,lng:pose.p.lon},radius:60,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},(data,result)=>{
   pending=false;if(!active||token!==request)return;
   if(result===google.maps.StreetViewStatus.OK&&data?.location?.pano){
-   panorama.setPano(data.location.pano);panorama.setPov({heading:pose.heading,pitch:0});panorama.setZoom(0);panorama.setVisible(true);showPanorama();
+   remember(key,data);renderPanorama(data,pose);prefetch(window.RutasMap.get(),pose.distance+30);
   }else{
-   panorama.setVisible(false);showMap('No hay imágenes aquí. Se muestra el mapa y Vista calle volverá a buscar más adelante.');
+   remember(key,null);panorama.setVisible(false);showMap('No hay imágenes aquí. Se muestra el mapa y Vista calle volverá a buscar más adelante.');
   }
  });
 }
@@ -75,7 +92,8 @@ function sync(distance){
  if(!active||!service||pending)return;
  const state=window.RutasMap?.get();if(!state?.route)return;
  const pose=routePose(state,Number.isFinite(distance)?distance:state.progress);
- if(lastRoute===state.route&&Number.isFinite(lastDistance)&&Math.abs(pose.distance-lastDistance)<28){panorama?.setPov({heading:pose.heading,pitch:0});return;}
+ if(lastRoute===state.route&&Number.isFinite(lastDistance)&&Math.abs(pose.distance-lastDistance)<28)return;
+ if(lastRoute!==state.route){cache.clear();prefetching.clear();}
  lastRoute=state.route;lastDistance=pose.distance;showNotice('Buscando la imagen más próxima…');findPanorama(pose,++request);
 }
 async function open(){
@@ -86,6 +104,7 @@ async function open(){
 }
 
 $('drive-streetview').onclick=open;$('streetview-preview').onclick=open;$('map-streetview').onclick=open;$('streetview-map').onclick=close;
+$('streetview-recenter').onclick=()=>{if(panorama){panorama.setPov({heading:currentHeading,pitch:0});panorama.setZoom(0);}};
 $('map-3d')?.addEventListener('click',()=>{if(active)close();});
 $('streetview-save').onclick=()=>{
  const key=$('streetview-key').value.trim();
@@ -98,7 +117,8 @@ $('streetview-clear').onclick=()=>{close();storeKey('');$('streetview-key').valu
 $('streetview-test').onclick=()=>{const typed=$('streetview-key').value.trim();if(typed&&typed!==savedKey())storeKey(typed);open();};
 const key=savedKey();if(key){$('streetview-key').value=key;status('Clave guardada en este dispositivo. Vista calle está lista para usarse.','ok');}
 window.addEventListener('rutas:progress',event=>sync(event.detail?.distance));
-window.addEventListener('rutas:check-route',()=>{lastRoute=null;lastDistance=NaN;if(active)sync();});
+window.addEventListener('rutas:check-route',()=>{lastRoute=null;lastDistance=NaN;cache.clear();prefetching.clear();if(active)sync();});
 window.addEventListener('offline',()=>{if(active){showMap('Sin conexión: se mantiene el mapa disponible.');}});
+window.addEventListener('online',()=>{if(active){lastDistance=NaN;sync();}});
 window.RutasStreetView={open,close,isActive:()=>active,sync};
 })();
