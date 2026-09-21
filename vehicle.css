@@ -1,6 +1,6 @@
 .veh-presets{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;margin:0}
 .veh-presets button{padding:8px 13px;border:1px solid var(--rule-strong);border-radius:999px;
- background:var(--surface);color:var(--ink-2);font:600 13px/1 inherit;cursor:pointer;min-height:40px}
+ background:var(--surface);color:var(--ink-2);font-family:inherit;font-weight:600;font-size:13px;line-height:1;cursor:pointer;min-height:40px}
 .veh-presets button:hover{border-color:var(--accent);color:var(--ink)}
 .veh-presets button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 
@@ -12,7 +12,7 @@
 /* Arriba de la ruta: el conductor lo ve antes de salir, no enterrado en ajustes. */
 #veh-alert{display:block;width:100%;margin:14px 0 0;padding:12px 14px;text-align:left;cursor:pointer;
  border:1px solid var(--danger);border-left:5px solid var(--danger);border-radius:12px;
- background:var(--warn-soft);color:var(--danger);font:700 13.5px/1.35 inherit;letter-spacing:-.01em}
+ background:var(--warn-soft);color:var(--danger);font-family:inherit;font-weight:700;font-size:13.5px;line-height:1.35;letter-spacing:-.01em}
 #veh-alert:hover{filter:brightness(.97)}
 #veh-alert[hidden]{display:none}
 /* sobre la ficha oscura de la ruta el rojo no contrasta: alli va en claro */

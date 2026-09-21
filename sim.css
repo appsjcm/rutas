@@ -17,7 +17,7 @@
 .sim-opts{display:flex;align-items:center;gap:4px}
 .sim-opts button{flex:1;min-width:0;padding:7px 4px;border:1px solid var(--rule,#e1e8f0);
  border-radius:8px;background:var(--surface-2,#f6f8fb);color:var(--ink,#172b43);
- font:600 12px/1 inherit;cursor:pointer;text-transform:none;letter-spacing:0}
+ font-family:inherit;font-weight:600;font-size:12px;line-height:1;cursor:pointer;text-transform:none;letter-spacing:0}
 .sim-opts button[aria-pressed=true]{background:var(--accent,#096c83);border-color:var(--accent,#096c83);color:#fff}
 .sim-opts i{font-style:normal;font-size:10px;color:var(--muted,#607389);flex:none}
 #sim-panel label.sim-check{flex-direction:row;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:12px;font-weight:600;color:var(--ink,#172b43)}
