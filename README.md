@@ -45,9 +45,15 @@ Reconocer las calles del GPX lo hace Valhalla de FOSSGIS. No tiene reserva para 
 
 Enlazar los cortes si tiene reserva, porque ahi basta con dos puntos por peticion: primero Valhalla en lotes de cinco cortes -admite diez localizaciones y cada corte gasta dos- y, si falla, OSRM uno a uno. Un corte que no logre enlazar ninguno de los dos se dibuja como interrupcion, nunca como recta.
 
+## Chequeo antes de salir
+
+Al pulsar Iniciar navegación aparece una tarjeta con el estado real del turno: Ruta, GPS, Voz, Mapas y Restricciones. No bloquea nada -la navegación arranca en ese mismo toque-; si todo está en orden la tarjeta se retira sola a los tres segundos, y si hay algo que leer espera a que se cierre. El permiso de GPS se consulta al navegador, no se supone: distingue concedido, por pedir y denegado. El apartado de restricciones cuenta lo que depende del vehículo y deja fuera los avisos de sentido de circulación.
+
 ## Sin conexión
 
 Las teselas del mapa 3D se guardan igual que las del 2D, asi que cambiar de vista sin cobertura ya no deja la pantalla en blanco. Un service worker guarda la aplicación entera -código, estilos, Leaflet y los iconos- la primera vez que se abre, así que arranca sin cobertura. Las teselas del mapa se guardan solo cuando el mapa las ha pedido de verdad, mientras exploras la ruta o conduces, con un tope de 1500: no hay descarga por lotes, que es lo que desaconseja la política de uso de OpenStreetMap. Preparar la ronda en el depósito, con datos, deja esas calles disponibles después. Una zona que no se haya visto nunca aparecerá vacía, y un aviso en pantalla lo indica mientras no haya conexión. Las consultas a Overpass nunca pasan por ese almacén: tienen su propia caducidad de 24 horas.
+
+El aviso de sin conexión dice qué seguirá funcionando, no solo que no hay red: «la ruta está guardada entera», «mapa guardado al 40 % de la ruta» o «esta zona no se ha visto todavía». La medida recorre puntos repartidos por el recorrido y da por cubierto el que tenga una tesela guardada a un zoom utilizable: la suya, una hasta dos niveles por encima -borrosa pero legible- o una más detallada de cuando se pasó por allí. Ampliar tres niveles o más es un borrón de color que no guía a nadie, así que no cuenta. Solo se miran las teselas del mapa 2D: el satélite numera los ejes al revés y las vectoriales del 3D son otro dibujo.
 
 En pantallas de telefono la cabecera se reduce y la explicacion de portada se oculta -sigue entera en la pestana Guia-, las pestanas se acortan y quedan fijas arriba, y todo lo que se toca mide al menos 44 px. Los campos usan 16 px para que iOS no haga zoom al enfocarlos. Con eso la primera pestana aparece a 61 px del borde en vez de a 178, y el mapa entra en pantalla sin desplazarse.
 

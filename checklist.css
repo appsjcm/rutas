@@ -1,0 +1,43 @@
+/* Tarjeta del chequeo: flota sobre el mapa sin robar el clic al resto de la pantalla. */
+#check-panel{position:fixed;z-index:1200;left:50%;transform:translateX(-50%);
+ bottom:calc(96px + env(safe-area-inset-bottom));width:min(420px,calc(100vw - 24px));
+ padding:16px 18px;border-radius:16px;border:1px solid var(--rule);
+ background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+#check-panel[hidden]{display:none}
+#check-panel[data-tone=ok]{border-color:var(--pine)}
+#check-panel[data-tone=warn]{border-color:var(--warn)}
+#check-panel[data-tone=bad]{border-color:var(--danger)}
+
+.check-head{margin:0 0 12px;font-size:15px;font-weight:700;letter-spacing:-.01em}
+#check-panel[data-tone=ok] .check-head{color:var(--pine)}
+#check-panel[data-tone=warn] .check-head{color:var(--warn)}
+#check-panel[data-tone=bad] .check-head{color:var(--danger)}
+
+.check-list{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.check-list li{display:grid;grid-template-columns:22px auto 1fr;align-items:baseline;gap:8px;
+ font-size:13px;line-height:1.4}
+.check-list b{font-weight:650}
+.check-detail{color:var(--muted)}
+.check-mark{justify-self:center;width:20px;height:20px;border-radius:50%;
+ display:inline-flex;align-items:center;justify-content:center;
+ font-size:12px;font-weight:800;line-height:1;align-self:center}
+li[data-state=ok] .check-mark{background:var(--pine-soft);color:var(--pine)}
+li[data-state=warn] .check-mark{background:var(--warn-soft);color:var(--warn)}
+li[data-state=bad] .check-mark{background:var(--accent-soft);color:var(--danger)}
+li[data-state=bad] .check-detail{color:var(--danger)}
+
+#check-panel .check-close{margin-top:13px;width:100%}
+
+/* El indicador de sin conexión ya no dice solo «sin conexión»: dice qué seguirá funcionando. */
+#net-offline[data-tone=ok]{border-color:var(--pine)}
+#net-offline[data-tone=bad]{border-color:var(--danger)}
+
+@media(max-width:700px){
+ #check-panel{bottom:calc(78px + env(safe-area-inset-bottom));padding:14px}
+ .check-list li{font-size:12.5px}
+ .check-head{font-size:14px}
+}
+@media(prefers-reduced-motion:no-preference){
+ #check-panel{animation:check-in .18s ease-out}
+ @keyframes check-in{from{opacity:0;transform:translateX(-50%) translateY(8px)}}
+}
