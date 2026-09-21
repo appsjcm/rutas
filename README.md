@@ -8,7 +8,7 @@ Web: https://appsjcm.github.io/rutas/
 
 1. Abre Navegar y carga un GPX desde tu dispositivo.
 2. Si contiene varias trazas o segmentos, elige uno.
-3. Explora la ruta con el control de distancia o Reproducir. Vista calle abre las fotografías gratuitas de Mapillary próximas al punto seleccionado.
+3. Explora la ruta con el control de distancia o Reproducir y cambia entre mapa 2D, satélite híbrido y calles 3D.
 4. Sitúa el control en tu punto de inicio y pulsa Iniciar GPS. Permite la ubicación y mantén la página visible.
 
 La línea gris muestra todo el recorrido, la verde lo completado y la azul los próximos 200 metros. Las flechas indican el sentido. El mapa puede ampliarse a pantalla completa. La posición real aparece con un círculo de precisión. Se muestran distancia restante y velocidad, con avisos opcionales de desvío y de giro por voz. Los giros se estiman por la geometría del GPX y se pueden consultar para todo el recorrido. Si el GPX trae horas, se detectan además las paradas de 3 minutos o más dentro de un radio de 40 metros y se muestra cuántas llevas hechas de la ronda. Solo se anuncian los tomados a 5 km/h o más, medidos con las marcas de tiempo del propio GPX, y con 60 metros mínimos entre indicaciones: así la deriva del GPS durante una parada no genera giros inexistentes ni se encadenan dos avisos imposibles de seguir. Cuando el GPX no trae horas, solo se aplica la separación mínima. La navegación en directo ofrece avisos de preparación, proximidad y «Ahora», ajustados a la velocidad; muestra el siguiente giro y las indicaciones completadas. Si dos posiciones fiables confirman que el vehículo se ha desviado, propone un punto futuro lógico y puede calcular un regreso temporal por calles sin adelantar ni sustituir el GPX. La voz está activada inicialmente y se puede desactivar o repetir. Ante una posición imprecisa, antigua o ausente durante 20 segundos, las indicaciones se pausan hasta recuperar una posición válida. La reproducción admite velocidades 1×, 5× y 25×.
@@ -19,9 +19,9 @@ Al cargar un GPX aparece una revisión automática compacta con continuidad y se
 
 ## Datos y servicios
 
-Los GPX se procesan en el dispositivo y no se suben al repositorio. La ruta cargada, la grabación y los puntos manuales usan almacenamiento local del navegador. La ruta se recupera al volver y puede eliminarse con Olvidar ruta guardada. El mapa solicita únicamente las teselas visibles a OpenStreetMap o Esri. Al abrir Vista calle se consulta Mapillary alrededor del punto elegido; nunca se envía el GPX completo. Las fuentes y el generador de QR usan servicios externos.
+Los GPX se procesan en el dispositivo y no se suben al repositorio. La ruta cargada, la grabación y los puntos manuales usan almacenamiento local del navegador. La ruta se recupera al volver y puede eliminarse con Olvidar ruta guardada. El mapa solicita únicamente las teselas visibles a OpenStreetMap o Esri. Las fuentes y el generador de QR usan servicios externos.
 
-Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap contributors. Satélite: Esri, Maxar, Earthstar Geographics y GIS User Community. Vista calle utiliza MapillaryJS y un token gratuito guardado solo en el dispositivo.
+Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap contributors. Satélite: Esri, Maxar, Earthstar Geographics y GIS User Community.
 
 ## Comprobaciones
 
