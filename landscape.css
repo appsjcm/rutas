@@ -1,0 +1,43 @@
+/* Horizontal en el soporte del coche. En vertical la cabecera y el panel ocupan una franja
+   arriba y otra abajo; girado el teléfono eso deja 215 px de mapa en una pantalla de 375.
+   Aquí las indicaciones se apilan en una columna a la derecha y el mapa se queda entero
+   a la izquierda, que es como se mira conduciendo. */
+@media (orientation:landscape) and (max-height:560px){
+
+ body.map-focus #nav-stage.focus{--rail:min(42%,330px)}
+
+ /* --- columna de indicaciones a la derecha --- */
+ body.map-focus #nav-stage.focus #drive-banner{
+  left:auto;right:8px;top:8px;width:var(--rail);border-radius:16px;overflow:hidden}
+ body.map-focus #nav-stage.focus #drive-panel{
+  left:auto;right:8px;top:auto;bottom:8px;width:var(--rail);border-radius:16px}
+
+ /* --- el mapa, y sus mandos, a la izquierda --- */
+ #nav-stage.focus #drive-exit{left:12px;right:auto;top:12px}
+ #nav-stage.focus .map-dimension{left:12px;right:auto;top:68px}
+ #nav-stage.focus #drive-speedo{left:12px;right:auto;top:auto;bottom:12px}
+ #nav-stage.focus #drive-speed-limit{left:76px;right:auto;top:auto;bottom:12px}
+ #nav-stage.focus #drive-tools{left:12px;right:auto;top:auto;bottom:76px;
+  flex-direction:row;width:auto;height:auto}
+ /* premium.css coloca este botón con un :has() que pesa más; se iguala el selector para
+    poder moverlo, en vez de subirle la prioridad con !important. */
+ #nav-stage.driving:not(:has(#drive-speed-limit:not([hidden]))) #nav-repeat,
+ #nav-stage.driving #nav-repeat{left:180px;right:auto;top:auto;bottom:76px}
+ #nav-stage.focus .nav-map-key{display:none}      /* la leyenda no cabe y no guía a nadie */
+
+ /* --- lo que avisa no debe meterse debajo de la columna --- */
+ #nav-stage.driving #drive-road-info:not([hidden]){
+  top:12px;left:70px;max-width:calc(100% - var(--rail,330px) - 100px)}
+ #nav-stage.focus #route-recovery{right:calc(var(--rail,330px) + 20px);left:12px;bottom:12px}
+ #nav-stage.driving #nav-road-alert{right:calc(var(--rail,330px) + 20px);left:12px;
+  transform:none;max-width:none}
+ #check-panel{left:12px;transform:none;bottom:12px;
+  width:min(360px,calc(100vw - var(--rail,330px) - 32px))}
+}
+
+/* Horizontal fuera de la conducción: la pantalla es baja, así que el mapa de exploración
+   deja de pedir media pantalla de alto y las pestañas no se comen el resto. */
+@media (orientation:landscape) and (max-height:560px){
+ /* premium.css fija la altura con #nav-stage #nav-map; se iguala para poder bajarla. */
+ #nav-stage #nav-map{height:62vh;min-height:200px;max-height:none}
+}
