@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id),A=window.RutasRestrictions,C=window.Ruta
 let report=null,roads=[],layer=null,token=0,controller=null,routeRef=null,acks=[],ackKey=null,profile={},lastData=null,lastCached=false,autoTimer=null;
 const km=m=>(m/1000).toFixed(3).replace('.',',')+' km';
 const VEH=['height','weight','width'];
-function loadProfile(){try{const v=JSON.parse(localStorage.getItem('rutas-vehicle-v1'))||{};const out={};for(const k of VEH)if(Number.isFinite(+v[k])&&+v[k]>0)out[k]=+v[k];return out;}catch{return {};}}
+function loadProfile(){try{const v=JSON.parse(localStorage.getItem('rutas-vehicle-v1'))||{};return window.RutasVehicleCore?window.RutasVehicleCore.normalise(v):v;}catch{return {};}}
 function saveProfile(){try{Object.keys(profile).length?localStorage.setItem('rutas-vehicle-v1',JSON.stringify(profile)):localStorage.removeItem('rutas-vehicle-v1');}catch{}}
 profile=loadProfile();
 function bounds(pts){let s=90,w=180,n=-90,e=-180;for(const p of pts){s=Math.min(s,p.lat);n=Math.max(n,p.lat);w=Math.min(w,p.lon);e=Math.max(e,p.lon);}return [s-.002,w-.002,n+.002,e+.002];}
@@ -21,7 +21,7 @@ function loadAcks(route){const print=C.fingerprint(route);ackKey='rutas-oneway-a
 function saveAcks(){if(!ackKey)return;try{acks.length?localStorage.setItem(ackKey,JSON.stringify(acks)):localStorage.removeItem(ackKey);}catch{}}
 function muted(issue){return acks.some(a=>a[0]===issue.way&&a[2]===issue.kind&&Math.abs(a[1]-issue.start)<=ACK_TOLERANCE);}
 function setAck(issue,on){if(on){if(!muted(issue))acks.push([issue.way,Math.round(issue.start),issue.kind]);}else acks=acks.filter(a=>!(a[0]===issue.way&&a[2]===issue.kind&&Math.abs(a[1]-issue.start)<=ACK_TOLERANCE));}
-function reset(){const state=RutasMap.get();if(!state.route||state.route.pts===routeRef)return;routeRef=state.route.pts;loadAcks(state.route);token++;if(controller)controller.abort();report=null;roads=[];lastData=null;lastCached=false;window.dispatchEvent(new CustomEvent('rutas:road-state',{detail:{state:'idle'}}));if(layer){state.map.removeLayer(layer);layer=null;}$('road-issues').replaceChildren();$('road-export').disabled=true;$('drive-road-info').hidden=true;$('drive-speed-limit').hidden=true;$('drive-speedo').classList.remove('over-limit');if(state.mode==='access'){$('road-check').disabled=true;$('nav-road-alert').hidden=true;$('road-status').textContent='Acceso calculado para coche. Las medidas del vehículo no se tienen en cuenta en este trayecto.';return;}$('road-check').disabled=Roadbook.getRoute().sample;$('road-status').textContent=Roadbook.getRoute().sample?'Carga tu GPX real para comprobarlo.':'Preparando nombres de calles, sentidos y restricciones…';$('nav-road-alert').hidden=true;try{const cache=JSON.parse(localStorage.getItem(key(routeRef)));if(cache&&Date.now()-cache.saved<86400000)render(cache.data,state.route,true);}catch{}}
+function reset(){const state=RutasMap.get();if(!state.route||state.route.pts===routeRef)return;routeRef=state.route.pts;loadAcks(state.route);token++;if(controller)controller.abort();report=null;roads=[];lastData=null;lastCached=false;window.dispatchEvent(new CustomEvent('rutas:road-state',{detail:{state:'idle'}}));if(layer){state.map.removeLayer(layer);layer=null;}$('road-issues').replaceChildren();$('road-export').disabled=true;$('drive-road-info').hidden=true;$('drive-speed-limit').hidden=true;$('drive-speedo').classList.remove('over-limit');if(state.mode==='access'){$('road-check').disabled=true;$('nav-road-alert').hidden=true;window.dispatchEvent(new CustomEvent('rutas:road-issues',{detail:{issues:null,profile}}));$('road-status').textContent='Acceso calculado para coche. Las medidas del vehículo no se tienen en cuenta en este trayecto.';return;}$('road-check').disabled=Roadbook.getRoute().sample;$('road-status').textContent=Roadbook.getRoute().sample?'Carga tu GPX real para comprobarlo.':'Preparando nombres de calles, sentidos y restricciones…';$('nav-road-alert').hidden=true;try{const cache=JSON.parse(localStorage.getItem(key(routeRef)));if(cache&&Date.now()-cache.saved<86400000)render(cache.data,state.route,true);}catch{}}
 const KINDS={opposed:'Posible contramano (sentido contrario)',conditional:'Sentido variable: revisar condiciones',ambiguous:'Coincidencia dudosa entre vías cercanas',height:'El vehículo no pasa por altura',weight:'El vehículo supera el peso permitido',width:'El vehículo no pasa por anchura',access:'Vía cerrada a este vehículo','limit-variable':'Límite dimensional variable: revisar condiciones'};
 const HARD=new Set(['opposed','height','weight','width','access']);
 function description(issue){return (KINDS[issue.kind]||'Restricción por revisar')+(issue.detail?' · '+issue.detail:'');}
@@ -49,7 +49,7 @@ function render(data,route,cached=false){if(data.remark||!Array.isArray(data.ele
   painters.push(paint);li.append(label,range,button,ack);if(whole)li.append(whole);li.append(link('Fuente OSM','https://www.openstreetmap.org/way/'+issue.way));$('road-issues').append(li);}
  for(const fn of painters)fn();
  updateStatus();
- $('road-export').disabled=false;alertAt(state.progress);RutasMap.refresh();window.dispatchEvent(new CustomEvent("rutas:roads",{detail:{pts:route.pts,elements:data.elements}}));window.dispatchEvent(new CustomEvent('rutas:road-state',{detail:{state:'ready'}}));}
+ $('road-export').disabled=false;alertAt(state.progress);RutasMap.refresh();window.dispatchEvent(new CustomEvent("rutas:roads",{detail:{pts:route.pts,elements:data.elements}}));window.dispatchEvent(new CustomEvent("rutas:road-issues",{detail:{issues:report.issues.map(i=>({kind:i.kind,name:i.name,detail:i.detail,start:i.start,end:i.end})),profile}}));window.dispatchEvent(new CustomEvent('rutas:road-state',{detail:{state:'ready'}}));}
 const MIRRORS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
 const ATTEMPT_MS=25000;
 function host(url){try{return new URL(url).hostname;}catch{return url;}}
@@ -99,5 +99,13 @@ $('road-data').onchange=async e=>{const file=e.target.files[0];e.target.value=''
 for(const k of VEH){const input=$('veh-'+k);if(!input)continue;if(profile[k]!=null)input.value=profile[k];
  input.onchange=()=>{const v=parseFloat(String(input.value).replace(',','.'));if((Number.isFinite(v)&&v>0?v:undefined)===profile[k])return;if(Number.isFinite(v)&&v>0)profile[k]=v;else{delete profile[k];input.value='';}saveProfile();
   const state=RutasMap.get();if(lastData&&state.route)try{render(lastData,state.route,lastCached);}catch(err){$('road-status').textContent=err.message;}};}
+window.RutasVehicle={
+ get:()=>({...profile}),
+ set(next){const V=window.RutasVehicleCore;profile=V?V.normalise(next):(next||{});saveProfile();
+  for(const k of VEH){const input=$('veh-'+k);if(input)input.value=profile[k]!=null?profile[k]:'';}
+  const state=RutasMap.get();
+  if(lastData&&state.route){try{render(lastData,state.route,lastCached);}catch(err){$('road-status').textContent=err.message;}}
+  else window.dispatchEvent(new CustomEvent('rutas:road-issues',{detail:{issues:report?report.issues:null,profile}}));}
+};
 $('road-check').onclick=check;$('road-export').onclick=()=>{if(!report)return;const quote=s=>'"'+String(s??'').replace(/"/g,'""')+'"';const rows=[['calle','km_inicio','km_fin','resultado','revisado','via_osm','fecha_datos_osm']].concat(report.issues.map(i=>[i.name,(i.start/1000).toFixed(3),(i.end/1000).toFixed(3),description(i),muted(i)?'sí':'no','https://www.openstreetmap.org/way/'+i.way,report.osmDate]));const blob=new Blob(['\uFEFF'+rows.map(r=>r.map(quote).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='revision-sentidos.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);};window.addEventListener('rutas:check-route',reset);window.addEventListener('rutas:navigation-path',reset);window.addEventListener('rutas:street-state',e=>{if(e.detail?.state!=='ready'||!e.detail.navigable)return;reset();clearTimeout(autoTimer);autoTimer=setTimeout(()=>{if(!report&&!controller)check();},250);});window.addEventListener('rutas:progress',e=>alertAt(e.detail.distance));reset();
 })();
