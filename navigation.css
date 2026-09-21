@@ -21,7 +21,7 @@
 
 
 /* ---- vista de conduccion: banner, velocimetro y hoja inferior ---- */
-#drive-banner[hidden],#drive-speedo[hidden]{display:none}
+#drive-banner[hidden],#drive-speedo[hidden],#drive-exit[hidden]{display:none}
 #drive-banner{position:absolute;z-index:620;top:0;left:0;right:0;display:flex;align-items:center;gap:16px;
  background:#0b0d0c;color:#fff;padding:calc(10px + env(safe-area-inset-top)) 68px 14px 18px;box-shadow:0 2px 14px #0006}
 #drive-turn-arrow{font-size:46px;line-height:1;width:54px;text-align:center;flex:none}
@@ -106,4 +106,3 @@ body.map-focus #nav-stage.focus.driving{overscroll-behavior:none}
  .drive-stat small{font-size:10px}
  .drive-eta{gap:8px}
 }
-

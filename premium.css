@@ -176,3 +176,137 @@ html{background:var(--ground);-webkit-text-size-adjust:100%}body{overscroll-beha
  .nav-clean>.nav-actions #nav-start{width:100%;font-size:15px;min-height:52px}.nav-clean>.nav-actions #nav-stop{flex:none}
  .route-settings-body{padding:12px;gap:12px}.route-settings{scroll-margin-top:12px}
 }
+
+/* Cabina de navegación: una vista limpia y legible para conducción. */
+#nav-stage.driving{
+ --cockpit-navy:#102f49;--cockpit-blue:#1684d6;--cockpit-cyan:#83e4e1;
+ --cockpit-panel:rgba(255,255,255,.96);--cockpit-panel-height:148px;
+ background:#dbe7df;color:#10263a;
+}
+#nav-stage.driving #drive-banner{
+ min-height:132px;padding:calc(13px + env(safe-area-inset-top)) 70px 13px max(14px,env(safe-area-inset-left));
+ align-items:stretch;gap:13px;background:linear-gradient(145deg,#0c2a41 0%,#123b58 100%);
+ border-bottom:1px solid #ffffff1f;box-shadow:0 8px 28px #061a2b42;
+}
+.drive-maneuver{display:grid;place-items:center;align-self:center;flex:0 0 72px;height:72px;border-radius:20px;background:#ffffff12;border:1px solid #ffffff18}
+#drive-turn-arrow{width:auto;font-size:51px;font-weight:700;line-height:1;color:#fff;text-shadow:0 2px 8px #0003}
+.drive-instruction{display:grid;align-content:center;min-width:0;flex:1}
+#drive-turn-phase{font-size:10px;font-weight:800;line-height:1.2;letter-spacing:.14em;text-transform:uppercase;color:#b9ccda}
+.drive-primary{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:baseline;gap:10px;margin-top:2px;min-width:0}
+#drive-turn-dist{font-size:38px;font-weight:800;line-height:1;letter-spacing:-.045em;color:#fff;white-space:nowrap}
+#drive-turn-street{font-size:19px;font-weight:720;line-height:1.15;color:var(--cockpit-cyan);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#drive-turn-action{margin-top:6px;font-size:13px;font-weight:650;line-height:1.2;color:#fff}
+#drive-upcoming{margin-top:5px;padding-top:5px;border-top:1px solid #ffffff1f;font-size:10px;line-height:1.25;color:#bdceda;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#drive-upcoming:empty,#drive-turn-action:empty{display:none}
+
+#nav-stage.driving #drive-exit{
+ position:fixed;top:calc(12px + env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));
+ width:48px;height:48px;min-height:48px;border:1px solid #ffffff5e;background:#b7353c;color:#fff;
+ box-shadow:0 5px 18px #20080b55,inset 0 1px #ffffff28;
+}
+#nav-stage.driving #drive-exit:active{transform:scale(.94)}
+
+#nav-stage.driving #drive-road-info:not([hidden]){
+ top:calc(var(--drive-banner-height,132px) + 10px);left:max(12px,env(safe-area-inset-left));
+ max-width:min(440px,calc(100% - 84px));padding:8px 12px 8px 8px;border:1px solid #fff;
+ border-radius:17px;background:#fffffff2;box-shadow:0 8px 24px #0c26342b;
+}
+#drive-road-icon{width:40px;height:40px;border-radius:13px}
+#drive-road-kind{font-size:9px;letter-spacing:.12em}
+#drive-road-name{font-size:15px;font-weight:750}
+#drive-road-extra{font-size:10px}
+#nav-stage.driving #nav-road-alert{
+ top:calc(var(--drive-banner-height,132px) + 76px);left:max(12px,env(safe-area-inset-left));right:72px;
+ width:auto;max-width:520px;padding:10px 13px;border-width:1px 1px 1px 5px;border-radius:16px;
+ background:#fff8f4f5;box-shadow:0 8px 28px #40150f32;
+}
+#nav-stage.driving #nav-road-alert strong{font-size:13px}#nav-stage.driving #nav-road-alert small{font-size:10px}
+
+#nav-stage.driving #drive-tools{
+ right:max(12px,env(safe-area-inset-right));bottom:calc(var(--cockpit-panel-height) + env(safe-area-inset-bottom) + 14px);
+ z-index:640;display:grid;gap:9px;
+}
+#nav-stage.driving #drive-tools button{
+ position:relative;width:46px;height:46px;min-height:46px;padding:0;border:1px solid #fff;border-radius:15px;
+ background:#fffffff2;color:#183d59;font-size:0;box-shadow:0 7px 20px #12243330;
+ backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+#nav-stage.driving #drive-tools button::before{display:grid;place-items:center;width:100%;height:100%;font-size:22px;font-weight:750;line-height:1}
+#drive-heading::before{content:'N';font-size:17px!important}
+#drive-heading[aria-pressed=true]::before{content:'▲';font-size:19px!important}
+#drive-voice::before{content:'◖))';font-size:15px!important;letter-spacing:-2px}
+#drive-voice[aria-pressed=false]::before{content:'◖×';letter-spacing:-1px;color:#8d3940}
+#drive-center::before{content:'◎';font-size:27px!important}
+#nav-stage.driving #drive-center.needs-center{background:var(--cockpit-blue);color:#fff;border-color:#ffffff88}
+#nav-stage.driving #drive-tools button:active{transform:scale(.94)}
+
+#nav-stage.driving #drive-speedo{
+ left:max(14px,env(safe-area-inset-left));bottom:calc(var(--cockpit-panel-height) + env(safe-area-inset-bottom) + 15px);
+ width:72px;height:72px;border:4px solid #fff;background:#102f49f2;color:#fff;box-shadow:0 8px 24px #1023344a;
+}
+#nav-stage.driving #drive-speedo strong{font-size:27px;font-weight:800;letter-spacing:-.04em}
+#nav-stage.driving #drive-speedo small{font-size:9px;font-weight:700;color:#cbd9e2}
+#nav-stage.driving #nav-repeat{
+ left:96px;right:auto;bottom:calc(var(--cockpit-panel-height) + env(safe-area-inset-bottom) + 28px);
+ min-width:0;width:46px;height:46px;min-height:46px;padding:0;border:1px solid #fff;border-radius:15px;
+ background:#fffffff2;color:#183d59;font-size:0;box-shadow:0 7px 20px #12243330;
+}
+#nav-stage.driving #nav-repeat::before{content:'↻';font-size:25px;line-height:1}
+
+#nav-stage.driving #drive-panel{
+ left:0;right:0;bottom:0;width:auto;min-height:var(--cockpit-panel-height);padding:14px max(18px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));
+ border:0;border-radius:23px 23px 0 0;background:var(--cockpit-panel);color:#112c42;
+ box-shadow:0 -10px 34px #0b213329;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+#nav-stage.driving .drive-eta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.drive-stat{min-width:0;padding-right:8px;border-right:1px solid #dce5ea}.drive-stat:nth-child(3){border-right:0}
+.drive-stat small{display:block;margin-bottom:2px;font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#748695}
+#nav-stage.driving .drive-stat b{display:block;font-size:20px;font-weight:800;line-height:1.15;letter-spacing:-.035em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#nav-stage.driving #drive-progress{height:5px;margin:11px 0 8px;border:0;border-radius:99px;overflow:hidden;background:#dce7ec;accent-color:var(--cockpit-blue)}
+#drive-progress::-webkit-progress-bar{background:#dce7ec}#drive-progress::-webkit-progress-value{background:linear-gradient(90deg,#1287d7,#14a7a2);border-radius:99px}#drive-progress::-moz-progress-bar{background:linear-gradient(90deg,#1287d7,#14a7a2);border-radius:99px}
+.drive-detail{display:grid;gap:2px;min-width:0}
+#nav-stage.driving #drive-next,#nav-stage.driving #drive-status{margin:0;max-height:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#nav-stage.driving #drive-next{font-size:11px;font-weight:750;color:#176e87;min-height:0}
+#nav-stage.driving #drive-status{font-size:10px;line-height:1.35;color:#657986}
+#nav-stage.driving #drive-status.warn{color:#a22d23;font-weight:700}
+#nav-stage.driving .leaflet-bottom{bottom:calc(var(--cockpit-panel-height) + env(safe-area-inset-bottom) + 4px)}
+#nav-stage.driving .leaflet-control-attribution{font-size:8px;background:#ffffffbd}
+
+@media(min-width:760px) and (min-height:551px){
+ #nav-stage.driving #drive-banner{left:50%;right:auto;width:560px;max-width:calc(100% - 24px);transform:translateX(-50%);border-radius:0 0 23px 23px}
+ #nav-stage.driving #drive-panel{left:50%;right:auto;width:560px;max-width:calc(100% - 24px);transform:translateX(-50%);border-radius:23px 23px 0 0}
+ #nav-stage.driving #drive-road-info:not([hidden]){left:50%;width:540px;max-width:calc(100% - 24px);transform:translateX(-50%)}
+ #nav-stage.driving #nav-road-alert{left:50%;right:auto;width:520px;max-width:calc(100% - 48px);transform:translateX(-50%)}
+}
+
+@media(max-width:600px){
+ #nav-stage.driving{--cockpit-panel-height:142px}
+ #nav-stage.driving #drive-banner{min-height:124px;gap:10px;padding-left:max(10px,env(safe-area-inset-left));padding-right:62px}
+ .drive-maneuver{flex-basis:62px;width:62px;height:66px;border-radius:17px}
+ #drive-turn-arrow{font-size:43px;width:auto}
+ .drive-primary{grid-template-columns:1fr;gap:1px;margin-top:3px}
+ #drive-turn-dist{font-size:34px}#drive-turn-street{font-size:17px}
+ #drive-turn-action{margin-top:4px;font-size:12px}#drive-upcoming{font-size:9px}
+ #nav-stage.driving #drive-exit{width:44px;height:44px;min-height:44px}
+ #nav-stage.driving #drive-road-info:not([hidden]){top:calc(var(--drive-banner-height,124px) + 9px);max-width:calc(100% - 76px)}
+ #nav-stage.driving #nav-road-alert{top:calc(var(--drive-banner-height,124px) + 73px);right:64px}
+ #nav-stage.driving .drive-stat b{font-size:18px}
+ #nav-stage.driving #drive-speedo{width:66px;height:66px}
+ #nav-stage.driving #nav-repeat{left:90px}
+}
+
+@media(max-height:550px){
+ #nav-stage.driving{--cockpit-panel-height:82px}
+ #nav-stage.driving #drive-banner{min-height:78px;padding-top:calc(7px + env(safe-area-inset-top));padding-bottom:7px}
+ .drive-maneuver{flex-basis:48px;width:48px;height:48px;border-radius:13px}#drive-turn-arrow{font-size:34px}
+ .drive-primary{display:flex;align-items:baseline;gap:8px}#drive-turn-dist{font-size:27px}#drive-turn-street{font-size:15px}
+ #drive-turn-action{font-size:10px;margin-top:2px}#drive-upcoming{display:none}
+ #nav-stage.driving #drive-panel{min-height:var(--cockpit-panel-height);padding-top:8px;padding-bottom:calc(7px + env(safe-area-inset-bottom))}
+ #nav-stage.driving .drive-stat small,.drive-detail{display:none}#nav-stage.driving .drive-stat b{font-size:16px}
+ #nav-stage.driving #drive-progress{margin:7px 0 0}
+ #nav-stage.driving #drive-tools{bottom:calc(var(--cockpit-panel-height) + 8px);grid-auto-flow:column}
+ #nav-stage.driving #drive-speedo{bottom:calc(var(--cockpit-panel-height) + 8px);width:56px;height:56px}
+ #nav-stage.driving #nav-repeat{bottom:calc(var(--cockpit-panel-height) + 13px);left:80px}
+ #nav-stage.driving #drive-road-info:not([hidden]){top:calc(var(--drive-banner-height,78px) + 7px);max-width:44%}
+ #nav-stage.driving #nav-road-alert{top:calc(var(--drive-banner-height,78px) + 58px);max-width:55%}
+}
