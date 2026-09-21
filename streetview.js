@@ -1,124 +1,80 @@
-/* Google Street View follows the current GPX progress without sending the GPX file. */
+/* Free-first panoramic street imagery, with Google Street View as an optional fallback. */
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),C=window.RutasNav;
-const STORE='rutas-google-maps-key-v1',stage=$('nav-stage'),pane=$('streetview-pane'),canvas=$('streetview-canvas');
-const mapButton=document.createElement('button');mapButton.type='button';mapButton.id='map-streetview';mapButton.textContent='Calle';mapButton.title='Fotografías de la calle siguiendo la ruta';mapButton.setAttribute('aria-pressed','false');document.querySelector('.map-dimension')?.append(mapButton);
-const photoHud=document.createElement('div');photoHud.id='streetview-hud';photoHud.hidden=true;photoHud.innerHTML='<small>VISTA CALLE</small><b id="streetview-place">Siguiendo el recorrido</b><span id="streetview-position"></span>';pane.append(photoHud);
+const KEYS={google:'rutas-google-maps-key-v1',mapillary:'rutas-mapillary-token-v1',provider:'rutas-street-provider-v1'};
+const stage=$('nav-stage'),pane=$('streetview-pane'),googleCanvas=$('streetview-canvas');
+const mapillaryCanvas=document.createElement('div');mapillaryCanvas.id='mapillary-canvas';mapillaryCanvas.hidden=true;googleCanvas.after(mapillaryCanvas);
+const mapButton=document.createElement('button');mapButton.type='button';mapButton.id='map-streetview';mapButton.textContent='Calle';mapButton.title='Panorámicas y fotografías siguiendo la ruta';mapButton.setAttribute('aria-pressed','false');document.querySelector('.map-dimension')?.append(mapButton);
+const photoHud=document.createElement('div');photoHud.id='streetview-hud';photoHud.hidden=true;photoHud.innerHTML='<small id="streetview-source">VISTA CALLE</small><b id="streetview-place">Siguiendo el recorrido</b><span id="streetview-position"></span>';pane.append(photoHud);
 const actions=document.createElement('div');actions.id='streetview-actions';const recenter=document.createElement('button');recenter.type='button';recenter.id='streetview-recenter';recenter.className='btn';recenter.textContent='Orientar a la marcha';actions.append($('streetview-map'),recenter);pane.append(actions);
 const notice=document.createElement('div');notice.id='streetview-notice';notice.role='status';notice.hidden=true;stage.append(notice);
-let active=false,panorama=null,service=null,loadPromise=null,loadedKey='',lastDistance=NaN,lastRoute=null,request=0,pending=false,currentHeading=0;
-const cache=new Map(),prefetching=new Set();
 
-function savedKey(){try{return localStorage.getItem(STORE)||'';}catch{return '';}}
-function storeKey(value){try{if(value)localStorage.setItem(STORE,value);else localStorage.removeItem(STORE);return true;}catch{return false;}}
-function status(text,kind='info'){$('streetview-key-status').textContent=text;$('streetview-key-status').dataset.kind=kind;}
+let active=false,activeProvider='',pending=false,lastDistance=NaN,lastRoute=null,request=0,currentHeading=0;
+let panorama=null,googleService=null,googleLoad=null,googleLoadedKey='';
+let mapillaryViewer=null,mapillaryLoad=null,vectorTileLoad=null,mapillaryLoadedToken='',currentMapillary=null;
+const googleCache=new Map(),mapillaryCache=new Map(),googlePrefetching=new Set();
+
+function getStored(name){try{return localStorage.getItem(KEYS[name])||'';}catch{return '';}}
+function putStored(name,value){try{if(value)localStorage.setItem(KEYS[name],value);else localStorage.removeItem(KEYS[name]);return true;}catch{return false;}}
+function settingStatus(id,text,kind='info'){const el=$(id);el.textContent=text;el.dataset.kind=kind;}
+function mapillaryError(error){const message=error?.message||'';if(/401|403|token|fetch data|failed to fetch/i.test(message))return 'No se ha podido conectar con Mapillary. Revisa el token de cliente y la conexión.';return message||'No se ha podido consultar Mapillary.';}
+function preference(){return $('streetview-provider').value||'auto';}
 function buttons(on){for(const id of ['drive-streetview','streetview-preview','map-streetview']){const b=$(id);if(!b)continue;b.setAttribute('aria-pressed',String(on));if(id==='drive-streetview')b.textContent=on?'Mapa':'Vista calle';else if(id==='streetview-preview')b.textContent=on?'Volver al mapa':'Vista calle';}}
-function openSettings(message){close();const settings=document.querySelector('.route-settings');if(settings){settings.open=true;settings.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}status(message,'warn');setTimeout(()=>$('streetview-key').focus({preventScroll:true}),250);}
 function showNotice(text){notice.textContent=text;notice.hidden=!text;}
-function showMap(message=''){
- pane.hidden=true;stage.classList.remove('streetview-active');
- if(message)showNotice(message);
- window.RutasMap?.get().map?.invalidateSize();
-}
-function showPanorama(){$('streetview-status').textContent='';notice.hidden=true;pane.hidden=false;photoHud.hidden=false;stage.classList.add('streetview-active');setTimeout(()=>window.google?.maps?.event?.trigger(panorama,'resize'),30);}
-function close(){active=false;request++;pending=false;lastDistance=NaN;lastRoute=null;photoHud.hidden=true;showMap();showNotice('');buttons(false);panorama?.setVisible(false);}
+function openSettings(message,target='mapillary-token'){close();const settings=document.querySelector('.route-settings');if(settings){settings.open=true;settings.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}settingStatus(target==='streetview-key'?'streetview-key-status':'mapillary-status',message,'warn');setTimeout(()=>$(target).focus({preventScroll:true}),250);}
+function showMap(message=''){pane.hidden=true;stage.classList.remove('streetview-active');photoHud.hidden=true;if(message)showNotice(message);window.RutasMap?.get().map?.invalidateSize();}
+function showImagery(provider){activeProvider=provider;googleCanvas.hidden=provider!=='google';mapillaryCanvas.hidden=provider!=='mapillary';panorama?.setVisible(provider==='google');$('streetview-status').textContent='';notice.hidden=true;pane.hidden=false;photoHud.hidden=false;stage.classList.add('streetview-active');setTimeout(()=>{if(provider==='google')window.google?.maps?.event?.trigger(panorama,'resize');else mapillaryViewer?.resize();},40);}
+function close(){active=false;activeProvider='';request++;pending=false;lastDistance=NaN;lastRoute=null;currentMapillary=null;showMap();showNotice('');buttons(false);panorama?.setVisible(false);}
+function clearCaches(){googleCache.clear();mapillaryCache.clear();googlePrefetching.clear();}
 
 function loadGoogle(key){
- if(window.google?.maps?.importLibrary)return Promise.resolve(window.google.maps);
- if(loadPromise&&loadedKey===key)return loadPromise;
- loadedKey=key;
- loadPromise=new Promise((resolve,reject)=>{
-  const callback='__rutasStreetViewReady';let settled=false;
-  const finish=(fn,value)=>{if(settled)return;settled=true;clearTimeout(timer);fn(value);};
-  window[callback]=()=>finish(resolve,window.google.maps);
-  window.gm_authFailure=()=>finish(reject,Error('Google no ha aceptado la clave. Revisa sus restricciones y la facturación.'));
-  document.getElementById('rutas-google-maps')?.remove();
-  const script=document.createElement('script');script.id='rutas-google-maps';script.async=true;script.referrerPolicy='strict-origin-when-cross-origin';
-  script.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(key)+'&loading=async&v=weekly&language=es&region=ES&auth_referrer_policy=origin&callback='+callback;
-  script.onerror=()=>finish(reject,Error('No se ha podido conectar con Google Street View.'));
-  document.head.append(script);
-  const timer=setTimeout(()=>finish(reject,Error('Google Street View está tardando demasiado en responder.')),20000);
- }).catch(error=>{loadPromise=null;throw error;});
- return loadPromise;
+ if(window.google?.maps?.importLibrary)return Promise.resolve(window.google.maps);if(googleLoad&&googleLoadedKey===key)return googleLoad;googleLoadedKey=key;
+ googleLoad=new Promise((resolve,reject)=>{const callback='__rutasStreetViewReady';let settled=false;const finish=(fn,value)=>{if(settled)return;settled=true;clearTimeout(timer);fn(value);};window[callback]=()=>finish(resolve,window.google.maps);window.gm_authFailure=()=>finish(reject,Error('Google no ha aceptado la clave. Revisa sus restricciones y la facturación.'));document.getElementById('rutas-google-maps')?.remove();const script=document.createElement('script');script.id='rutas-google-maps';script.async=true;script.referrerPolicy='strict-origin-when-cross-origin';script.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(key)+'&loading=async&v=weekly&language=es&region=ES&auth_referrer_policy=origin&callback='+callback;script.onerror=()=>finish(reject,Error('No se ha podido conectar con Google Street View.'));document.head.append(script);const timer=setTimeout(()=>finish(reject,Error('Google Street View está tardando demasiado en responder.')),20000);}).catch(error=>{googleLoad=null;throw error;});return googleLoad;
 }
+async function prepareGoogle(key){await loadGoogle(key);const lib=await google.maps.importLibrary('streetView');if(!panorama){panorama=new lib.StreetViewPanorama(googleCanvas,{addressControl:false,clickToGo:true,disableDefaultUI:true,fullscreenControl:false,linksControl:true,motionTracking:false,motionTrackingControl:false,panControl:true,showRoadLabels:true,zoom:0,zoomControl:true});googleService=new lib.StreetViewService();}}
+function loadMapillary(){if(window.mapillary?.Viewer)return Promise.resolve(window.mapillary);if(mapillaryLoad)return mapillaryLoad;mapillaryLoad=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='vendor/mapillary.js';script.onload=()=>resolve(window.mapillary);script.onerror=()=>reject(Error('No se ha podido cargar el visor panorámico gratuito.'));document.head.append(script);}).catch(error=>{mapillaryLoad=null;throw error;});return mapillaryLoad;}
+async function prepareMapillary(token){await loadMapillary();if(!mapillaryViewer){mapillaryViewer=new mapillary.Viewer({accessToken:token,container:mapillaryCanvas});mapillaryLoadedToken=token;}else if(mapillaryLoadedToken!==token){await mapillaryViewer.setAccessToken(token);mapillaryLoadedToken=token;}}
+function loadVectorTile(){if(!vectorTileLoad)vectorTileLoad=Promise.all([import('./vendor/pbf-module.js'),import('./vendor/vector-tile-module.js')]).then(([pbf,vt])=>({Pbf:pbf.default,VectorTile:vt.VectorTile}));return vectorTileLoad;}
 
-async function prepare(){
- const key=savedKey();if(!key){openSettings('Añade tu clave de Google Maps para activar Vista calle. Se guardará solo en este dispositivo.');return false;}
- showNotice('Conectando con Google Street View…');
- try{
-  await loadGoogle(key);
-  const lib=await google.maps.importLibrary('streetView');
-  if(!panorama){
-   panorama=new lib.StreetViewPanorama(canvas,{addressControl:false,clickToGo:true,disableDefaultUI:true,fullscreenControl:false,linksControl:true,motionTracking:false,motionTrackingControl:false,panControl:true,showRoadLabels:true,zoom:0,zoomControl:true});
-   service=new lib.StreetViewService();
-  }
-  return true;
- }catch(error){showMap();showNotice('');openSettings(error.message||'No se ha podido abrir Vista calle. Revisa la clave.');return false;}
-}
+function routePose(state,distance){const d=Math.max(0,Math.min(state.route.total,distance)),p=C.at(state.route,d),from=d>=state.route.total-2?C.at(state.route,Math.max(0,d-30)):p,to=d>=state.route.total-2?p:C.at(state.route,Math.min(state.route.total,d+30));return {p,heading:C.heading(from,to),distance:d};}
+function angleGap(a,b){return Math.abs(((a-b+540)%360)-180);}
+function trimCache(cache,max=90){if(cache.size>max)cache.delete(cache.keys().next().value);}
+function routeLabel(){const road=$('drive-road-name')?.textContent?.trim();return road&&!/buscando/i.test(road)?road:'Siguiendo el recorrido';}
+function updateHud(source,place,pose,date=''){$('streetview-source').textContent=source;$('streetview-place').textContent=place||routeLabel();$('streetview-position').textContent=(date?date+' · ':'')+(pose.distance/1000).toLocaleString('es-ES',{maximumFractionDigits:2})+' km desde el inicio';}
 
-function routePose(state,distance){
- const d=Math.max(0,Math.min(state.route.total,distance)),p=C.at(state.route,d);
- const from=d>=state.route.total-2?C.at(state.route,Math.max(0,d-30)):p;
- const to=d>=state.route.total-2?p:C.at(state.route,Math.min(state.route.total,d+30));
- return {p,heading:C.heading(from,to),distance:d};
+async function searchMapillary(pose,token){
+ const bucket=Math.round(pose.distance/80);let images=mapillaryCache.get(bucket);
+ if(!images){
+  const z=14,n=2**z,x=Math.floor((pose.p.lon+180)/360*n),rad=pose.p.lat*Math.PI/180,y=Math.floor((1-Math.asinh(Math.tan(rad))/Math.PI)/2*n),{Pbf,VectorTile}=await loadVectorTile();
+  const read=async(tx,ty)=>{const url=`https://tiles.mapillary.com/maps/vtp/mly1_computed_public/2/${z}/${tx}/${ty}?access_token=${encodeURIComponent(token)}`,response=await fetch(url);if(!response.ok){const error=Error(response.status===401||response.status===403?'Mapillary no acepta este token. Crea un token de cliente nuevo.':'Mapillary no está respondiendo ahora mismo.');throw error;}const tile=new VectorTile(new Pbf(new Uint8Array(await response.arrayBuffer()))),layer=tile.layers.image;if(!layer)return [];const found=[];for(let i=0;i<layer.length;i++){const feature=layer.feature(i),coordinates=feature.toGeoJSON(tx,ty,z).geometry.coordinates,properties=feature.properties;found.push({id:String(properties.id),computed_geometry:{lat:coordinates[1],lng:coordinates[0]},camera_type:properties.is_pano?'spherical':'perspective',compass_angle:properties.compass_angle,captured_at:properties.captured_at});}return found;};
+  const tiles=[];for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++)tiles.push(read(x+ox,y+oy));const results=await Promise.allSettled(tiles),success=results.filter(result=>result.status==='fulfilled');if(!success.length)throw results[0].reason;images=success.flatMap(result=>result.value);
+  mapillaryCache.set(bucket,images);trimCache(mapillaryCache,70);
+ }
+ const ranked=images.map(image=>{const c=image.computed_geometry||image.geometry;if(!c)return null;const distance=C.distance(pose.p,{lat:c.lat,lon:c.lng}),spherical=image.camera_type==='spherical',angle=Number.isFinite(image.computed_compass_angle)?image.computed_compass_angle:image.compass_angle,direction=Number.isFinite(angle)?angleGap(angle,pose.heading):45;return {image,distance,spherical,score:distance+(spherical?-42:direction*.32)};}).filter(Boolean).filter(x=>x.distance<=120).sort((a,b)=>a.score-b.score);return ranked[0]||null;
 }
-function cacheKey(distance){return Math.round(distance/30);}
-function remember(key,data){cache.set(key,data);if(cache.size>80)cache.delete(cache.keys().next().value);}
-function renderPanorama(data,pose){
- currentHeading=pose.heading;panorama.setPano(data.location.pano);panorama.setPov({heading:currentHeading,pitch:0});panorama.setZoom(0);panorama.setVisible(true);
- const road=$('drive-road-name')?.textContent?.trim(),place=data.location.description?.trim();
- $('streetview-place').textContent=place||(road&&!/buscando/i.test(road)?road:'Siguiendo el recorrido');
- $('streetview-position').textContent=(pose.distance/1000).toLocaleString('es-ES',{maximumFractionDigits:2})+' km desde el inicio';
- showPanorama();
-}
-function prefetch(state,distance){
- if(!active||!service||distance>=state.route.total)return;const routeRef=state.route,pose=routePose(state,distance),key=cacheKey(pose.distance);if(cache.has(key)||prefetching.has(key))return;prefetching.add(key);
- service.getPanorama({location:{lat:pose.p.lat,lng:pose.p.lon},radius:60,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},(data,result)=>{prefetching.delete(key);if(!active||window.RutasMap.get().route!==routeRef)return;remember(key,result===google.maps.StreetViewStatus.OK&&data?.location?.pano?data:null);});
-}
-function findPanorama(pose,token){
- const key=cacheKey(pose.distance);if(cache.has(key)){const data=cache.get(key);if(data){renderPanorama(data,pose);prefetch(window.RutasMap.get(),pose.distance+30);}else{panorama.setVisible(false);showMap('No hay imágenes aquí. Se muestra el mapa y Vista calle volverá a buscar más adelante.');}return;}
- pending=true;
- service.getPanorama({location:{lat:pose.p.lat,lng:pose.p.lon},radius:60,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},(data,result)=>{
-  pending=false;if(!active||token!==request)return;
-  if(result===google.maps.StreetViewStatus.OK&&data?.location?.pano){
-   remember(key,data);renderPanorama(data,pose);prefetch(window.RutasMap.get(),pose.distance+30);
-  }else{
-   remember(key,null);panorama.setVisible(false);showMap('No hay imágenes aquí. Se muestra el mapa y Vista calle volverá a buscar más adelante.');
-  }
- });
-}
-function sync(distance){
- if(!active||!service||pending)return;
- const state=window.RutasMap?.get();if(!state?.route)return;
- const pose=routePose(state,Number.isFinite(distance)?distance:state.progress);
- if(lastRoute===state.route&&Number.isFinite(lastDistance)&&Math.abs(pose.distance-lastDistance)<28)return;
- if(lastRoute!==state.route){cache.clear();prefetching.clear();}
- lastRoute=state.route;lastDistance=pose.distance;showNotice('Buscando la imagen más próxima…');findPanorama(pose,++request);
-}
-async function open(){
- if(active){close();return;}
- const map2d=$('map-2d');if(map2d?.getAttribute('aria-pressed')!=='true')map2d.click();
- if(!await prepare())return;
- active=true;buttons(true);lastDistance=NaN;lastRoute=null;sync();
-}
+function orientMapillary(){if(!mapillaryViewer||!currentMapillary)return;const image=currentMapillary.image;if(currentMapillary.spherical){const delta=((currentHeading-(Number(image.compass_angle)||0)+540)%360)-180,x=(.5+delta/360+1)%1;mapillaryViewer.setCenter([x,.5]);}else mapillaryViewer.setCenter([.5,.5]);mapillaryViewer.setZoom(0);}
+async function renderMapillary(found,pose,token){await prepareMapillary(token);currentHeading=pose.heading;currentMapillary=found;await mapillaryViewer.moveTo(String(found.image.id));orientMapillary();const year=found.image.captured_at?new Date(found.image.captured_at).getFullYear().toString():'';updateHud(found.spherical?'PANORÁMICA GRATIS · MAPILLARY 360':'FOTO GRATIS · MAPILLARY',routeLabel(),pose,year);showImagery('mapillary');}
 
-$('drive-streetview').onclick=open;$('streetview-preview').onclick=open;$('map-streetview').onclick=open;$('streetview-map').onclick=close;
-$('streetview-recenter').onclick=()=>{if(panorama){panorama.setPov({heading:currentHeading,pitch:0});panorama.setZoom(0);}};
-$('map-3d')?.addEventListener('click',()=>{if(active)close();});
-$('streetview-save').onclick=()=>{
- const key=$('streetview-key').value.trim();
- if(!key){status('Pega una clave antes de guardarla.','warn');return;}
- const changed=key!==savedKey();
- if(!storeKey(key)){status('Este navegador no ha permitido guardar la clave.','warn');return;}
- status(changed&&loadedKey&&loadedKey!==key?'Clave actualizada. Recarga Rutas antes de probar la nueva clave.':'Clave guardada solo en este dispositivo. Ya puedes probar Vista calle.','ok');
-};
-$('streetview-clear').onclick=()=>{close();storeKey('');$('streetview-key').value='';status('Clave borrada de este dispositivo.');};
-$('streetview-test').onclick=()=>{const typed=$('streetview-key').value.trim();if(typed&&typed!==savedKey())storeKey(typed);open();};
-const key=savedKey();if(key){$('streetview-key').value=key;status('Clave guardada en este dispositivo. Vista calle está lista para usarse.','ok');}
-window.addEventListener('rutas:progress',event=>sync(event.detail?.distance));
-window.addEventListener('rutas:check-route',()=>{lastRoute=null;lastDistance=NaN;cache.clear();prefetching.clear();if(active)sync();});
-window.addEventListener('offline',()=>{if(active){showMap('Sin conexión: se mantiene el mapa disponible.');}});
-window.addEventListener('online',()=>{if(active){lastDistance=NaN;sync();}});
-window.RutasStreetView={open,close,isActive:()=>active,sync};
+function googleKey(distance){return Math.round(distance/30);}
+function googleLookup(pose){const key=googleKey(pose.distance);if(googleCache.has(key))return Promise.resolve(googleCache.get(key));return new Promise(resolve=>googleService.getPanorama({location:{lat:pose.p.lat,lng:pose.p.lon},radius:60,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},(data,result)=>{const value=result===google.maps.StreetViewStatus.OK&&data?.location?.pano?data:null;googleCache.set(key,value);trimCache(googleCache);resolve(value);}));}
+function prefetchGoogle(state,distance){if(!active||!googleService||distance>=state.route.total)return;const pose=routePose(state,distance),key=googleKey(pose.distance);if(googleCache.has(key)||googlePrefetching.has(key))return;googlePrefetching.add(key);googleLookup(pose).finally(()=>googlePrefetching.delete(key));}
+function renderGoogle(data,pose){currentHeading=pose.heading;currentMapillary=null;panorama.setPano(data.location.pano);panorama.setPov({heading:currentHeading,pitch:0});panorama.setZoom(0);panorama.setVisible(true);updateHud('VISTA CALLE · GOOGLE',data.location.description?.trim()||routeLabel(),pose);showImagery('google');prefetchGoogle(window.RutasMap.get(),pose.distance+30);}
+
+async function sync(distance){
+ if(!active||pending)return;const state=window.RutasMap?.get();if(!state?.route)return;const pose=routePose(state,Number.isFinite(distance)?distance:state.progress);if(lastRoute===state.route&&Number.isFinite(lastDistance)&&Math.abs(pose.distance-lastDistance)<32)return;if(lastRoute!==state.route)clearCaches();lastRoute=state.route;lastDistance=pose.distance;pending=true;const token=++request,pref=preference(),mapToken=getStored('mapillary'),gKey=getStored('google');showNotice('Buscando panorámicas gratuitas…');
+ try{if(pref!=='google'&&mapToken){try{const found=await searchMapillary(pose,mapToken);if(!active||token!==request)return;if(found){await renderMapillary(found,pose,mapToken);return;}}catch(error){const message=mapillaryError(error);settingStatus('mapillary-status',message,'warn');if(pref==='mapillary'){openSettings(message,'mapillary-token');return;}if(!gKey){showMap(message+' Se mantiene el mapa.');return;}}}if(pref!=='mapillary'&&gKey){await prepareGoogle(gKey);if(!active||token!==request)return;const data=await googleLookup(pose);if(!active||token!==request)return;if(data){renderGoogle(data,pose);return;}}showMap(pref==='mapillary'?'No hay fotografías gratuitas próximas. Se mantiene el mapa.':mapToken?'No hay imágenes próximas. Se mantiene el mapa.':'Añade un token gratuito de Mapillary para buscar panorámicas.');}
+ catch(error){if(!active||token!==request)return;if(pref==='google')openSettings(error.message||'No se ha podido abrir Google Street View.','streetview-key');else showMap('No se ha podido cargar la imagen. Se mantiene el mapa.');}finally{if(token===request)pending=false;}
+}
+async function open(){if(active){close();return;}const pref=preference(),mapToken=getStored('mapillary'),gKey=getStored('google');if((pref==='mapillary'&&!mapToken)||(pref==='auto'&&!mapToken&&!gKey)){openSettings('Añade un token gratuito de Mapillary. No requiere facturación.','mapillary-token');return;}if(pref==='google'&&!gKey){openSettings('Añade tu clave de Google Maps para usar Google Street View.','streetview-key');return;}const map2d=$('map-2d');if(map2d?.getAttribute('aria-pressed')!=='true')map2d.click();active=true;buttons(true);lastDistance=NaN;lastRoute=null;sync();}
+
+$('drive-streetview').onclick=open;$('streetview-preview').onclick=open;$('map-streetview').onclick=open;$('streetview-map').onclick=close;$('streetview-recenter').onclick=()=>{if(activeProvider==='mapillary')orientMapillary();else if(panorama){panorama.setPov({heading:currentHeading,pitch:0});panorama.setZoom(0);}};$('map-3d')?.addEventListener('click',()=>{if(active)close();});
+$('streetview-provider').onchange=()=>{putStored('provider',$('streetview-provider').value);clearCaches();if(active){request++;pending=false;lastDistance=NaN;sync();}};
+$('mapillary-save').onclick=()=>{const value=$('mapillary-token').value.trim();if(!value){settingStatus('mapillary-status','Pega un token antes de guardarlo.','warn');return;}if(!putStored('mapillary',value)){settingStatus('mapillary-status','Este navegador no ha permitido guardar el token.','warn');return;}settingStatus('mapillary-status','Token gratuito guardado solo en este dispositivo.','ok');clearCaches();};
+$('mapillary-clear').onclick=()=>{close();putStored('mapillary','');$('mapillary-token').value='';settingStatus('mapillary-status','Token borrado de este dispositivo.');clearCaches();};
+$('streetview-save').onclick=()=>{const value=$('streetview-key').value.trim();if(!value){settingStatus('streetview-key-status','Pega una clave antes de guardarla.','warn');return;}if(!putStored('google',value)){settingStatus('streetview-key-status','Este navegador no ha permitido guardar la clave.','warn');return;}settingStatus('streetview-key-status','Clave guardada solo en este dispositivo.','ok');clearCaches();};
+$('streetview-clear').onclick=()=>{close();putStored('google','');$('streetview-key').value='';settingStatus('streetview-key-status','Clave borrada de este dispositivo.');clearCaches();};
+$('streetview-test').onclick=()=>{const mapValue=$('mapillary-token').value.trim(),googleValue=$('streetview-key').value.trim();if(mapValue)putStored('mapillary',mapValue);if(googleValue)putStored('google',googleValue);open();};
+const provider=getStored('provider');if(['auto','mapillary','google'].includes(provider))$('streetview-provider').value=provider;const mapToken=getStored('mapillary'),gKey=getStored('google');if(mapToken){$('mapillary-token').value=mapToken;settingStatus('mapillary-status','Token gratuito guardado. Panorámica gratis está lista.','ok');}if(gKey){$('streetview-key').value=gKey;settingStatus('streetview-key-status','Clave de Google guardada como alternativa.','ok');}
+window.addEventListener('rutas:progress',event=>sync(event.detail?.distance));window.addEventListener('rutas:check-route',()=>{lastRoute=null;lastDistance=NaN;clearCaches();if(active)sync();});window.addEventListener('offline',()=>{if(active)showMap('Sin conexión: se mantiene el mapa disponible.');});window.addEventListener('online',()=>{if(active){lastDistance=NaN;sync();}});window.RutasStreetView={open,close,isActive:()=>active,sync};
 })();
