@@ -23,6 +23,14 @@ Los GPX se procesan en el dispositivo y no se suben al repositorio. La ruta carg
 
 Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap contributors. Satélite: Esri, Maxar, Earthstar Geographics y GIS User Community.
 
+## Simulador de conducción
+
+Abrir la aplicación con `?sim=1` añade un simulador que sustituye el GPS por una posición generada sobre el recorrido cargado. Solo aparece con ese parámetro y nunca sobrevive a una recarga: una posición falsa activada por descuido dentro de un vehículo sería peligrosa. Mientras corre, una franja roja avisa de que la posición no es real.
+
+Permite elegir velocidad -30, 50 u 80 km/h-, calidad de señal, desvío lateral de 50 o 100 metros y simular la falta de Internet. La señal irregular introduce ruido y pierde una posición de cada ocho; la mala llega a 65 metros de imprecisión, por encima del umbral con el que la navegación deja de fiarse, y pierde una de cada tres. El desvío aparta la posición en perpendicular a la marcha, sin inventar calles.
+
+Como no toca la navegación sino la fuente de posiciones, lo que se prueba es exactamente el mismo código que corre en la carretera: emparejado, giros, voz, paradas, avisos de desvío y comportamiento sin cobertura.
+
 ## Comprobaciones
 
 `node --test tests/*.cjs`
