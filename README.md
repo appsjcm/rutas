@@ -57,6 +57,8 @@ La aplicación se puede instalar en la pantalla de inicio con su manifiesto e ic
 
 En Navegar, Comprobar mi recorrido compara muestras de la traza con vías de OpenStreetMap, incluyendo oneway=yes, oneway=-1, rotondas y excepciones para vehículos a motor. Las restricciones variables y las vías cercanas ambiguas se señalan aparte. No es una validación legal ni sustituye la señalización. No revisa obras ni prohibiciones de giro. Si rellenas las medidas de tu vehículo -altura, peso y anchura, opcionales y guardadas en el dispositivo- se comprueban además maxheight, maxweight y maxwidth, con la variante :hgv por delante de la general, y las vías cerradas por hgv, access o motor_vehicle. Un límite solo salta cuando tu vehículo no cabe, y el aviso dice la medida de la vía y la tuya. Sin medidas, esa parte no se comprueba y no aparece ningún aviso dimensional. access=destination no se señala: una ronda de recogida entra legítimamente en esas calles.
 
+Las medidas se eligen con un preajuste -Furgoneta, Camión 12 t, Camión 18 t- o se escriben a mano, y se guardan en el dispositivo. Debajo se leen como una ficha: «3,6 m alto · 2,55 m ancho · 12 t». Arriba del recorrido, junto a su nombre, aparece el recuento de lo que depende del vehículo: «4 posibles incompatibilidades con tu vehículo», y al pulsarlo se abre la lista y lleva a los tramos. Ese recuento deja fuera los avisos de sentido de circulación, que no dependen de las medidas. Cambiar de preajuste vuelve a evaluar los datos de calles ya descargados sin pedirlos otra vez. Sin medidas no se afirma nada: solo se invita a ponerlas.
+
 Se muestra la fecha de los datos, cobertura de coincidencia, señales sobre el mapa, enlaces a las fuentes y un informe CSV descargable. Cada aviso puede marcarse como revisado: ese tramo queda silenciado en el mapa, en el panel, en el banner y en la voz, y el informe CSV recoge su estado. Cuando la ronda repite una calle, un segundo botón silencia de una vez todos sus tramos, sin extender el silencio a un conflicto nuevo que aparezca más adelante en esa misma vía. Así solo hablan los avisos que aún no ha mirado nadie. La marca se guarda en el dispositivo junto a la huella de la ruta, sobrevive a nuevas consultas y se revierte desde el mismo botón. Un posible conflicto tiene prioridad sobre el aviso de giro. La consulta envía a Overpass solamente el rectángulo de la zona, sin puntos ni tiempos del GPX. Los datos se guardan durante 24 horas en el navegador para evitar consultas repetidas. Al guardar una consulta nueva se borran las caducadas y solo se conservan las dos ultimas, porque cada una pesa mas de un megabyte y en iPhone el almacen ronda los cinco. Servidores: overpass-api.de y, si no responde, overpass.kumi.systems de Private.coffee, probados en ese orden con 25 segundos cada uno. Una respuesta vacía se trata como fallo y pasa al siguiente: un servidor que solo sirve otra región contestaría sin calles, y eso diría «no hay conflictos» sin haber comprobado nada. Datos © OpenStreetMap contributors, ODbL. Las rutas personales y sus informes no están incluidos en el repositorio.
 
 Si el servidor público falla, Cargar datos de calles permite importar un JSON de Overpass (out tags geom) y realizar la misma comprobación local, mostrando siempre la fecha de sus datos. El JSON también permanece en el dispositivo.
@@ -91,7 +93,7 @@ El seguimiento, los giros y las restricciones siguen dependiendo del mismo GPX y
 
 Fuentes de integración: https://openfreemap.org/quick_start/ y https://maplibre.org/maplibre-gl-js/docs/examples/display-buildings-in-3d/ . El volumen de los edificios es cartográfico; Satélite es una capa independiente de imágenes de Esri.
 
-Validación: carga real de calles y edificios, GPS simulado con rumbo, pausa y recuperación de cámara, cambio 2D/3D durante navegación, avisos sobre el mapa y limpieza al cambiar de ruta. Verificado también el retorno a 2D sin WebGL y las 39 pruebas del motor existente. Pendiente la comprobación de rendimiento con GPS real en el teléfono.
+Validación: carga real de calles y edificios, GPS simulado con rumbo, pausa y recuperación de cámara, cambio 2D/3D durante navegación, avisos sobre el mapa y limpieza al cambiar de ruta. Verificado también el retorno a 2D sin WebGL y las 94 pruebas del motor existente. Pendiente la comprobación de rendimiento con GPS real en el teléfono.
 
 ## Llegar al comienzo
 
@@ -113,7 +115,7 @@ La cabecera de conducción distingue preparación, cercanía y maniobra inmediat
 
 El mapa 3D oculta inicialmente las capas de lugares y comercios; el botón Lugares permite recuperarlas y conserva la elección en el dispositivo. Los nombres de calles y las flechas de sentido siguen presentes. El recorrido lleva un contorno blanco y los edificios son más suaves. La posición de los controles se adapta a la altura real de la cabecera.
 
-Verificado con las 39 pruebas del motor, GPS simulado, dos giros próximos, voz, GPS impreciso, visibilidad de etiquetas, seguimiento 3D, restricciones y cambio de ruta.
+Verificado con las 94 pruebas del motor, GPS simulado, dos giros próximos, voz, GPS impreciso, visibilidad de etiquetas, seguimiento 3D, restricciones y cambio de ruta.
 
 ## Biblioteca privada de rutas
 
