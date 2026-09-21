@@ -1,0 +1,69 @@
+(function(root){
+'use strict';
+// Cabecera de conduccion. Un GPS de coche dice tres cosas y en este orden: cuanto falta,
+// que hacer, y a donde. Lo demas -la fase, los matices- no cabe a 90 km/h ni a 20.
+
+// Distancias redondeadas como las dice un navegador: nadie anuncia "en 183 metros".
+// La voz usa este mismo escalon, asi que pantalla y voz no se contradicen.
+function step(m){
+ const v=Number(m);
+ if(!Number.isFinite(v)||v<=0)return 0;
+ if(v>=1000)return Math.round(v/100)*100;
+ if(v>=300)return Math.round(v/50)*50;
+ if(v>=100)return Math.round(v/25)*25;
+ return Math.max(10,Math.round(v/10)*10);
+}
+function distance(m){
+ const v=step(m);
+ if(!v)return '';
+ return v>=1000?(v/1000).toFixed(1).replace('.',',')+' km':v+' m';
+}
+
+function lower(s){
+ const t=String(s||'');
+ return t?t.charAt(0).toLowerCase()+t.slice(1):'';
+}
+
+// Lo que viene despues va en una linea aparte y pequena: orienta, no manda.
+function after(next,fromD){
+ if(!next||!next.label)return '';
+ const partes=['Después: '+lower(next.label)];
+ if(next.toRoad)partes.push(next.toRoad);
+ const d=distance(Number(next.d)-Number(fromD));
+ if(d)partes.push('a '+d);
+ return partes.join(' · ');
+}
+
+const SIN_NOMBRE='Según el GPX';
+
+function banner(state){
+ const s=state||{};
+
+ if(s.paused)return {tone:'paused',arrow:s.arrow||'!',eyebrow:'ESPERANDO GPS',
+  lead:'GPS',action:s.paused===true?'Indicaciones pausadas':String(s.paused),street:'',after:''};
+
+ if(s.end)return {tone:'done',arrow:'✓',eyebrow:'',
+  lead:'FIN',action:'Recorrido completado',street:'Final del recorrido',after:''};
+
+ const eyebrow=s.access?(s.access.recovery?'REGRESO AL RECORRIDO':'ACCESO POR CALLES'):'';
+ const ahora=s.stage==='now';
+ const turn=s.turn;
+
+ if(!turn)return {tone:ahora?'now':'far',arrow:'↑',eyebrow,
+  lead:ahora?'AHORA':(distance(s.gap)?'EN '+distance(s.gap):''),
+  action:'Sigue el recorrido',street:'',after:''};
+
+ return {
+  tone:ahora?'now':(s.stage==='near'?'near':'far'),
+  arrow:turn.symbol||'↑',
+  eyebrow,
+  lead:ahora?'AHORA':(distance(s.gap)?'EN '+distance(s.gap):''),
+  action:turn.label||'Sigue el recorrido',
+  street:turn.toRoad||SIN_NOMBRE,
+  after:after(s.next,turn.d)
+ };
+}
+
+const api={step,distance,after,banner,lower,SIN_NOMBRE};
+if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasHudCore=api;
+})(typeof globalThis!=='undefined'?globalThis:this);

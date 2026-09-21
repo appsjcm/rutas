@@ -125,3 +125,7 @@ body.map-focus #nav-stage.focus.driving{overscroll-behavior:none}
 #route-recovery-start{background:#174d3d;color:#fff}
 #route-recovery-start:disabled{opacity:.62}#route-recovery-close{background:#fffdf8;color:#5c4210;border:1px solid #e0b978}
 @media(max-width:540px){#route-audit summary{grid-template-columns:38px minmax(0,1fr) auto;padding:10px}.audit-shield{width:34px;height:34px}#route-recovery{grid-template-columns:28px minmax(0,1fr);bottom:137px;padding:11px 12px}#route-recovery strong{font-size:15.5px}#route-recovery button{min-height:44px;font-size:12.5px}#route-recovery>span{font-size:23px}}
+
+/* El recorrido incluido es una demostración, no un análisis que se haya quedado colgado. */
+#route-audit[data-state=demo] #audit-badge{background:#e7eef8;color:#315c86}
+.audit-row[data-state=demo] i{background:#e3edf8;color:#315f8a}

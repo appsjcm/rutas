@@ -1,0 +1,30 @@
+/* Cabecera de conducción con el orden de un GPS de coche: flecha, cuánto falta, qué hacer,
+   a dónde. La acción era la línea más pequeña de las cuatro; ahora va justo bajo la
+   distancia, que es como se lee de un vistazo con las manos en el volante. */
+#nav-stage.driving #drive-turn-dist{font-size:33px;font-weight:800;line-height:1;
+ letter-spacing:-.04em;color:#fff;white-space:nowrap}
+#nav-stage.driving #drive-turn-action{margin-top:2px;font-size:21px;font-weight:750;
+ line-height:1.12;letter-spacing:-.02em;color:#fff;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#nav-stage.driving #drive-turn-street{margin-top:1px;font-size:14.5px;font-weight:650;
+ line-height:1.2;color:var(--cockpit-cyan,#93e7df);
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* La fase -«próxima maniobra», «prepárate para el giro»- repetía lo que ya dice la
+   distancia. Solo queda arriba cuando aporta algo: acceso por calles o GPS perdido. */
+#nav-stage.driving #drive-turn-phase:empty{display:none}
+#nav-stage.driving #drive-turn-street:empty{display:none}
+
+#nav-stage.driving #drive-banner[data-phase=now] #drive-turn-dist{letter-spacing:.02em}
+
+@media(max-width:700px){
+ #nav-stage.driving #drive-turn-dist{font-size:29px}
+ #nav-stage.driving #drive-turn-action{font-size:18.5px}
+ #nav-stage.driving #drive-turn-street{font-size:13.5px}
+}
+/* En horizontal la columna es estrecha y baja: cabe menos, y la acción manda. */
+@media (orientation:landscape) and (max-height:560px){
+ #nav-stage.driving #drive-turn-dist{font-size:24px}
+ #nav-stage.driving #drive-turn-action{font-size:16.5px;margin-top:1px}
+ #nav-stage.driving #drive-turn-street{font-size:12.5px}
+}
