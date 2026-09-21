@@ -19,8 +19,19 @@ test('mas de un kilometro se lee en kilometros',()=>{
  assert.equal(H.distance(0),'');
 });
 
+test('las indicaciones del GPX pasan de sustantivo a imperativo',()=>{
+ // nav-core solo produce estas tres; las del acceso ya vienen en imperativo.
+ assert.equal(H.imperative('Giro a la derecha'),'Gira a la derecha');
+ assert.equal(H.imperative('Giro a la izquierda'),'Gira a la izquierda');
+ assert.equal(H.imperative('Cambio de sentido'),'Cambia de sentido');
+ assert.equal(H.imperative('Sal de la rotonda'),'Sal de la rotonda');
+ assert.equal(H.imperative('En la rotonda, toma la salida 2'),'En la rotonda, toma la salida 2');
+ assert.equal(H.imperative(''),'');
+ assert.equal(H.imperative(null),'');
+});
+
 test('el orden es el de un GPS: cuanto falta, que hacer, a donde',()=>{
- const b=H.banner({stage:'prepare',gap:183,turn:{symbol:'↱',label:'Gira a la derecha',toRoad:'Carrer Major',d:900}});
+ const b=H.banner({stage:'prepare',gap:183,turn:{symbol:'↱',label:'Giro a la derecha',toRoad:'Carrer Major',d:900}});
  assert.equal(b.lead,'EN 175 m');
  assert.equal(b.action,'Gira a la derecha');
  assert.equal(b.street,'Carrer Major');

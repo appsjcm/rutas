@@ -27,11 +27,20 @@ function lower(s){
 // Lo que viene despues va en una linea aparte y pequena: orienta, no manda.
 function after(next,fromD){
  if(!next||!next.label)return '';
- const partes=['Después: '+lower(next.label)];
+ const partes=['Después: '+lower(imperative(next.label))];
  if(next.toRoad)partes.push(next.toRoad);
  const d=distance(Number(next.d)-Number(fromD));
  if(d)partes.push('a '+d);
  return partes.join(' · ');
+}
+
+// Las indicaciones sacadas del GPX vienen como sustantivo -«Giro a la derecha»-; un GPS
+// las da en imperativo. Son las mismas dos conversiones que ya hace la voz, en un solo sitio.
+function imperative(label){
+ const t=String(label||'').trim();
+ if(!t)return '';
+ const l=t.toLowerCase().replace(/^giro a /,'gira a ').replace(/^cambio de sentido$/,'cambia de sentido');
+ return l.charAt(0).toUpperCase()+l.slice(1);
 }
 
 const SIN_NOMBRE='Según el GPX';
@@ -58,12 +67,12 @@ function banner(state){
   arrow:turn.symbol||'↑',
   eyebrow,
   lead:ahora?'AHORA':(distance(s.gap)?'EN '+distance(s.gap):''),
-  action:turn.label||'Sigue el recorrido',
+  action:imperative(turn.label)||'Sigue el recorrido',
   street:turn.toRoad||SIN_NOMBRE,
   after:after(s.next,turn.d)
  };
 }
 
-const api={step,distance,after,banner,lower,SIN_NOMBRE};
+const api={step,distance,after,banner,lower,imperative,SIN_NOMBRE};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasHudCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
