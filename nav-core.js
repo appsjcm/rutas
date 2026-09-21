@@ -88,5 +88,23 @@ function gpsPause(code){
 }
 function fingerprint(r){let hash=2166136261;for(const p of r.pts){const value=p.lat.toFixed(7)+','+p.lon.toFixed(7)+';';for(let i=0;i<value.length;i++)hash=Math.imul(hash^value.charCodeAt(i),16777619);}return r.pts.length+'-'+(hash>>>0).toString(16);}
 function nearbyPasses(r,p){const hits=[];for(let i=0;i<r.pts.length-1;i++){const lo=r.cum[i],hi=r.cum[i+1],m=match({pts:r.pts.slice(i,i+2),cum:[lo,hi],total:hi},p,lo,hi-lo,lo);if(m&&m.error<60)hits.push(m);}hits.sort((a,b)=>a.error-b.error);const chosen=[];for(const h of hits){if(chosen.every(c=>Math.abs(c.d-h.d)>80))chosen.push(h);if(chosen.length===5)break;}return chosen.sort((a,b)=>a.d-b.d);}
-const api={distance,prepare,at,heading,match,section,turns,guidance,fingerprint,nearbyPasses,speedAt,stops,stopProgress,remainingSeconds,gpsFatal,gpsPause,transferTimes,simplify,packRoute,unpackRoute,TURN_MIN_SPEED,TURN_MIN_GAP,STOP_RADIUS,STOP_SECONDS};if(typeof module!=='undefined')module.exports=api;else root.RutasNav=api;
+// Busca un punto futuro razonable al que regresar cuando el vehiculo abandona la traza.
+// Se penalizan los puntos muy lejanos en el orden del GPX para no saltar una vuelta entera
+// cuando la ruta pasa varias veces cerca de la misma calle.
+function rejoin(r,p,progress,{minAhead=100,maxAhead=1500,course=null}={}){
+ const from=Math.min(r.total,Math.max(0,progress+minAhead)),to=Math.min(r.total,progress+maxAhead);
+ if(to-from<1)return null;
+ const kx=111320*Math.cos(p.lat*rad),ky=110540;let best=null;
+ for(let i=0;i<r.pts.length-1;i++){
+  if(r.cum[i+1]<from||r.cum[i]>to)continue;
+  const a=r.pts[i],b=r.pts[i+1],x=(a.lon-p.lon)*kx,y=(a.lat-p.lat)*ky,dx=(b.lon-a.lon)*kx,dy=(b.lat-a.lat)*ky;
+  const t=Math.max(0,Math.min(1,-(x*dx+y*dy)/(dx*dx+dy*dy||1))),d=r.cum[i]+(r.cum[i+1]-r.cum[i])*t;
+  if(d<from||d>to)continue;
+  const error=Math.hypot(x+t*dx,y+t*dy),turn=Number.isFinite(course)?Math.abs(((heading(a,b)-course+540)%360)-180):0;
+  const score=error+(d-from)*.06+turn*.025;
+  if(!best||score<best.score)best={d,error,score,ahead:d-progress,target:at(r,d)};
+ }
+ return best;
+}
+const api={distance,prepare,at,heading,match,section,turns,guidance,fingerprint,nearbyPasses,rejoin,speedAt,stops,stopProgress,remainingSeconds,gpsFatal,gpsPause,transferTimes,simplify,packRoute,unpackRoute,TURN_MIN_SPEED,TURN_MIN_GAP,STOP_RADIUS,STOP_SECONDS};if(typeof module!=='undefined')module.exports=api;else root.RutasNav=api;
 })(typeof window!=='undefined'?window:globalThis);

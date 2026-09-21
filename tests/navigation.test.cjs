@@ -53,6 +53,8 @@ test('simplificar respeta los extremos y afloja la traza',()=>{const pts=[];for(
 test('huella distingue ruta invertida para no recuperar otra pasada',()=>{const pts=[{lat:41,lon:2},{lat:41.001,lon:2}];assert.notEqual(N.fingerprint(N.prepare(pts)),N.fingerprint(N.prepare(pts.slice().reverse())));});
 test('buscar pasada ofrece distintos puntos del recorrido repetido',()=>{const r=N.prepare([{lat:41,lon:2},{lat:41.003,lon:2},{lat:41,lon:2}]);const c=N.nearbyPasses(r,{lat:41.001,lon:2});assert.equal(c.length,2);assert(c[1].d-c[0].d>100);});
 test('rumbo diferencia ida y vuelta coincidentes',()=>{const r=N.prepare([{lat:41,lon:2},{lat:41.001,lon:2},{lat:41,lon:2}]),p={lat:41.0008,lon:2};const north=N.match(r,p,100,150,111,0),south=N.match(r,p,100,150,111,180);assert(north.d<r.cum[1]);assert(south.d>r.cum[1]);});
+test('el regreso propone un punto futuro sin retroceder',()=>{const r=N.prepare([{lat:41,lon:2},{lat:41.003,lon:2},{lat:41.003,lon:2.004},{lat:41.006,lon:2.004}]),progress=120,p={lat:41.002,lon:2.002};const out=N.rejoin(r,p,progress);assert(out);assert(out.d>=progress+100);assert(out.d<=progress+1500);assert(out.ahead>0);assert(Number.isFinite(out.target.lat)&&Number.isFinite(out.target.lon));});
+test('el regreso no salta a una vuelta lejana cuando existe otra cercana en el orden',()=>{const pts=[{lat:41,lon:2},{lat:41.004,lon:2},{lat:41.004,lon:2.004},{lat:41,lon:2.004},{lat:41,lon:2},{lat:41.004,lon:2}],r=N.prepare(pts),out=N.rejoin(r,{lat:41.002,lon:2.001},100,{minAhead:100,maxAhead:1500});assert(out);assert(out.d<r.cum[4]);});
 test('la ronda invertida conserva paradas y duración disponible',()=>{const pts=[{lat:41,lon:2,time:'2026-01-01T10:00:00Z'},{lat:41,lon:2,time:'2026-01-01T10:04:00Z'},{lat:41.002,lon:2,time:'2026-01-01T10:08:00Z'}],a=N.prepare(pts),b=N.prepare(pts.slice().reverse());assert.equal(N.stops(a).length,1);assert.equal(N.stops(b).length,1);assert.equal(N.remainingSeconds(a,0),480);assert.equal(N.remainingSeconds(b,0),480);assert.equal(N.remainingSeconds(b,b.total),0);});
 test('un enlace con símbolos inválidos no se interpreta como una ruta',()=>{assert.throws(()=>N.unpackRoute(JSON.stringify({v:1,p:'!!??'})),/inválidos/);});
 test('solo la denegación de permiso termina la navegación',()=>{
@@ -88,4 +90,3 @@ test('sin horas o con datos raros devuelve el trazado intacto',()=>{
  assert.equal(N.transferTimes([{lat:41,lon:2,time:'x'}],calles),calles);
  assert.deepEqual(N.transferTimes([{lat:41,lon:2,time:'2026-01-01T00:00:00Z'},{lat:41.002,lon:2,time:'2026-01-01T00:00:00Z'}],calles),calles);
 });
-
