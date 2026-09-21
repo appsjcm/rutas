@@ -8,6 +8,7 @@ test('vía paralela cercana rebaja a coincidencia dudosa',()=>{const parallel=li
 test('una vía lejana no se asigna a la ruta',()=>{assert.equal(A.analyze(line.slice().reverse(),[way({oneway:'yes'},line.map(p=>({...p,lon:p.lon+.001})))]).issues.length,0);});
 test('las unidades de OSM se interpretan en metros y toneladas',()=>{assert.equal(A.metresOf('3.5'),3.5);assert.equal(A.metresOf('3,5 m'),3.5);assert.equal(A.metresOf(`12'6"`),3.81);assert.equal(A.tonnesOf('7.5 t'),7.5);assert.equal(A.tonnesOf('3500 kg'),3.5);
  for(const v of [null,'','default','none','unsigned','no sé'])assert.equal(A.metresOf(v),null);});
+test('interpreta límites de velocidad sin inventar valores variables',()=>{assert.equal(A.speedLimit('30'),30);assert.equal(A.speedLimit('50 km/h'),50);assert.equal(A.speedLimit('30 mph'),48);for(const v of [null,'','signals','ES:urban','50 @ (Mo-Fr)'])assert.equal(A.speedLimit(v),null);});
 test('un limite solo salta si el vehiculo no cabe',()=>{const tags={highway:'residential',maxheight:'3.5'};
  assert.equal(A.vehicle(tags,{height:4.1}).length,1);
  assert.equal(A.vehicle(tags,{height:3.2}).length,0);
@@ -32,5 +33,6 @@ test('sentido contrario y limite de peso se comunican por separado',()=>{const l
 test('contexto de calle distingue curva sin modificar coordenadas',()=>{const N=require('../nav-core'),pts=[{lat:41,lon:2},{lat:41.002,lon:2},{lat:41.002,lon:2.002}],r=N.prepare(pts),before=JSON.stringify(pts),turns=N.turns(r),out=A.enrichTurns(r,turns,[way({name:'Calle de prueba'},pts)]);assert(out.some(t=>t.label==='Curva a la derecha'&&t.toRoad==='Calle de prueba'));assert.equal(JSON.stringify(pts),before);});
 test('una excepción explícita permite el acceso frente a la restricción general',()=>{assert.equal(A.vehicle({access:'private',motor_vehicle:'yes'},{}).length,0);assert.equal(A.vehicle({motor_vehicle:'no',hgv:'yes'},{}).length,0);assert.equal(A.vehicle({access:'yes',hgv:'no'},{}).length,1);});
 test('el contexto de navegación informa nombre y doble sentido',()=>{const roads=A.roadContext(line,[way({name:'Carrer Major',oneway:'no',maxspeed:'30'})]);assert(roads.length);assert.equal(roads[0].name,'Carrer Major');assert.equal(roads[0].flow,'twoway');assert.equal(roads[0].maxspeed,'30');});
+test('el límite específico de camión aparece en el contexto vial',()=>{const roads=A.roadContext(line,[way({name:'Carrer Major',maxspeed:'80','maxspeed:hgv':'60'})]);assert.equal(roads[0].maxspeed,'60');});
 test('el contexto distingue sentido único permitido y posible contramano',()=>{assert.equal(A.roadContext(line,[way({name:'Carrer Nord',oneway:'yes'})])[0].flow,'oneway');assert.equal(A.roadContext(line.slice().reverse(),[way({name:'Carrer Nord',oneway:'yes'})])[0].flow,'opposed');});
 test('el contexto identifica sentidos condicionales',()=>{assert.equal(A.roadContext(line,[way({name:'Acceso industrial','oneway:conditional':'yes @ (Mo-Fr 08:00-18:00)'})])[0].flow,'conditional');});
