@@ -1,0 +1,29 @@
+/* Bajo consumo. Lo caro en un móvil no son los colores: son las capas que el sistema
+   tiene que recomponer en cada fotograma. Se quitan las animaciones, el desenfoque de
+   fondo y las pistas de capa GPU; todo lo demás se ve igual. */
+body.low-power *,
+body.low-power *::before,
+body.low-power *::after{
+ animation-duration:.001ms!important;
+ animation-iteration-count:1!important;
+ transition-duration:.001ms!important;
+ transition-delay:0s!important;
+}
+body.low-power{scroll-behavior:auto}
+
+/* El desenfoque de fondo obliga a releer lo que hay debajo en cada cuadro. Los fondos
+   de estas tarjetas ya son casi opacos, así que sin él se siguen leyendo igual de bien. */
+body.low-power .nav-guidance,
+body.low-power #nav-road-alert,
+body.low-power #route-recovery,
+body.low-power #drive-road-info,
+body.low-power #drive-banner,
+body.low-power #drive-panel,
+body.low-power .map-dimension,
+body.low-power #drive-tools,
+body.low-power #drive-speedo{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+
+/* Mantener una capa de 170 % del mapa lista para rotar cuesta memoria de vídeo. */
+body.low-power #nav-stage.focus.heading-up #nav-map{will-change:auto;transition:none}
+
+body.low-power-critical #nav-message{color:var(--danger);font-weight:700}

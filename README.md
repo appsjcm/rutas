@@ -49,6 +49,12 @@ Enlazar los cortes si tiene reserva, porque ahi basta con dos puntos por peticio
 
 Al pulsar Iniciar navegación aparece una tarjeta con el estado real del turno: Ruta, GPS, Voz, Mapas y Restricciones. No bloquea nada -la navegación arranca en ese mismo toque-; si todo está en orden la tarjeta se retira sola a los tres segundos, y si hay algo que leer espera a que se cierre. El permiso de GPS se consulta al navegador, no se supone: distingue concedido, por pedir y denegado. El apartado de restricciones cuenta lo que depende del vehículo y deja fuera los avisos de sentido de circulación.
 
+## Bajo consumo
+
+Una jornada entera con el GPS activo, la pantalla encendida y el mapa 3D gasta batería. Cuando el navegador da el nivel de batería -Chrome en Android sí, Safari no- y el teléfono baja del 20 % sin estar cargando, se quitan las animaciones y el desenfoque de fondo de las tarjetas, y el mapa vuelve a 2D; por debajo del 10 % el aviso se marca en rojo. Enchufado no se ahorra nunca, que es como suele ir en la cabina. Sin dato de batería el único indicio fiable es el tiempo: a partir de 45 minutos de navegación seguida se reducen las animaciones, pero no se toca el 3D, porque no hay motivo para quitarlo. Si el sistema pide menos movimiento, se respeta siempre. Volver a 2D se hace una sola vez por cambio de estado: si el conductor reactiva el 3D, no se le insiste.
+
+Lo que se quita es lo que obliga a recomponer capas en cada fotograma, no lo que se ve: los textos, los colores y los tamaños siguen igual. El ahorro real depende del teléfono y no se mide aquí; lo comprobado es que el estado cambia cuando debe y suelta cuando debe.
+
 ## Sin conexión
 
 Las teselas del mapa 3D se guardan igual que las del 2D, asi que cambiar de vista sin cobertura ya no deja la pantalla en blanco. Un service worker guarda la aplicación entera -código, estilos, Leaflet y los iconos- la primera vez que se abre, así que arranca sin cobertura. Las teselas del mapa se guardan solo cuando el mapa las ha pedido de verdad, mientras exploras la ruta o conduces, con un tope de 1500: no hay descarga por lotes, que es lo que desaconseja la política de uso de OpenStreetMap. Preparar la ronda en el depósito, con datos, deja esas calles disponibles después. Una zona que no se haya visto nunca aparecerá vacía, y un aviso en pantalla lo indica mientras no haya conexión. Las consultas a Overpass nunca pasan por ese almacén: tienen su propia caducidad de 24 horas.
