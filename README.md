@@ -8,7 +8,7 @@ Web: https://appsjcm.github.io/rutas/
 
 1. Abre Navegar y carga un GPX desde tu dispositivo.
 2. Si contiene varias trazas o segmentos, elige uno.
-3. Explora la ruta con el control de distancia o Reproducir. Street View abre las panorámicas disponibles del punto seleccionado en Google.
+3. Explora la ruta con el control de distancia o Reproducir. Vista calle abre las fotografías gratuitas de Mapillary próximas al punto seleccionado.
 4. Sitúa el control en tu punto de inicio y pulsa Iniciar GPS. Permite la ubicación y mantén la página visible.
 
 La línea gris muestra todo el recorrido, la verde lo completado y la azul los próximos 200 metros. Las flechas indican el sentido. El mapa puede ampliarse a pantalla completa. La posición real aparece con un círculo de precisión. Se muestran distancia restante y velocidad, con avisos opcionales de desvío y de giro por voz. Los giros se estiman por la geometría del GPX y se pueden consultar para todo el recorrido. Si el GPX trae horas, se detectan además las paradas de 3 minutos o más dentro de un radio de 40 metros y se muestra cuántas llevas hechas de la ronda. Solo se anuncian los tomados a 5 km/h o más, medidos con las marcas de tiempo del propio GPX, y con 60 metros mínimos entre indicaciones: así la deriva del GPS durante una parada no genera giros inexistentes ni se encadenan dos avisos imposibles de seguir. Cuando el GPX no trae horas, solo se aplica la separación mínima. La navegación en directo ofrece avisos de preparación, proximidad y «Ahora», ajustados a la velocidad; muestra el siguiente giro y las indicaciones completadas. La voz está activada inicialmente y se puede desactivar o repetir. Ante una posición imprecisa, antigua o ausente durante 20 segundos, las indicaciones se pausan hasta recuperar una posición válida. La reproducción admite velocidades 1×, 5× y 25×.
@@ -17,9 +17,9 @@ El seguimiento conserva el orden del GPX, también cuando se repiten calles. No 
 
 ## Datos y servicios
 
-Los GPX se procesan en el dispositivo y no se suben al repositorio. La ruta cargada, la grabación y los puntos manuales usan almacenamiento local del navegador. La ruta se recupera al volver y puede eliminarse con Olvidar ruta guardada. El mapa solicita únicamente las teselas visibles a OpenStreetMap. Al abrir Street View se envían a Google las coordenadas del punto elegido. Las fuentes y el generador de QR usan servicios externos.
+Los GPX se procesan en el dispositivo y no se suben al repositorio. La ruta cargada, la grabación y los puntos manuales usan almacenamiento local del navegador. La ruta se recupera al volver y puede eliminarse con Olvidar ruta guardada. El mapa solicita únicamente las teselas visibles a OpenStreetMap o Esri. Al abrir Vista calle se consulta Mapillary alrededor del punto elegido; nunca se envía el GPX completo. Las fuentes y el generador de QR usan servicios externos.
 
-Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap contributors. Street View utiliza las URLs oficiales de Google Maps sin clave. Integrar panorámicas dentro de la página requeriría configurar la API de Google Maps por separado.
+Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap contributors. Satélite: Esri, Maxar, Earthstar Geographics y GIS User Community. Vista calle utiliza MapillaryJS y un token gratuito guardado solo en el dispositivo.
 
 ## Comprobaciones
 
@@ -79,7 +79,7 @@ El selector 2D / 3D activa un segundo renderizador con MapLibre GL JS 4.7.1 (lic
 
 El seguimiento, los giros y las restricciones siguen dependiendo del mismo GPX y del mismo motor de navegación. Ambas vistas comparten posición, avance y avisos revisados; cambiar de vista no recalcula la ruta. Al iniciar navegación desde 3D se activa la orientación a la marcha; el botón de orientación permite volver al norte. Arrastrar suspende el seguimiento y Centrar GPS lo recupera. Una falta de soporte gráfico, pérdida del contexto WebGL o carga inicial agotada devuelve al mapa 2D.
 
-Fuentes de integración: https://openfreemap.org/quick_start/ y https://maplibre.org/maplibre-gl-js/docs/examples/display-buildings-in-3d/ . El volumen de los edificios es cartográfico, no fotografía ni Street View.
+Fuentes de integración: https://openfreemap.org/quick_start/ y https://maplibre.org/maplibre-gl-js/docs/examples/display-buildings-in-3d/ . El volumen de los edificios es cartográfico; Satélite es una capa independiente de imágenes de Esri.
 
 Validación: carga real de calles y edificios, GPS simulado con rumbo, pausa y recuperación de cámara, cambio 2D/3D durante navegación, avisos sobre el mapa y limpieza al cambiar de ruta. Verificado también el retorno a 2D sin WebGL y las 39 pruebas del motor existente. Pendiente la comprobación de rendimiento con GPS real en el teléfono.
 
