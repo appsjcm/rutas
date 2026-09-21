@@ -263,7 +263,7 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
   <header class="masthead">
     <div class="brandrow">
       <h1>Rutas</h1>
-      <p class="sub">Convertir · Crear · Navegar</p>
+      <p class="sub">Crear · Navegar · Compartir</p>
     </div>
     <p class="deck">Carga tu GPX, explora las calles y sigue el recorrido con tu posición GPS. Revisa cada punto con Street View o exporta la ruta para otras aplicaciones.</p>
   </header>
@@ -271,7 +271,7 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
   <div class="tabs" role="tablist">
 <button class="tab" role="tab" id="tab-nav" aria-controls="p-nav" aria-selected="false" type="button"><span class="t-long">Navegar</span><span class="t-short">Navegar</span></button>
     <button class="tab" role="tab" id="tab-exp" aria-controls="p-exp" aria-selected="true" type="button"><span class="t-long">Para el conductor</span><span class="t-short">Conductor</span></button>
-    <button class="tab" role="tab" id="tab-conv" aria-controls="p-conv" aria-selected="false" type="button"><span class="t-long">Enlaces de Maps</span><span class="t-short">Maps</span></button>
+    <button class="tab" role="tab" id="tab-conv" aria-controls="p-conv" aria-selected="false" type="button" hidden><span class="t-long">Enlaces de Maps</span><span class="t-short">Maps</span></button>
     <button class="tab" role="tab" id="tab-make" aria-controls="p-make" aria-selected="false" type="button"><span class="t-long">Crear GPX</span><span class="t-short">Crear</span></button>
     <button class="tab" role="tab" id="tab-help" aria-controls="p-help" aria-selected="false" type="button"><span class="t-long">Guía</span><span class="t-short">Guía</span></button>
   </div>
@@ -335,7 +335,7 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
                 <option value="8" selected>8 tramos numerados</option>
                 <option value="16">16 tramos numerados</option>
               </select>
-              <p class="hint">Cada tramo sale con su color y su n&uacute;mero, as&iacute; que en el mapa se lee el orden del recorrido de un vistazo. Solo afecta a KML y GeoJSON.</p>
+              <p class="hint">Cada tramo sale con su color y su n&uacute;mero, as&iacute; que en el archivo GeoJSON se lee el orden del recorrido de un vistazo.</p>
             </div>
           </div>
         </section>
@@ -347,17 +347,17 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
         <section class="panel">
           <div class="panel-hd"><h2>Formato</h2></div>
           <div>
-            <div class="fmt best">
+            <div class="fmt best" hidden>
               <div class="ft"><em>Recomendado para el cami&oacute;n</em><strong>KML para Google My&nbsp;Maps</strong>
                 <span>La l&iacute;nea exacta, con los tramos numerados y las marcas de sentido. Se sube a My&nbsp;Maps y aparece como capa dentro de la app de Google Maps del conductor, con su punto azul encima.</span></div>
               <button class="btn primary sm" type="button" data-exp2="kml">Guardar</button>
             </div>
-            <div class="fmt">
-              <div class="ft"><em>Para OsmAnd, Organic Maps, Locus</em><strong>GPX de la traza</strong>
+            <div class="fmt best">
+              <div class="ft"><em>Recomendado para compartir</em><strong>GPX de la traza</strong>
                 <span>El recorrido completo, punto por punto. Es el formato que entienden las apps que s&iacute; siguen una traza y avisan si te sales de ella.</span></div>
               <button class="btn primary sm" type="button" data-exp2="gpx">Guardar</button>
             </div>
-            <div class="fmt">
+            <div class="fmt" hidden>
               <div class="ft"><strong>GPX simplificado</strong>
                 <span>Solo los puntos gu&iacute;a que calcula la pesta&ntilde;a de enlaces. Archivo peque&ntilde;o, &uacute;til si la app se atraganta con miles de puntos.</span></div>
               <button class="btn sm" type="button" data-exp2="gpxs">Guardar</button>
@@ -369,7 +369,7 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
             </div>
             <div class="fmt">
               <div class="ft"><strong>CSV de puntos</strong>
-                <span>Orden, latitud, longitud, hora y distancia acumulada. Para Excel, para control horario o para subirlo a My&nbsp;Maps como tabla.</span></div>
+                <span>Orden, latitud, longitud, hora y distancia acumulada. Para Excel, control horario o sistemas de la empresa.</span></div>
               <button class="btn sm" type="button" data-exp2="csv">Guardar</button>
             </div>
           </div>
@@ -378,7 +378,7 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
         <section class="panel">
           <div class="panel-hd"><h2>Ponerlo en el m&oacute;vil del conductor</h2></div>
           <div class="panel-bd howto">
-            <div>
+            <div hidden>
               <h3>Opci&oacute;n A &middot; El Google Maps que ya conoce</h3>
               <ol class="steps">
                 <li>Guarda el <b>KML</b> y entra en <b>mymaps.google.com</b> con la cuenta de la empresa.</li>
@@ -388,8 +388,8 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
                 <li>La l&iacute;nea queda dibujada sobre el mapa normal y su posici&oacute;n se ve encima. Sin voz ni giro a giro: &eacute;l ve por d&oacute;nde va y qu&eacute; le queda.</li>
               </ol>
             </div>
-            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--rule)">
-              <h3>Opci&oacute;n B &middot; OsmAnd, la buena de verdad</h3>
+            <div>
+              <h3>Abrir el GPX en otra aplicaci&oacute;n</h3>
               <ol class="steps">
                 <li>Instala <b>OsmAnd</b> y desc&aacute;rgate el mapa de la zona, para que funcione sin datos.</li>
                 <li>P&aacute;sale el <b>GPX</b> y &aacute;brelo con OsmAnd.</li>
@@ -401,7 +401,7 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
           </div>
         </section>
 
-        <div class="note">
+        <div class="note" hidden>
           <span aria-hidden="true">&#9888;</span>
           <div><b>Por qu&eacute; aqu&iacute; no sirve la navegaci&oacute;n de Google Maps.</b> Maps calcula la ruta m&aacute;s r&aacute;pida entre puntos y nunca repite una calle. Una ronda de recogida es justo lo contrario: sube una calle, baja la siguiente y vuelve a pasar. Maps la &laquo;arreglar&iacute;a&raquo; salt&aacute;ndose pasadas. Por eso la respuesta es la l&iacute;nea dibujada, no el guiado por voz.</div>
         </div>
@@ -507,7 +507,7 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
             <p class="hint" id="rechint">Pon el móvil en el soporte, dale a grabar y conduce. Va anotando una posición cada pocos segundos. Si cierras la pestaña se guarda lo grabado hasta ese momento; al volver lo recuperas.</p>
             <div class="btnrow" id="recout" hidden>
               <button class="btn primary sm" type="button" data-exp="rec">Guardar como GPX</button>
-              <button class="btn sm" type="button" id="rec2conv">Abrir en Convertir</button>
+              <button class="btn sm" type="button" id="rec2conv" hidden>Abrir en Convertir</button>
             </div>
           </div>
         </section>
@@ -515,8 +515,8 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
         <section class="panel">
           <div class="panel-hd"><h2>Ruta por puntos</h2><span class="leg-meta" id="ptcount"></span></div>
           <div class="panel-bd">
-            <label for="ptin" class="hint" style="margin:0">Pega coordenadas (<code>41.97680, 1.87315</code>) o un enlace de Google Maps. Admite varias líneas de golpe.</label>
-            <textarea id="ptin" spellcheck="false" placeholder="41.97680, 1.87315&#10;https://maps.app.goo.gl/… (pega el enlace ya abierto, con /@lat,lon)&#10;Casa de Hicham  41.9769, 1.8731"></textarea>
+            <label for="ptin" class="hint" style="margin:0">Pega coordenadas (<code>41.97680, 1.87315</code>). Admite varias líneas de golpe.</label>
+            <textarea id="ptin" spellcheck="false" placeholder="41.97680, 1.87315&#10;41.97725, 1.87510&#10;Casa de Hicham  41.9769, 1.8731"></textarea>
             <div class="btnrow">
               <button id="ptadd" class="btn primary sm" type="button">Añadir puntos</button>
               <button id="ptgeo" class="btn sm" type="button">Mi ubicación</button>
@@ -525,8 +525,8 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
             <ol class="plist" id="plist"></ol>
             <div class="btnrow" id="ptout" hidden>
               <button class="btn primary sm" type="button" data-exp="pts">Guardar como GPX</button>
-              <button class="btn sm" type="button" id="pt2conv">Abrir en Convertir</button>
-              <a class="btn sm" id="ptmaps" href="#" target="_blank" rel="noopener">Abrir en Maps</a>
+              <button class="btn sm" type="button" id="pt2conv" hidden>Abrir en Convertir</button>
+              <a class="btn sm" id="ptmaps" href="#" target="_blank" rel="noopener" hidden>Abrir en Maps</a>
             </div>
             <p class="hint" id="pthint"></p>
           </div>
@@ -570,11 +570,11 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
             </ul>
           </div>
           <div>
-            <h3>Convertir desde el ordenador</h3>
+            <h3>Cargar y navegar</h3>
             <ol>
-              <li>Carga el GPX en el PC, donde suelen estar los archivos.</li>
-              <li>Ajusta los tramos y pulsa <b>QR</b> en el tramo que vayas a conducir.</li>
-              <li>Escanea el código con la cámara del móvil: Google Maps se abre con la ruta puesta.</li>
+              <li>Abre Rutas y pulsa <b>Cargar ruta</b>.</li>
+              <li>Selecciona el archivo GPX guardado en el teléfono.</li>
+              <li>Comprueba el recorrido y pulsa <b>Iniciar navegación</b>.</li>
             </ol>
           </div>
         </div>
@@ -583,20 +583,20 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
             <h3>Qué traza funciona bien</h3>
             <ul>
               <li>Un recorrido de un sitio a otro, por carretera abierta al tráfico.</li>
-              <li>Sin pasar dos veces por el mismo punto: Maps no sabe reproducir un bucle repetido.</li>
-              <li>Si tu GPX es una ronda con paradas, usa el reparto <b>Paradas</b>: convierte cada alto en un punto intermedio, que es justo para lo que sirve Maps.</li>
+              <li>Puede repetir calles y cruzar varias veces el mismo punto.</li>
+              <li>Los segmentos deben estar ordenados en el sentido real del recorrido.</li>
             </ul>
           </div>
           <div>
             <h3>Seguir la traza exacta</h3>
             <ul>
-              <li>Google Maps siempre recalcula por carretera. No existe forma de que siga un GPX al milímetro.</li>
-              <li>Para eso hacen falta apps que naveguen la traza: OsmAnd, Organic Maps o Guru Maps.</li>
-              <li>Exporta «Traza completa» desde la pestaña Convertir y ábrela con una de ellas.</li>
+              <li>Rutas conserva el orden y las repeticiones del GPX.</li>
+              <li>El reconocimiento de calles añade nombres, sentidos y restricciones conocidas.</li>
+              <li>Comprueba siempre la señalización real antes de continuar.</li>
             </ul>
           </div>
         </div>
-        <p class="colophon">Los puntos guía se eligen con un Douglas&ndash;Peucker por presupuesto: se parte de la recta origen&ndash;destino y se inserta, una a una, la coordenada que más se desvía de la línea actual, hasta agotar los puntos disponibles. En <b>Equilibrado</b> la desviación se pondera por la longitud del tramo, para que un puerto lleno de curvas no se quede con todo el presupuesto y deje la autovía sin vigilar. En <b>Paradas</b> se detectan primero los altos (40 m de radio durante 3 minutos o más), se fijan como puntos obligados y el presupuesto sobrante se reparte con el mismo criterio.</p>
+        <p class="colophon">La ruta y el progreso se guardan localmente en este dispositivo. El archivo GPX no se publica ni se envía a un servidor de Rutas.</p>
       </div>
     </section>
   </section>

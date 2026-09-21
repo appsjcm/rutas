@@ -10,7 +10,7 @@ const track=document.getElementById('nav-track'),label=document.querySelector('l
 const start=document.getElementById('nav-start');start.parentElement.classList.add('nav-actions');start.prepend(icon('nav'));document.getElementById('nav-stage').before(start.parentElement);
 const upload=document.getElementById('nav-file').parentElement;upload.prepend(icon('upload'));document.getElementById('nav-fit').prepend(icon('map'));document.getElementById('nav-center').prepend(icon('nav'));
 
-const tabs=[...document.querySelectorAll('[role=tab]')];tabs.forEach((t,i)=>t.addEventListener('keydown',e=>{let next;if(e.key==='ArrowRight')next=(i+1)%tabs.length;if(e.key==='ArrowLeft')next=(i+tabs.length-1)%tabs.length;if(e.key==='Home')next=0;if(e.key==='End')next=tabs.length-1;if(next!==undefined){e.preventDefault();tabs[next].click();tabs[next].focus();}}));
+const tabs=[...document.querySelectorAll('[role=tab]')].filter(t=>!t.hidden);tabs.forEach((t,i)=>t.addEventListener('keydown',e=>{let next;if(e.key==='ArrowRight')next=(i+1)%tabs.length;if(e.key==='ArrowLeft')next=(i+tabs.length-1)%tabs.length;if(e.key==='Home')next=0;if(e.key==='End')next=tabs.length-1;if(next!==undefined){e.preventDefault();tabs[next].click();tabs[next].focus();}}));
 
 // Route overview and secondary tools keep the main screen focused on departure.
 const body=document.querySelector('.nav-shell>.panel-bd');
