@@ -18,6 +18,59 @@ function legs(data){
  if(!list.length)throw Error(data?.error||data?.status_message||'No se encontraron calles próximas al recorrido.');
  return list.map(leg=>decode(leg.shape));
 }
+// Valhalla ya conoce la maniobra real de cada cruce. Se conserva una versión breve para
+// la pantalla y el punto exacto de la geometría para colocarla después de unir las patas.
+function roadManeuver(value){
+ const m=value||{},type=Number(m.type),exit=Number(m.roundabout_exit_count)||0;
+ const actions={
+  9:['Giro suave a la derecha','↱'],10:['Giro a la derecha','↱'],11:['Giro cerrado a la derecha','↱'],
+  12:['Cambio de sentido','↶'],13:['Cambio de sentido','↶'],
+  14:['Giro cerrado a la izquierda','↰'],15:['Giro a la izquierda','↰'],16:['Giro suave a la izquierda','↰'],
+  17:['Toma la incorporación','↑'],18:['Toma la incorporación a la derecha','↱'],19:['Toma la incorporación a la izquierda','↰'],
+  20:['Toma la salida a la derecha','↱'],21:['Toma la salida a la izquierda','↰'],
+  22:['Continúa recto','↑'],23:['Mantente a la derecha','↱'],24:['Mantente a la izquierda','↰'],
+  25:['Incorpórate a la vía','↑'],
+  26:[exit?'En la rotonda, toma la salida '+exit:'Entra en la rotonda','⟳'],27:['Sal de la rotonda','⟳'],
+  28:['Sube al ferry','↑'],29:['Sal del ferry','↑'],
+  37:['Incorpórate por la derecha','↱'],38:['Incorpórate por la izquierda','↰']
+ };
+ const action=actions[type];if(!action)return null;
+ const names=Array.isArray(m.begin_street_names)&&m.begin_street_names.length?m.begin_street_names:m.street_names;
+ const toRoad=Array.isArray(names)?String(names.find(Boolean)||''):'';
+ return {type,label:action[0],symbol:action[1],toRoad,roadContext:true,source:'valhalla',
+  instruction:String(m.instruction||''),voice:String(m.verbal_pre_transition_instruction||m.verbal_transition_alert_instruction||'')};
+}
+function guidedLegs(data){
+ const list=data&&data.trip&&Array.isArray(data.trip.legs)?data.trip.legs:[];
+ if(!list.length)throw Error(data?.error||data?.status_message||'No se encontraron calles próximas al recorrido.');
+ return list.map(leg=>{
+  const path=decode(leg.shape),maneuvers=[];
+  for(const raw of Array.isArray(leg.maneuvers)?leg.maneuvers:[]){
+   const guide=roadManeuver(raw),index=Number(raw.begin_shape_index);
+   if(guide&&Number.isInteger(index)&&index>=0&&index<path.length)maneuvers.push({...guide,point:path[index]});
+  }
+  return {path,maneuvers};
+ });
+}
+// Al montar el camino pueden aparecer conectores entre patas. Las coordenadas de las
+// maniobras siguen siendo válidas: se buscan hacia delante para respetar las calles repetidas.
+function placeManeuvers(values,path,distance,tolerance=70){
+ if(!Array.isArray(values)||!Array.isArray(path)||path.length<2||typeof distance!=='function')return [];
+ const cum=[0];for(let i=1;i<path.length;i++)cum.push(cum[i-1]+distance(path[i-1],path[i]));
+ const out=[];let cursor=0;
+ for(const value of values){
+  if(!value?.point)continue;let best=-1,error=Infinity;
+  for(let i=cursor;i<path.length;i++){
+   const gap=distance(value.point,path[i]);if(gap<error){error=gap;best=i;if(gap<.2)break;}
+  }
+  if(best<0||!Number.isFinite(error)||error>tolerance)continue;
+  cursor=best;const turn={...value,d:cum[best]};delete turn.point;
+  const previous=out.at(-1);
+  if(previous&&Math.abs(previous.d-turn.d)<8&&previous.label===turn.label)continue;
+  out.push(turn);
+ }
+ return out;
+}
 // OSRM devuelve cada trozo continuo como un "matching" propio, que encaja uno a uno con la
 // idea de pata de Valhalla: entre matchings es donde puede haber corte, dentro nunca.
 function osrmLegs(data){
@@ -102,5 +155,5 @@ function coverage(samples,path,radius=45){
  for(const p of take){const kx=111320*Math.cos(p.lat*Math.PI/180),ky=110540;let best=Infinity;for(let i=0;i<path.length-1;i++){const a=path[i],b=path[i+1],x=(a.lon-p.lon)*kx,y=(a.lat-p.lat)*ky,dx=(b.lon-a.lon)*kx,dy=(b.lat-a.lat)*ky,l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,-(x*dx+y*dy)/l)):0;best=Math.min(best,Math.hypot(x+t*dx,y+t*dy));if(best<=radius)break;}if(best<=radius)hit++;}
  return Math.round(hit/take.length*100);
 }
-const api={decode,extract,legs,osrmLegs,osrmRoute,input,chunks,merge,joins,assemble,batches,split,coverage,length,usable,MIN_LENGTH_RATIO};if(typeof module!=='undefined')module.exports=api;else root.RutasStreetCore=api;
+const api={decode,extract,legs,guidedLegs,roadManeuver,placeManeuvers,osrmLegs,osrmRoute,input,chunks,merge,joins,assemble,batches,split,coverage,length,usable,MIN_LENGTH_RATIO};if(typeof module!=='undefined')module.exports=api;else root.RutasStreetCore=api;
 })(typeof window!=='undefined'?window:globalThis);

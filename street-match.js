@@ -5,7 +5,7 @@ const bar=document.createElement('section');bar.id='street-match';bar.hidden=tru
 stage.after(bar);
 const text=document.getElementById('street-match-text'),retry=document.getElementById('street-match-retry');
 let controller=null,routeRef=null,layer=null,path=[],run=0,cortesVisibles=0,matchState='idle',navigable=false,coverage=null,lengthPct=null;
-const CACHE_PREFIX='rutas-street-path-v1:';
+const CACHE_PREFIX='rutas-street-path-v2:';
 function cacheKey(data){return CACHE_PREFIX+C.fingerprint(C.prepare(data.pts));}
 function loadCache(data){try{const value=JSON.parse(localStorage.getItem(cacheKey(data)));if(!value||!Array.isArray(value.path)||value.path.length<2||!value.path.every(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180))return null;return value;}catch{return null;}}
 function saveCache(data,value){try{localStorage.setItem(cacheKey(data),JSON.stringify({...value,saved:Date.now()}));const rows=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k?.startsWith(CACHE_PREFIX)){let saved=0;try{saved=JSON.parse(localStorage.getItem(k)).saved||0;}catch{}rows.push({k,saved});}}rows.sort((a,b)=>b.saved-a.saved);rows.slice(3).forEach(r=>localStorage.removeItem(r.k));}catch{}}
@@ -25,7 +25,7 @@ const MATCHER={
   const response=await fetch(VALHALLA+'/trace_route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal,cache:'no-store'});
   const json=await response.json().catch(()=>null);
   if(!response.ok)throw Error(json?.error||json?.status_message||'respondió '+response.status);
-  return S.legs(json);
+  return S.guidedLegs(json);
  }
 };
 const BRIDGES=[{
@@ -77,15 +77,15 @@ async function match(force=false){
  if(!state.route||data.sample||state.mode==='access'){clear();bar.hidden=true;routeRef=state.route?.pts||null;return;}
  if(!force&&routeRef===data.pts)return;clear();routeRef=data.pts;const own=++run,input=S.input(data.pts,null);
  if(input.length<2){status('error','No hay puntos suficientes para reconocer las calles.');return;}
-  if(!force){const saved=loadCache(data);if(saved){const medida=S.usable(S.length(saved.path,C.distance),S.length(data.pts,C.distance));if(medida.ok){path=saved.path;coverage=saved.coverage;lengthPct=medida.pct;layer=L.featureGroup().addTo(state.map);L.polyline(path.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(layer);layer.bringToBack();navigable=RutasMap.useStreetPath(path);mapKey(true);status('ready','Calles recuperadas del dispositivo · '+(saved.coverage||'—')+' % de coincidencia. No se ha repetido el reconocimiento.');window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:saved.coverage,navigation:navigable,bridges:saved.bridges||0,gaps:0,pieces:1,lengthPct:medida.pct,source:'dispositivo',cached:true}}));return;}}
+  if(!force){const saved=loadCache(data);if(saved){const medida=S.usable(S.length(saved.path,C.distance),S.length(data.pts,C.distance));if(medida.ok){path=saved.path;coverage=saved.coverage;lengthPct=medida.pct;layer=L.featureGroup().addTo(state.map);L.polyline(path.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(layer);layer.bringToBack();const guides=Array.isArray(saved.turns)?saved.turns:[];navigable=RutasMap.useStreetPath(path,guides);mapKey(true);status('ready','Calles recuperadas del dispositivo · '+(saved.coverage||'—')+' % de coincidencia · '+guides.length+' maniobras viales. No se ha repetido el reconocimiento.');window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:saved.coverage,navigation:navigable,bridges:saved.bridges||0,gaps:0,pieces:1,maneuvers:guides.length,lengthPct:medida.pct,source:'dispositivo',cached:true}}));return;}}
   if(data.source==='saved'){status('warn','Este recorrido guardado aún no tiene calles reconocidas. Carga el GPX una vez o pulsa Reconocer ahora.',true);return;}}
  const chunks=S.chunks(input,60);status('loading','Buscando las calles y carreteras que pasan por los puntos del GPX…');controller=new AbortController();
  try{
-  const piezasVia=[];
+  const piezasVia=[],maniobrasVia=[];
   for(let i=0;i<chunks.length;i++){
    if(own!==run)return;
    status('loading','Analizando calles… '+Math.round(i/chunks.length*100)+' % · puedes arrancar cuando quieras');
-   try{for(const leg of await MATCHER.legs(chunks[i],controller.signal))piezasVia.push(leg);}
+   try{for(const leg of await MATCHER.legs(chunks[i],controller.signal)){piezasVia.push(leg.path);maniobrasVia.push(...leg.maneuvers);}}
    catch(error){if(error.name==='AbortError')throw error;throw Error(MATCHER.name+' '+error.message);}
   }
   if(own!==run||Roadbook.getRoute().pts!==routeRef)return;
@@ -101,13 +101,13 @@ async function match(force=false){
   if(matched.length<2)throw Error('No se obtuvo un trazado continuo por calles.');
   const pct=S.coverage(input,matched);if(pct<25)throw Error('No se pudo asociar esta traza con suficientes calles cercanas.');
   const medida=S.usable(S.length(matched,C.distance),S.length(data.pts,C.distance));coverage=pct;lengthPct=medida.pct;
-  path=matched;const continuo=breaks.length===0,enlazados=detectados-breaks.length,fiable=continuo&&medida.ok;
+  path=matched;const roadTurns=S.placeManeuvers(maniobrasVia,matched,C.distance),continuo=breaks.length===0,enlazados=detectados-breaks.length,fiable=continuo&&medida.ok;
   // Un corte sin enlazar jamás se cruza con una recta: el camino se dibuja a trozos.
   const piezas=continuo?[matched]:S.split(matched,breaks);
   layer=L.featureGroup().addTo(state.map);
   for(const pieza of piezas)L.polyline(pieza.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(layer);
   layer.bringToBack();
-  const used=fiable?RutasMap.useStreetPath(path):false;navigable=used;mapKey(true);
+  const used=fiable?RutasMap.useStreetPath(path,roadTurns):false;navigable=used;mapKey(true);
   const reserva=puentesDe.has(BRIDGES[1].name);
   status(fiable?'ready':'warn',
    (continuo?'Trazado vial continuo · ':'Trazado vial con interrupciones · ')+pct+' % de los puntos quedan cerca de una calle reconocida.'
@@ -115,11 +115,11 @@ async function match(force=false){
    +(enlazados>0?' '+enlazados+(enlazados===1?' corte enlazado':' cortes enlazados')+' por carretera.':'')
    +(continuo?'':' Quedan '+breaks.length+(breaks.length===1?' corte sin enlazar, dibujado como interrupción en vez de como recta.':' cortes sin enlazar, dibujados como interrupciones en vez de como rectas.'))
    +(medida.ok?'':' Solo cubre el '+medida.pct+' % de los kilómetros del GPX: al reconocer las calles se han perdido pasadas repetidas.')
-   +(fiable?' Simulación y navegación preparadas sobre estas calles.':' La navegación sigue el GPX original.'),
+   +(fiable?' '+roadTurns.length+' maniobras viales preparadas para simulación y navegación.':' La navegación sigue el GPX original.'),
    !fiable);
   cortesVisibles=breaks.length;
-  if(fiable)saveCache(data,{path,coverage:pct,bridges:enlazados,gaps:0,lengthPct:medida.pct,navigable:true});
-  window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:pct,navigation:used,bridges:enlazados,gaps:breaks.length,pieces:piezas.length,lengthPct:medida.pct,source:MATCHER.name,bridgedBy:[...puentesDe]}}));
+  if(fiable)saveCache(data,{path,turns:roadTurns,coverage:pct,bridges:enlazados,gaps:0,lengthPct:medida.pct,navigable:true});
+  window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:pct,navigation:used,bridges:enlazados,gaps:breaks.length,pieces:piezas.length,maneuvers:roadTurns.length,lengthPct:medida.pct,source:MATCHER.name,bridgedBy:[...puentesDe]}}));
  }catch(error){if(error.name!=='AbortError'&&own===run)status('error','No se pudo dibujar el trazado por calles. '+error.message+' El GPX original sigue disponible.',true);}
  finally{if(own===run)controller=null;}
 }

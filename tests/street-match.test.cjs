@@ -4,6 +4,29 @@ const metros=(x,y)=>Math.hypot(x.lat-y.lat,x.lon-y.lon)*100000;
 test('decodifica la geometría vial de Valhalla',()=>{const pts=[{lat:41.97697,lon:1.87303},{lat:41.97731,lon:1.87355},{lat:41.978,lon:1.874}];const back=S.decode(encode(pts));assert.equal(back.length,3);assert(Math.abs(back[1].lat-pts[1].lat)<1e-6);assert(Math.abs(back[1].lon-pts[1].lon)<1e-6);});
 test('une patas sin duplicar el punto compartido',()=>{const a=[{lat:41,lon:2},{lat:41.001,lon:2}],b=[a[1],{lat:41.002,lon:2.001}],data={trip:{legs:[{shape:encode(a)},{shape:encode(b)}]}};assert.deepEqual(S.extract(data),[a[0],a[1],b[1]]);});
 test('separa la geometría de cada pata de la respuesta',()=>{const a=[{lat:41,lon:2},{lat:41.001,lon:2}],b=[{lat:41.002,lon:2},{lat:41.003,lon:2}],data={trip:{legs:[{shape:encode(a)},{shape:encode(b)}]}};const out=S.legs(data);assert.equal(out.length,2);assert.equal(out[0].length,2);assert(Math.abs(out[1][0].lat-b[0].lat)<1e-6);assert.throws(()=>S.legs({trip:{legs:[]}}));});
+test('conserva las maniobras viales y la salida real de una rotonda',()=>{
+ const pts=[{lat:41,lon:2},{lat:41.001,lon:2.001},{lat:41.002,lon:2.002}];
+ const data={trip:{legs:[{shape:encode(pts),maneuvers:[
+  {type:26,begin_shape_index:1,roundabout_exit_count:3,street_names:['C-16'],instruction:'Enter the roundabout'},
+  {type:10,begin_shape_index:2,begin_street_names:['Carrer Major']}
+ ]}]}};
+ const [leg]=S.guidedLegs(data);
+ assert.equal(leg.path.length,3);assert.equal(leg.maneuvers.length,2);
+ assert.equal(leg.maneuvers[0].label,'En la rotonda, toma la salida 3');
+ assert.equal(leg.maneuvers[0].symbol,'⟳');assert.equal(leg.maneuvers[0].toRoad,'C-16');
+ assert.deepEqual(leg.maneuvers[0].point,leg.path[1]);
+ assert.equal(leg.maneuvers[1].toRoad,'Carrer Major');
+});
+test('coloca las maniobras en orden sobre el camino final',()=>{
+ const path=[{lat:41,lon:2},{lat:41,lon:2.001},{lat:41,lon:2},{lat:41,lon:1.999}];
+ const values=[
+  {...S.roadManeuver({type:10,street_names:['Primera']}),point:{lat:41,lon:2.001}},
+  {...S.roadManeuver({type:15,street_names:['Segunda']}),point:{lat:41,lon:2}}
+ ];
+ const out=S.placeManeuvers(values,path,metros);
+ assert.equal(out.length,2);assert.equal(Math.round(out[0].d),100);assert.equal(Math.round(out[1].d),200);
+ assert.equal(out[1].toRoad,'Segunda');assert.equal('point' in out[0],false);
+});
 test('limita una traza grande conservando sus extremos',()=>{const pts=Array.from({length:5000},(_,i)=>({lat:41+i/1e6,lon:2}));const out=S.input(pts,p=>p,1800);assert.equal(out.length,1800);assert.deepEqual(out[0],pts[0]);assert.deepEqual(out.at(-1),pts.at(-1));});
 test('divide recorridos largos solapando el punto de unión',()=>{const pts=Array.from({length:250},(_,i)=>({lat:41+i/1e5,lon:2})),chunks=S.chunks(pts,120);assert.deepEqual(chunks.map(x=>x.length),[120,120,12]);assert.equal(chunks[0].at(-1),chunks[1][0]);assert.equal(chunks[1].at(-1),chunks[2][0]);assert.equal(S.merge(chunks).length,250);});
 test('calcula qué parte del GPX queda cerca del trazado vial',()=>{const road=[{lat:41,lon:2},{lat:41.01,lon:2}],near=[{lat:41.001,lon:2.0001},{lat:41.005,lon:2},{lat:41.009,lon:1.9999}],far=near.map(p=>({...p,lon:p.lon+.02}));assert.equal(S.coverage(near,road),100);assert.equal(S.coverage(far,road),0);});
@@ -31,4 +54,3 @@ test('lee las patas del servicio de reserva',()=>{const a=[{lat:41,lon:2},{lat:4
 test('lee un enlace del servicio de reserva',()=>{const linea=[{lat:41,lon:2},{lat:41.002,lon:2.001}];
  assert.equal(S.osrmRoute({code:'Ok',routes:[{geometry:encode(linea)}]}).length,2);
  for(const mal of [null,{code:'Ok',routes:[]},{code:'Ok',routes:[{}]},{code:'NoRoute'}])assert.throws(()=>S.osrmRoute(mal));});
-
