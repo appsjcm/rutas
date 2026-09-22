@@ -48,27 +48,28 @@ const SIN_NOMBRE='Según el GPX';
 function banner(state){
  const s=state||{};
 
- if(s.paused)return {tone:'paused',arrow:s.arrow||'!',eyebrow:'ESPERANDO GPS',
+ if(s.paused)return {tone:'paused',arrow:s.arrow||'!',exit:null,eyebrow:'ESPERANDO GPS',
   lead:'GPS',action:s.paused===true?'Indicaciones pausadas':String(s.paused),street:'',after:''};
 
- if(s.end)return {tone:'done',arrow:'✓',eyebrow:'',
+ if(s.end)return {tone:'done',arrow:'✓',exit:null,eyebrow:'',
   lead:'FIN',action:'Recorrido completado',street:'Final del recorrido',after:''};
 
  const eyebrow=s.access?(s.access.recovery?'REGRESO AL RECORRIDO':'ACCESO POR CALLES'):'';
  const ahora=s.stage==='now';
  const turn=s.turn;
 
- if(!turn)return {tone:ahora?'now':'far',arrow:'↑',eyebrow,
+ if(!turn)return {tone:ahora?'now':'far',arrow:'↑',exit:null,eyebrow,
   lead:ahora?'AHORA':(distance(s.gap)?'EN '+distance(s.gap):''),
   action:'Sigue el recorrido',street:'',after:''};
 
  return {
   tone:ahora?'now':(s.stage==='near'?'near':'far'),
   arrow:turn.symbol||'↑',
+  exit:Number.isSafeInteger(turn.roundaboutExit)&&turn.roundaboutExit>0?turn.roundaboutExit:null,
   eyebrow,
   lead:ahora?'AHORA':(distance(s.gap)?'EN '+distance(s.gap):''),
   action:imperative(turn.label)||'Sigue el recorrido',
-  street:turn.toRoad||SIN_NOMBRE,
+  street:turn.toRoad||(turn.roadContext?'Maniobra vial':SIN_NOMBRE),
   after:after(s.next,turn.d)
  };
 }

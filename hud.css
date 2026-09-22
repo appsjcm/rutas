@@ -15,6 +15,14 @@
 #nav-stage.driving #drive-turn-phase:empty{display:none}
 #nav-stage.driving #drive-turn-street:empty{display:none}
 
+/* La salida se reconoce en la señal antes de tener que leer toda la indicación. */
+#nav-stage.driving .drive-maneuver{position:relative}
+#nav-stage.driving .drive-maneuver[data-exit]:not([data-exit=""])::after{
+ content:attr(data-exit);position:absolute;right:-5px;bottom:-5px;display:grid;place-items:center;
+ min-width:25px;height:25px;padding:0 4px;border:3px solid #102c42;border-radius:50%;
+ background:#fff;color:#102c42;font-size:14px;font-weight:850;line-height:1;box-shadow:0 2px 8px #0005
+}
+
 #nav-stage.driving #drive-banner[data-phase=now] #drive-turn-dist{letter-spacing:.02em}
 
 @media(max-width:700px){
@@ -27,4 +35,5 @@
  #nav-stage.driving #drive-turn-dist{font-size:24px}
  #nav-stage.driving #drive-turn-action{font-size:16.5px;margin-top:1px}
  #nav-stage.driving #drive-turn-street{font-size:12.5px}
+ #nav-stage.driving .drive-maneuver[data-exit]:not([data-exit=""])::after{min-width:21px;height:21px;font-size:12px;border-width:2px}
 }

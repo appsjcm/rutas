@@ -22,6 +22,7 @@ function spell(seconds){const m=Math.round(seconds/60);if(m<60)return m+' min';c
 // Pintar la cabecera es una sola cosa y pasa por un solo sitio; lo que dice, lo decide H.
 function paintBanner(b){
  $('drive-banner').dataset.phase=b.tone;
+ $('drive-turn-arrow').parentElement.dataset.exit=b.exit||'';
  $('drive-turn-phase').textContent=b.eyebrow;
  $('drive-turn-arrow').textContent=b.arrow;
  $('drive-turn-dist').textContent=b.lead;

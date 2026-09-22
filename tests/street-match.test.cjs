@@ -13,7 +13,7 @@ test('conserva las maniobras viales y la salida real de una rotonda',()=>{
  const [leg]=S.guidedLegs(data);
  assert.equal(leg.path.length,3);assert.equal(leg.maneuvers.length,2);
  assert.equal(leg.maneuvers[0].label,'En la rotonda, toma la salida 3');
- assert.equal(leg.maneuvers[0].symbol,'⟳');assert.equal(leg.maneuvers[0].toRoad,'C-16');
+ assert.equal(leg.maneuvers[0].symbol,'⟲');assert.equal(leg.maneuvers[0].roundaboutExit,3);assert.equal(leg.maneuvers[0].toRoad,'C-16');
  assert.deepEqual(leg.maneuvers[0].point,leg.path[1]);
  assert.equal(leg.maneuvers[1].toRoad,'Carrer Major');
 });
@@ -26,6 +26,12 @@ test('coloca las maniobras en orden sobre el camino final',()=>{
  const out=S.placeManeuvers(values,path,metros);
  assert.equal(out.length,2);assert.equal(Math.round(out[0].d),100);assert.equal(Math.round(out[1].d),200);
  assert.equal(out[1].toRoad,'Segunda');assert.equal('point' in out[0],false);
+});
+test('actualiza las rotondas guardadas sin repetir el reconocimiento',()=>{
+ const out=S.upgradeManeuvers([{type:26,label:'En la rotonda, toma la salida 4',symbol:'⟳'},{type:27,label:'Sal de la rotonda',symbol:'⟳'},{type:10,label:'Giro'}]);
+ assert.equal(out[0].symbol,'⟲');assert.equal(out[0].roundaboutExit,4);
+ assert.equal(out[1].symbol,'↗');assert.equal(out[1].roundaboutExit,null);
+ assert.equal(out[2].label,'Giro');
 });
 test('limita una traza grande conservando sus extremos',()=>{const pts=Array.from({length:5000},(_,i)=>({lat:41+i/1e6,lon:2}));const out=S.input(pts,p=>p,1800);assert.equal(out.length,1800);assert.deepEqual(out[0],pts[0]);assert.deepEqual(out.at(-1),pts.at(-1));});
 test('divide recorridos largos solapando el punto de unión',()=>{const pts=Array.from({length:250},(_,i)=>({lat:41+i/1e5,lon:2})),chunks=S.chunks(pts,120);assert.deepEqual(chunks.map(x=>x.length),[120,120,12]);assert.equal(chunks[0].at(-1),chunks[1][0]);assert.equal(chunks[1].at(-1),chunks[2][0]);assert.equal(S.merge(chunks).length,250);});

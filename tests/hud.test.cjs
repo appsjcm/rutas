@@ -57,6 +57,12 @@ test('sin nombre de calle se dice de donde sale la indicacion',()=>{
  assert.equal(b.action,'Gira a la derecha','la accion no se sustituye por el matiz');
 });
 
+test('una rotonda destaca el numero de salida y su origen vial',()=>{
+ const b=H.banner({stage:'near',gap:80,turn:{symbol:'⟲',label:'En la rotonda, toma la salida 3',roundaboutExit:3,roadContext:true,d:200}});
+ assert.equal(b.arrow,'⟲');assert.equal(b.exit,3);assert.equal(b.street,'Maniobra vial');
+ assert.equal(H.banner({stage:'near',gap:80,turn:{label:'Gira',roundaboutExit:0,d:200}}).exit,null);
+});
+
 test('el siguiente giro va en una linea aparte y en pequeno',()=>{
  const b=H.banner({stage:'prepare',gap:200,turn:{label:'Gira a la derecha',toRoad:'Major',d:900},
                    next:{label:'En la rotonda, toma la salida 2',toRoad:'Carrer del Pont',d:1150}});
