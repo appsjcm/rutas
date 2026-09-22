@@ -16,7 +16,12 @@ controls.append(button);
 const status=document.createElement('div');
 status.id='streetview-status';status.hidden=true;status.setAttribute('role','status');
 document.getElementById('nav-stage').append(status);
-let statusTimer,picking=false,clickMap=null;
+const dialog=document.createElement('dialog');
+dialog.id='streetview-dialog';dialog.setAttribute('aria-labelledby','streetview-dialog-title');
+dialog.innerHTML='<div class="streetview-modal-head"><div><small>PUNTO DE LA RUTA</small><h2 id="streetview-dialog-title">Google Street View</h2></div><button type="button" class="streetview-close" aria-label="Cerrar Street View">×</button></div><div class="streetview-frame-wrap"><div class="streetview-loading">Cargando la panorámica…</div><iframe title="Google Street View del punto elegido" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div><div class="streetview-modal-foot"><p>Google recibe solamente este punto y el rumbo. La disponibilidad de imágenes depende de Street View.</p><a class="btn sm" target="_blank" rel="noopener noreferrer">Abrir en Google Maps ↗</a></div>';
+document.body.append(dialog);
+const frame=dialog.querySelector('iframe'),frameWrap=dialog.querySelector('.streetview-frame-wrap'),loading=dialog.querySelector('.streetview-loading'),external=dialog.querySelector('a');
+let statusTimer,frameTimer,picking=false,clickMap=null;
 
 function state(){return M.get();}
 function heading(s,d){
@@ -36,10 +41,11 @@ function choose(e){
  const s=state(),hit=V.routePosition(s.route,{lat:e.latlng.lat,lon:e.latlng.lng});
  cancel();
  if(!hit){message('No se encontró ese punto de la ruta.');return;}
- const url=V.url(hit.point,heading(s,hit.d));
- if(!url){message('No se pudo abrir ese punto.');return;}
- window.open(url,'_blank','noopener,noreferrer');
- message('Street View abierto en el punto elegido.');
+ const bearing=heading(s,hit.d),embed=V.embedUrl(hit.point,bearing),url=V.url(hit.point,bearing);
+ if(!embed||!url){message('No se pudo abrir ese punto.');return;}
+ clearTimeout(frameTimer);frameWrap.classList.remove('loaded');loading.textContent='Cargando la panorámica…';external.href=url;frame.src=embed;
+ dialog.showModal();message('Street View abierto en el punto elegido.');
+ frameTimer=setTimeout(()=>{if(dialog.open&&!frameWrap.classList.contains('loaded'))loading.textContent='La panorámica tarda en cargar. Puedes abrir este punto en Google Maps.';},10000);
 }
 function select(){
  const s=state();
@@ -60,9 +66,14 @@ function refresh(){
 }
 
 button.onclick=select;
+frame.addEventListener('load',()=>{if(frame.src&&frame.src!=='about:blank'){clearTimeout(frameTimer);frameWrap.classList.add('loaded');}});
+function closeDialog(){if(dialog.open)dialog.close();}
+dialog.querySelector('.streetview-close').onclick=closeDialog;
+dialog.addEventListener('click',e=>{if(e.target===dialog)closeDialog();});
+dialog.addEventListener('close',()=>{clearTimeout(frameTimer);frame.src='about:blank';frameWrap.classList.remove('loaded');loading.textContent='Cargando la panorámica…';external.removeAttribute('href');});
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&picking)cancel(true);});
 for(const name of ['rutas:route','rutas:visible','online','offline'])window.addEventListener(name,()=>{if(name==='rutas:route')cancel();refresh();});
 refresh();
 
-window.RutasStreetViewUI={select,cancel,isPicking:()=>picking,refresh};
+window.RutasStreetViewUI={select,cancel,close:closeDialog,isPicking:()=>picking,refresh};
 })();

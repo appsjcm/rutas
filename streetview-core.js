@@ -8,6 +8,7 @@
 // https://developers.google.com/maps/documentation/urls/get-started
 
 const BASE='https://www.google.com/maps/@?api=1&map_action=pano';
+const EMBED='https://maps.google.com/maps';
 const PRECISION=6;          // ~0,1 m: de sobra, y no manda mas detalle del necesario
 const FOV=90;               // el que Google usa por defecto
 
@@ -41,6 +42,15 @@ function url(point,heading){
  const h=normaliseHeading(heading);
  if(h!==null)out+='&heading='+h+'&pitch=0&fov='+FOV;
  return out;
+}
+
+// Vista incrustada sin clave que Google redirige a su reproductor /maps/embed.
+// Conservamos el enlace normal como alternativa visible por compatibilidad.
+function embedUrl(point,heading){
+ if(!validPoint(point))return null;
+ const lat=Number(point.lat).toFixed(PRECISION),lon=Number(point.lon).toFixed(PRECISION);
+ const h=normaliseHeading(heading);
+ return EMBED+'?layer=c&cbll='+lat+','+lon+'&cbp=11,'+(h===null?0:h)+',0,0,0&source=embed&output=svembed';
 }
 
 // Ajusta el toque del usuario al punto más cercano de la línea GPX. Así no hace falta
@@ -96,7 +106,7 @@ function offlineNote(online){
  return online===false?'Street View necesita conexión.':'';
 }
 
-const api={url,validPoint,numero,normaliseHeading,routePosition,nextTurn,nextStop,ahead,walk,label,title,offlineNote,
-           BASE,PRECISION,FOV,STEP};
+const api={url,embedUrl,validPoint,numero,normaliseHeading,routePosition,nextTurn,nextStop,ahead,walk,label,title,offlineNote,
+           BASE,EMBED,PRECISION,FOV,STEP};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasStreetView=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

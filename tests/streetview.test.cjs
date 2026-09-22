@@ -100,6 +100,14 @@ test('una ronda invertida mira hacia donde se circula ahora',()=>{
  assert.equal(V.normaliseHeading(N.heading(N.at(alReves,100),N.at(alReves,115))),180);
 });
 
+test('la vista incrustada lleva punto y rumbo sin compartir la ruta',()=>{
+ const u=V.embedUrl(PUIG,90);
+ assert.equal(u,'https://maps.google.com/maps?layer=c&cbll=41.976474,1.873488&cbp=11,90,0,0,0&source=embed&output=svembed');
+ assert.ok(!/key=|token|track|gpx/i.test(u));
+ assert.match(V.embedUrl(PUIG,null),/cbp=11,0,0,0,0/);
+ assert.equal(V.embedUrl(null,90),null);
+});
+
 test('un toque en el mapa se ajusta al punto más cercano de la ruta',()=>{
  const route=N.prepare([{lat:41.9,lon:1.87},{lat:41.9,lon:1.88},{lat:41.91,lon:1.88}]);
  const hit=V.routePosition(route,{lat:41.9002,lon:1.875});
