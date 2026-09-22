@@ -27,6 +27,8 @@ Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap c
 
 Abrir la aplicación con `?sim=1` añade un simulador que sustituye el GPS por una posición generada sobre el recorrido cargado. Solo aparece con ese parámetro y nunca sobrevive a una recarga: una posición falsa activada por descuido dentro de un vehículo sería peligrosa. Mientras corre, una franja roja avisa de que la posición no es real.
 
+Simular arranca también la navegación y abre el mapa a pantalla completa: la simulación sirve para ver la ruta en marcha, y tener que pulsar después «Iniciar navegación» y «Ampliar mapa» sobraba.
+
 Permite elegir velocidad -30, 50 u 80 km/h-, calidad de señal, desvío lateral de 50 o 100 metros y simular la falta de Internet. La señal irregular introduce ruido y pierde una posición de cada ocho; la mala llega a 65 metros de imprecisión, por encima del umbral con el que la navegación deja de fiarse, y pierde una de cada tres. El desvío aparta la posición en perpendicular a la marcha, sin inventar calles.
 
 Como no toca la navegación sino la fuente de posiciones, lo que se prueba es exactamente el mismo código que corre en la carretera: emparejado, giros, voz, paradas, avisos de desvío y comportamiento sin cobertura.
@@ -44,6 +46,12 @@ Publicación mediante GitHub Pages desde main.
 Reconocer las calles del GPX lo hace Valhalla de FOSSGIS. No tiene reserva para esa tarea: el OSRM publico limita el emparejado a diez coordenadas por peticion, asi que cubrir una ronda costaria unas doscientas peticiones. Si Valhalla no responde no hay trazado vial y la navegacion se queda con el GPX original, que es el comportamiento seguro.
 
 Enlazar los cortes si tiene reserva, porque ahi basta con dos puntos por peticion: primero Valhalla en lotes de cinco cortes -admite diez localizaciones y cada corte gasta dos- y, si falla, OSRM uno a uno. Un corte que no logre enlazar ninguno de los dos se dibuja como interrupcion, nunca como recta.
+
+## Un aviso cada vez
+
+Sobre el mapa pueden coincidir tres cosas: el aviso de sentidos y restricciones, el que marcó quien conduce y la tarjeta de desvío. Apilarlos no cabe -con la cabecera, la hoja de datos y los mandos no queda sitio en un teléfono- y al volante tampoco se atienden tres cosas a la vez, así que se enseña el más urgente y los demás esperan. El orden es: te has salido del recorrido, restricción de la vía, aviso tuyo; si te has salido, lo demás ya no es lo que toca decidir. Ninguno se pierde: todos se vuelven a evaluar en cada actualización de la posición, así que en cuanto el de delante desaparece sale el siguiente.
+
+El que se enseña se coloca debajo de la cabecera y de la ficha de la vía, y si llegase a los mandos del mapa -velocímetro, orientación, voz, centrar- sube lo justo para no taparlos. Se coloca en el mismo momento de aparecer, no en el fotograma siguiente, para que no se le vea saltar de sitio.
 
 ## Chequeo antes de salir
 

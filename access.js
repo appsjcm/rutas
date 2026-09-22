@@ -13,7 +13,8 @@ function showRecovery(state){const c=R.card(state);recovery.dataset.phase=c.phas
  recoveryHead.textContent=c.head;recoveryText.textContent=c.lead;
  recoveryStart.textContent=c.primary;recoveryClose.textContent=c.secondary;
  recoveryNote.textContent=c.note;recoveryNote.hidden=!c.note;
- recoveryStart.disabled=c.busy;recovery.hidden=false;}
+ recoveryStart.disabled=c.busy;recovery.hidden=false;
+ if(window.RutasOverlays)window.RutasOverlays.layout();}
 const source=document.createElement('p');source.id='access-source';source.className='hint';source.hidden=true;source.innerHTML='Acceso para coche · <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer">OSRM / FOSSGIS</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer">Corregir mapa</a>';$('drive-panel').append(source);
 function controls(){const active=RutasMap.get().mode==='access';recalc.hidden=!active;source.hidden=!active;}
 function status(text){$('access-status').textContent=text;}

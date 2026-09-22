@@ -121,6 +121,27 @@ function arrancar(){
  banner.hidden=false;panel.dataset.running='yes';
  $('sim-go').disabled=true;$('sim-stop').disabled=false;$('sim-state').textContent='en marcha';
  timer=setInterval(paso,STEP);paso();
+ abrirMapa(state);
+}
+// Simular es para ver la ruta en marcha, asi que arranca la navegacion y abre el mapa:
+// tener que pulsar despues "Iniciar navegacion" y "Ampliar mapa" sobraba.
+function abrirMapa(state){
+ const stage=document.getElementById('nav-stage');
+ if(!stage)return;
+ if(!state.active){const b=document.getElementById('nav-start');if(b)b.click();}
+ stage.scrollIntoView({block:'center',behavior:'smooth'});
+ const ampliar=()=>{
+  if(document.body.classList.contains('map-focus'))return true;
+  const foco=document.getElementById('nav-focus');
+  // El boton solo existe cuando ya hay posicion y la vista de conduccion esta montada.
+  if(foco&&!foco.hidden&&foco.offsetParent){foco.click();return true;}
+  return false;
+ };
+ if(ampliar())return;
+ let intentos=0;
+ const espera=setInterval(()=>{
+  if(!running||ampliar()||++intentos>20)clearInterval(espera);
+ },250);
 }
 function parar(){
  running=false;if(timer)clearInterval(timer);timer=null;

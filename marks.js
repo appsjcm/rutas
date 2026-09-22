@@ -109,6 +109,7 @@ function check(d){
  if(!proximo)return;
  alerta.textContent=M.warning(proximo);
  alerta.dataset.kind=proximo.kind;
+ if(window.RutasOverlays)window.RutasOverlays.layout();
  // Una vez por marca y por vuelta: repetirlo cada segundo seria insoportable.
  if(proximo.gap<=200&&!dicho.has(proximo.id)){
   dicho.add(proximo.id);
