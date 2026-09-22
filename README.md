@@ -81,6 +81,10 @@ La primera visita pide 481 kB en 61 peticiones. Dos cosas se quedaron fuera de e
 
 El resto de la carga es lo que hace falta desde el primer momento: Leaflet -144 kB- para el mapa, el motor de navegación y las hojas de estilo propias. Los archivos van sin minificar a propósito: el código se lee, y quien mantenga esto tiene que poder abrirlo y entenderlo.
 
+## Cómo llega una versión nueva
+
+El service worker sirve desde su propio almacén, así que una versión recién publicada no entra sola: hay que aplicarla. Antes eso dependía de ver y pulsar el botón «Nueva versión · actualizar», y quien no lo viera se quedaba con la copia anterior sin saberlo, echando en falta cosas que ya estaban publicadas. Ahora, si la app se acaba de abrir -menos de treinta segundos- y no se está navegando, la versión nueva se aplica sola con una recarga que apenas se nota. Pasados esos treinta segundos, o con el GPS en marcha, no se toca nada y aparece el botón, porque a media jornada una recarga sí molesta. Con la navegación activa el botón avisa de que hay que detenerla antes.
+
 ## Sin conexión
 
 Las teselas del mapa 3D se guardan igual que las del 2D, asi que cambiar de vista sin cobertura ya no deja la pantalla en blanco. Un service worker guarda la aplicación entera -código, estilos, Leaflet y los iconos- la primera vez que se abre, así que arranca sin cobertura. Las teselas del mapa se guardan solo cuando el mapa las ha pedido de verdad, mientras exploras la ruta o conduces, con un tope de 1500: no hay descarga por lotes, que es lo que desaconseja la política de uso de OpenStreetMap. Preparar la ronda en el depósito, con datos, deja esas calles disponibles después. Una zona que no se haya visto nunca aparecerá vacía, y un aviso en pantalla lo indica mientras no haya conexión. Las consultas a Overpass nunca pasan por ese almacén: tienen su propia caducidad de 24 horas. La instalación pide cada archivo a la red y no a la caché del navegador: leyéndola, una versión nueva podía guardarse con un archivo viejo dentro y servirlo para siempre, porque después siempre responde desde su propio almacén.
