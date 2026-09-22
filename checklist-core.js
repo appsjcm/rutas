@@ -160,7 +160,14 @@ function verdict(list){
 }
 
 // Con todo en orden el panel se quita solo; si hay algo que leer, espera.
-function dwell(tone){return tone===OK?2800:0;}
+// La navegacion arranca en el mismo toque, asi que para cuando se lee la tarjeta el camion
+// ya esta saliendo. Lo que solo informa se quita solo; solo espera lo que impide salir de
+// verdad -sin ruta, sin permiso de GPS-, porque ahi hay algo que hacer antes de moverse.
+function dwell(tone){
+ if(tone===OK)return 2800;
+ if(tone===AVISO)return 6000;   // seis lineas cortas se leen de sobra en seis segundos
+ return 0;
+}
 
 const api={tileOf,keyOf,fromUrl,cachedKeys,zoomLevels,sample,tilesFor,seen,coverage,
            routeItem,gpsItem,voiceItem,mapItem,roadsItem,marksItem,items,verdict,dwell,

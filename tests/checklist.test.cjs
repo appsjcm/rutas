@@ -120,10 +120,13 @@ test('el veredicto pone por delante lo que impide salir',()=>{
  assert.equal(C.verdict(null).tone,'ok');
 });
 
-test('con todo en orden el panel se quita solo; si hay que leer, espera',()=>{
+test('solo espera un toque lo que impide salir; lo demas se quita solo',()=>{
+ // La navegacion ya ha arrancado cuando se lee la tarjeta: pedir un toque por una
+ // advertencia es pedirselo a alguien que ya esta saliendo.
  assert.ok(C.dwell('ok')>=2000&&C.dwell('ok')<=3500);
- assert.equal(C.dwell('warn'),0);
- assert.equal(C.dwell('bad'),0);
+ assert.ok(C.dwell('warn')>=5000&&C.dwell('warn')<=8000,'da tiempo a leerlo y se va');
+ assert.ok(C.dwell('warn')>C.dwell('ok'),'una advertencia se lee mas despacio');
+ assert.equal(C.dwell('bad'),0,'sin ruta o sin permiso hay algo que hacer antes de moverse');
 });
 
 test('el chequeo cuenta tambien los avisos que marco quien conduce',()=>{

@@ -55,7 +55,7 @@ El que se enseña se coloca debajo de la cabecera y de la ficha de la vía, y si
 
 ## Chequeo antes de salir
 
-Al pulsar Iniciar navegación aparece una tarjeta con el estado real del turno: Ruta, GPS, Voz, Mapas y Restricciones. No bloquea nada -la navegación arranca en ese mismo toque-; si todo está en orden la tarjeta se retira sola a los tres segundos, y si hay algo que leer espera a que se cierre. El permiso de GPS se consulta al navegador, no se supone: distingue concedido, por pedir y denegado. El apartado de restricciones cuenta lo que depende del vehículo y deja fuera los avisos de sentido de circulación. Un sexto apartado cuenta los avisos propios que caen en esta ruta, y cuando no hay ninguno dice cuántos tienes guardados en otras, para que no parezca que se han perdido.
+Al pulsar Iniciar navegación aparece una tarjeta con el estado real del turno: Ruta, GPS, Voz, Mapas y Restricciones. No bloquea nada -la navegación arranca en ese mismo toque-, y por eso mismo tampoco pide un toque para quitarse: con todo en orden se retira a los tres segundos y con advertencias a los seis, que es de sobra para leer seis líneas cortas. Solo espera cuando hay algo que impide salir de verdad -sin ruta cargada, sin permiso de GPS-, porque ahí hay algo que hacer antes de moverse. El permiso de GPS se consulta al navegador, no se supone: distingue concedido, por pedir y denegado. El apartado de restricciones cuenta lo que depende del vehículo y deja fuera los avisos de sentido de circulación. Un sexto apartado cuenta los avisos propios que caen en esta ruta, y cuando no hay ninguno dice cuántos tienes guardados en otras, para que no parezca que se han perdido.
 
 ## Tus avisos en la ruta
 
