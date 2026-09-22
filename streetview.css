@@ -1,6 +1,8 @@
 #map-streetview{min-width:76px!important;padding:0 8px!important;font-size:11px!important;color:var(--accent)!important}
 #map-streetview:hover:not(:disabled){background:var(--accent-soft)}
+#map-streetview[aria-pressed=true]{background:var(--accent)!important;color:var(--on-accent)!important}
 #map-streetview:disabled{opacity:.45;cursor:default}
+#nav-stage.streetview-picking #nav-map{cursor:crosshair}
 #streetview-status{position:absolute;z-index:545;top:174px;right:12px;max-width:min(300px,calc(100% - 24px));padding:9px 12px;border-radius:10px;background:var(--surface);color:var(--ink);box-shadow:0 4px 18px #07192b45;font-size:11px;line-height:1.35}
 #streetview-status[hidden]{display:none}
 .driving #streetview-status{top:calc(var(--drive-banner-height,160px) + 66px)}

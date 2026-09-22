@@ -43,6 +43,24 @@ function url(point,heading){
  return out;
 }
 
+// Ajusta el toque del usuario al punto más cercano de la línea GPX. Así no hace falta
+// acertar exactamente con un trazo de pocos píxeles en la pantalla del móvil.
+function routePosition(route,point){
+ if(!route||!Array.isArray(route.pts)||route.pts.length<2||!route.cum||!validPoint(point))return null;
+ const rad=Math.PI/180,kx=111320*Math.cos(Number(point.lat)*rad),ky=110540;
+ let best=null;
+ for(let i=0;i<route.pts.length-1;i++){
+  const a=route.pts[i],b=route.pts[i+1];
+  const x=(a.lon-point.lon)*kx,y=(a.lat-point.lat)*ky;
+  const dx=(b.lon-a.lon)*kx,dy=(b.lat-a.lat)*ky;
+  const t=Math.max(0,Math.min(1,-(x*dx+y*dy)/(dx*dx+dy*dy||1)));
+  const error=Math.hypot(x+t*dx,y+t*dy);
+  if(!best||error<best.error)best={d:route.cum[i]+(route.cum[i+1]-route.cum[i])*t,error,
+   point:{lat:a.lat+(b.lat-a.lat)*t,lon:a.lon+(b.lon-a.lon)*t},segment:i};
+ }
+ return best;
+}
+
 function ahead(list,progress,key){
  const d=Number(progress)||0;
  const campo=key||'d';
@@ -78,7 +96,7 @@ function offlineNote(online){
  return online===false?'Street View necesita conexión.':'';
 }
 
-const api={url,validPoint,numero,normaliseHeading,nextTurn,nextStop,ahead,walk,label,title,offlineNote,
+const api={url,validPoint,numero,normaliseHeading,routePosition,nextTurn,nextStop,ahead,walk,label,title,offlineNote,
            BASE,PRECISION,FOV,STEP};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasStreetView=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

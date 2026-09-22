@@ -172,7 +172,7 @@ Validación: carga real de calles y edificios, GPS simulado con rumbo, pausa y r
 
 ## Google Street View
 
-El control **Street View** abre Google Maps en la posición actual del navegador y orienta la cámara según el sentido de marcha del GPX. Durante la navegación usa la posición GPS; en la vista previa usa el punto seleccionado de la ruta. Funciona con un enlace público de Google y no necesita clave de API.
+El control **Street View** activa la selección sobre el mapa: después de pulsarlo se puede tocar cualquier punto de la línea GPX, sin iniciar la navegación. Rutas ajusta el toque al trazado y abre Google Maps en ese lugar, con la cámara orientada según el sentido del recorrido. Funciona con un enlace público de Google y no necesita clave de API.
 
 Solo se comparte con Google la coordenada elegida y el rumbo. El archivo GPX, sus horas, la biblioteca de rutas y las medidas del vehículo permanecen en el dispositivo. La panorámica depende de la cobertura de Street View; si Google no tiene imágenes en ese punto puede mostrar únicamente el mapa.
 

@@ -100,6 +100,22 @@ test('una ronda invertida mira hacia donde se circula ahora',()=>{
  assert.equal(V.normaliseHeading(N.heading(N.at(alReves,100),N.at(alReves,115))),180);
 });
 
+test('un toque en el mapa se ajusta al punto más cercano de la ruta',()=>{
+ const route=N.prepare([{lat:41.9,lon:1.87},{lat:41.9,lon:1.88},{lat:41.91,lon:1.88}]);
+ const hit=V.routePosition(route,{lat:41.9002,lon:1.875});
+ assert.ok(hit);
+ assert.ok(hit.error<25,'el error se mide en metros');
+ assert.ok(Math.abs(hit.point.lat-41.9)<1e-6);
+ assert.ok(Math.abs(hit.point.lon-1.875)<1e-6);
+ assert.ok(hit.d>400&&hit.d<430,'conserva la posición dentro del recorrido');
+});
+
+test('un toque inválido no inventa un punto de la ruta',()=>{
+ assert.equal(V.routePosition(null,{lat:41.9,lon:1.87}),null);
+ assert.equal(V.routePosition({pts:[],cum:[]},{lat:41.9,lon:1.87}),null);
+ assert.equal(V.routePosition({pts:[{},{}],cum:[0,1]},null),null);
+});
+
 test('los textos no prometen lo que no se puede saber',()=>{
  assert.match(V.title('current'),/Abrir esta ubicación en Google Maps/);
  assert.ok(!/disponible/i.test(V.title('current')),'no se afirma que haya panoramica');
