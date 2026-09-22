@@ -48,6 +48,25 @@ function drops(tick,dropEvery){
 // Velocidad aparente que se entrega al navegador, en m/s.
 function speedOf(kmh){const v=Math.max(0,Number(kmh)||0);return v/3.6;}
 
-const api={advance,sidestep,jitter,quality,drops,speedOf,QUALITY};
+// Escalones de velocidad: finos al ritmo de una ronda de recogida -donde importa ver como
+// se comportan los avisos parando y arrancando- y gruesos en carretera, para adelantar
+// recorrido sin esperar. Una escalera explicita se lee mejor que una formula.
+const SPEEDS=[5,10,15,20,30,40,50,60,80,100,120,160,200];
+
+function stepSpeed(current,direction){
+ const v=Number(current);
+ const dir=Number(direction)<0?-1:1;
+ if(!Number.isFinite(v))return SPEEDS[0];
+ if(dir>0){
+  for(const s of SPEEDS)if(s>v)return s;      // vale aunque el valor no este en la escalera
+  return SPEEDS[SPEEDS.length-1];
+ }
+ for(let i=SPEEDS.length-1;i>=0;i--)if(SPEEDS[i]<v)return SPEEDS[i];
+ return SPEEDS[0];
+}
+function atFloor(v){return Number(v)<=SPEEDS[0];}
+function atCeiling(v){return Number(v)>=SPEEDS[SPEEDS.length-1];}
+
+const api={advance,sidestep,jitter,quality,drops,speedOf,stepSpeed,atFloor,atCeiling,SPEEDS,QUALITY};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasSimCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -56,3 +56,27 @@ test('la velocidad se entrega en metros por segundo',()=>{
  assert.equal(S.speedOf(-10),0);
  assert.equal(S.speedOf('80'),80/3.6);
 });
+
+test('la velocidad sube y baja por escalones, finos abajo y gruesos arriba',()=>{
+ assert.deepEqual(S.SPEEDS,[5,10,15,20,30,40,50,60,80,100,120,160,200]);
+ assert.equal(S.stepSpeed(50,1),60);
+ assert.equal(S.stepSpeed(50,-1),40);
+ assert.equal(S.stepSpeed(10,-1),5,'a ritmo de reparto los escalones son de cinco');
+ assert.equal(S.stepSpeed(120,1),160,'en carretera son de cuarenta');
+});
+
+test('no se sale de la escalera por ningun extremo',()=>{
+ assert.equal(S.stepSpeed(5,-1),5);
+ assert.equal(S.stepSpeed(200,1),200);
+ assert.equal(S.atFloor(5),true);
+ assert.equal(S.atFloor(10),false);
+ assert.equal(S.atCeiling(200),true);
+ assert.equal(S.atCeiling(160),false);
+});
+
+test('un valor que no este en la escalera se engancha al siguiente',()=>{
+ assert.equal(S.stepSpeed(33,1),40);
+ assert.equal(S.stepSpeed(33,-1),30);
+ assert.equal(S.stepSpeed(NaN,1),5);
+ assert.equal(S.stepSpeed(undefined,-1),5);
+});

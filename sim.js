@@ -20,8 +20,10 @@ banner.textContent='SIMULACIÓN · la posición no es real';
 const panel=document.createElement('section');panel.id='sim-panel';
 panel.innerHTML=
  '<header><b>Simulador de conducción</b><span id="sim-state">parado</span></header>'
- +'<label>Velocidad<span class="sim-opts" id="sim-speed">'
- +'<button type="button" data-v="30">30</button><button type="button" data-v="50" aria-pressed="true">50</button><button type="button" data-v="80">80</button>'
+ +'<label>Velocidad<span class="sim-opts sim-speedbox" id="sim-speed">'
+ +'<button type="button" id="sim-slower" aria-label="Más despacio">−</button>'
+ +'<output id="sim-speed-value">50</output>'
+ +'<button type="button" id="sim-faster" aria-label="Más rápido">+</button>'
  +'<i>km/h</i></span></label>'
  +'<label>Señal GPS<span class="sim-opts" id="sim-quality">'
  +'<button type="button" data-q="bueno" aria-pressed="true">Buena</button><button type="button" data-q="regular">Irregular</button><button type="button" data-q="malo">Mala</button>'
@@ -45,7 +47,16 @@ function pick(group,attr,set){
   set(b.dataset[attr]);
  });
 }
-pick('sim-speed','v',v=>{speed=Number(v);});
+function pintaVelocidad(){
+ $('sim-speed-value').textContent=speed;
+ $('sim-slower').disabled=S.atFloor(speed);
+ $('sim-faster').disabled=S.atCeiling(speed);
+}
+// Se puede cambiar en marcha: cada paso lee la velocidad del momento.
+function cambiaVelocidad(dir){speed=S.stepSpeed(speed,dir);pintaVelocidad();}
+$('sim-slower').onclick=()=>cambiaVelocidad(-1);
+$('sim-faster').onclick=()=>cambiaVelocidad(1);
+pintaVelocidad();
 pick('sim-quality','q',q=>{cal=S.quality(q);});
 pick('sim-drift','d',d=>{drift=Number(d);});
 
@@ -112,7 +123,8 @@ function pos(){
 }
 function info(t){$('sim-info').textContent=t;}
 
-function arrancar(){
+function arrancar(opts){
+ if(opts&&Number.isFinite(Number(opts.speed))){speed=Number(opts.speed);pintaVelocidad();}
  const state=RutasMap.get();
  if(!state||!state.route||state.route.total<1){info('Carga un GPX antes de simular.');return;}
  running=true;tick=0;

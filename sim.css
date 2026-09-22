@@ -31,3 +31,11 @@
  #sim-panel{left:12px;right:12px;width:auto;bottom:calc(74px + env(safe-area-inset-bottom))}
 }
 @media(prefers-reduced-motion:reduce){#sim-panel{transition:none}}
+
+/* Más y menos en vez de tres velocidades fijas: al revisar una ronda hace falta ir muy
+   despacio para ver los avisos y muy rápido para adelantar kilómetros. */
+.sim-speedbox{display:flex;align-items:center;gap:6px}
+#sim-speed-value{min-width:46px;text-align:center;font-weight:800;font-size:15px;
+ font-variant-numeric:tabular-nums}
+#sim-slower,#sim-faster{min-width:38px;min-height:38px;font-size:19px;font-weight:800;line-height:1}
+#sim-slower:disabled,#sim-faster:disabled{opacity:.4}
