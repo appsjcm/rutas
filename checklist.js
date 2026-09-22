@@ -57,7 +57,9 @@ function estado(permission,mapRatio){
   voiceSupported:'speechSynthesis' in window,
   voiceEnabled:!!($('nav-voice')&&$('nav-voice').checked),
   mapRatio,online:navigator.onLine,
-  roadState,vehicleCount:v.count,profiled:v.profiled
+  roadState,vehicleCount:v.count,profiled:v.profiled,
+  marksHere:window.RutasMarks?window.RutasMarks.anchored().length:0,
+  marksTotal:window.RutasMarks?window.RutasMarks.all().length:0
  };
 }
 

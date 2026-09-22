@@ -127,13 +127,25 @@ function roadsItem(state,vehicleCount,profiled){
   detail:profiled?'Sin incompatibilidades con tu vehículo.':'Calles y sentidos comprobados.'};
 }
 
+// Los avisos que marco quien conduce son tan parte de salir preparado como los de OSM.
+function marksItem(count,total){
+ const n=Number(count)||0,todos=Number(total)||0;
+ if(n)return {id:'avisos',label:'Tus avisos',state:OK,
+  detail:n===1?'1 aviso tuyo en esta ruta.':n+' avisos tuyos en esta ruta.'};
+ if(todos)return {id:'avisos',label:'Tus avisos',state:OK,
+  detail:'Ninguno en esta ruta; tienes '+todos+' guardados en otras.'};
+ return {id:'avisos',label:'Tus avisos',state:OK,
+  detail:'Ninguno marcado todavía. Marca un paso bajo o una calle donde no pasas.'};
+}
+
 function items(state){
  const s=state||{};
  return [routeItem(s.route),
          gpsItem(s.permission,s.geolocation),
          voiceItem(s.voiceSupported,s.voiceEnabled),
          mapItem(s.mapRatio,s.online),
-         roadsItem(s.roadState,s.vehicleCount,s.profiled)];
+         roadsItem(s.roadState,s.vehicleCount,s.profiled),
+         marksItem(s.marksHere,s.marksTotal)];
 }
 
 // El chequeo informa; no impide salir. Solo la falta de ruta deja el boton sin nada que hacer.
@@ -151,7 +163,7 @@ function verdict(list){
 function dwell(tone){return tone===OK?2800:0;}
 
 const api={tileOf,keyOf,fromUrl,cachedKeys,zoomLevels,sample,tilesFor,seen,coverage,
-           routeItem,gpsItem,voiceItem,mapItem,roadsItem,items,verdict,dwell,
+           routeItem,gpsItem,voiceItem,mapItem,roadsItem,marksItem,items,verdict,dwell,
            DRIVE_ZOOM,SPREAD,MAX_ZOOM,OK,AVISO,FALLO};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasCheckCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

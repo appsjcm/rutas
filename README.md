@@ -47,7 +47,7 @@ Enlazar los cortes si tiene reserva, porque ahi basta con dos puntos por peticio
 
 ## Chequeo antes de salir
 
-Al pulsar Iniciar navegación aparece una tarjeta con el estado real del turno: Ruta, GPS, Voz, Mapas y Restricciones. No bloquea nada -la navegación arranca en ese mismo toque-; si todo está en orden la tarjeta se retira sola a los tres segundos, y si hay algo que leer espera a que se cierre. El permiso de GPS se consulta al navegador, no se supone: distingue concedido, por pedir y denegado. El apartado de restricciones cuenta lo que depende del vehículo y deja fuera los avisos de sentido de circulación.
+Al pulsar Iniciar navegación aparece una tarjeta con el estado real del turno: Ruta, GPS, Voz, Mapas y Restricciones. No bloquea nada -la navegación arranca en ese mismo toque-; si todo está en orden la tarjeta se retira sola a los tres segundos, y si hay algo que leer espera a que se cierre. El permiso de GPS se consulta al navegador, no se supone: distingue concedido, por pedir y denegado. El apartado de restricciones cuenta lo que depende del vehículo y deja fuera los avisos de sentido de circulación. Un sexto apartado cuenta los avisos propios que caen en esta ruta, y cuando no hay ninguno dice cuántos tienes guardados en otras, para que no parezca que se han perdido.
 
 ## Tus avisos en la ruta
 

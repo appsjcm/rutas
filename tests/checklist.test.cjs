@@ -100,11 +100,11 @@ test('el apartado de calles cuenta lo del vehiculo, no lo de los sentidos',()=>{
  assert.equal(C.roadsItem('error').state,'warn');
 });
 
-test('el chequeo lista los cinco apartados en orden',()=>{
+test('el chequeo lista los apartados en orden',()=>{
  const l=C.items({route:{pts:[1,2],name:'R',metres:1000},permission:'granted',
                   voiceSupported:true,voiceEnabled:true,mapRatio:1,online:true,
                   roadState:'ready',vehicleCount:0,profiled:true});
- assert.deepEqual(l.map(i=>i.id),['ruta','gps','voz','mapas','calles']);
+ assert.deepEqual(l.map(i=>i.id),['ruta','gps','voz','mapas','calles','avisos']);
  assert.ok(l.every(i=>i.state==='ok'));
  assert.equal(C.verdict(l).tone,'ok');
  assert.equal(C.verdict(l).headline,'Todo listo. Buen turno.');
@@ -124,4 +124,23 @@ test('con todo en orden el panel se quita solo; si hay que leer, espera',()=>{
  assert.ok(C.dwell('ok')>=2000&&C.dwell('ok')<=3500);
  assert.equal(C.dwell('warn'),0);
  assert.equal(C.dwell('bad'),0);
+});
+
+test('el chequeo cuenta tambien los avisos que marco quien conduce',()=>{
+ assert.equal(C.marksItem(3,5).detail,'3 avisos tuyos en esta ruta.');
+ assert.equal(C.marksItem(1,1).detail,'1 aviso tuyo en esta ruta.');
+ assert.equal(C.marksItem(0,4).detail,'Ninguno en esta ruta; tienes 4 guardados en otras.');
+ assert.match(C.marksItem(0,0).detail,/Ninguno marcado todavía/);
+ // No tener avisos propios no es un problema: no debe ensuciar el veredicto.
+ assert.equal(C.marksItem(0,0).state,'ok');
+ assert.equal(C.marksItem(3,5).state,'ok');
+});
+
+test('los avisos propios entran como sexto apartado, al final',()=>{
+ const l=C.items({route:{pts:[1,2],name:'R',metres:1000},permission:'granted',
+                  voiceSupported:true,voiceEnabled:true,mapRatio:1,online:true,
+                  roadState:'ready',vehicleCount:0,profiled:true,marksHere:2,marksTotal:3});
+ assert.deepEqual(l.map(i=>i.id),['ruta','gps','voz','mapas','calles','avisos']);
+ assert.equal(l[5].detail,'2 avisos tuyos en esta ruta.');
+ assert.equal(C.verdict(l).tone,'ok','todo en orden sigue siendo todo en orden');
 });
