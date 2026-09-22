@@ -67,10 +67,22 @@ function refresh(){
 
 button.onclick=select;
 frame.addEventListener('load',()=>{if(frame.src&&frame.src!=='about:blank'){clearTimeout(frameTimer);frameWrap.classList.add('loaded');}});
-function closeDialog(){if(dialog.open)dialog.close();}
+// Al cerrar hay que soltar el iframe: si no, la página de Google se queda cargada de
+// fondo gastando red y batería. No basta con escuchar el evento close -medido: no llega
+// a dispararse aquí-, así que la limpieza se hace también a mano, y en el evento cancel
+// que sí llega al cerrar con Escape.
+function limpiarVisor(){
+ clearTimeout(frameTimer);
+ frame.src='about:blank';
+ frameWrap.classList.remove('loaded');
+ loading.textContent='Cargando la panorámica…';
+ external.removeAttribute('href');
+}
+function closeDialog(){if(dialog.open)dialog.close();limpiarVisor();}
 dialog.querySelector('.streetview-close').onclick=closeDialog;
 dialog.addEventListener('click',e=>{if(e.target===dialog)closeDialog();});
-dialog.addEventListener('close',()=>{clearTimeout(frameTimer);frame.src='about:blank';frameWrap.classList.remove('loaded');loading.textContent='Cargando la panorámica…';external.removeAttribute('href');});
+dialog.addEventListener('close',limpiarVisor);
+dialog.addEventListener('cancel',limpiarVisor);
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&picking)cancel(true);});
 for(const name of ['rutas:route','rutas:visible','online','offline'])window.addEventListener(name,()=>{if(name==='rutas:route')cancel();refresh();});
 refresh();
