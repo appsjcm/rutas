@@ -75,6 +75,12 @@ Una jornada entera con el GPS activo, la pantalla encendida y el mapa 3D gasta b
 
 Lo que se quita es lo que obliga a recomponer capas en cada fotograma, no lo que se ve: los textos, los colores y los tamaños siguen igual. El ahorro real depende del teléfono y no se mide aquí; lo comprobado es que el estado cambia cuando debe y suelta cuando debe.
 
+## Lo que se carga y cuándo
+
+La primera visita pide 481 kB en 61 peticiones. Dos cosas se quedaron fuera de esa carga porque casi nadie las usa y pesaban en todas: la hoja de estilo del motor 3D -64 kB, que se cargaba siempre aunque su propio motor ya se pedía solo al abrir la vista 3D- y el generador de códigos QR -6 kB de otro servidor-. Ahora la hoja viaja con el motor y el generador se pide cuando alguien pide un QR. Son 94 kB y cinco peticiones menos en cada visita, sin perder nada: al abrir el 3D la hoja llega con él, y al pedir un QR el generador llega antes de dibujarlo.
+
+El resto de la carga es lo que hace falta desde el primer momento: Leaflet -144 kB- para el mapa, el motor de navegación y las hojas de estilo propias. Los archivos van sin minificar a propósito: el código se lee, y quien mantenga esto tiene que poder abrirlo y entenderlo.
+
 ## Sin conexión
 
 Las teselas del mapa 3D se guardan igual que las del 2D, asi que cambiar de vista sin cobertura ya no deja la pantalla en blanco. Un service worker guarda la aplicación entera -código, estilos, Leaflet y los iconos- la primera vez que se abre, así que arranca sin cobertura. Las teselas del mapa se guardan solo cuando el mapa las ha pedido de verdad, mientras exploras la ruta o conduces, con un tope de 1500: no hay descarga por lotes, que es lo que desaconseja la política de uso de OpenStreetMap. Preparar la ronda en el depósito, con datos, deja esas calles disponibles después. Una zona que no se haya visto nunca aparecerá vacía, y un aviso en pantalla lo indica mientras no haya conexión. Las consultas a Overpass nunca pasan por ese almacén: tienen su propia caducidad de 24 horas. La instalación pide cada archivo a la red y no a la caché del navegador: leyéndola, una versión nueva podía guardarse con un archivo viejo dentro y servirlo para siempre, porque después siempre responde desde su propio almacén.

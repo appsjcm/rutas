@@ -96,7 +96,7 @@ async function buildShare(){const data=window.Roadbook.getRoute();
  $('share-url').value=url;$('share-box').hidden=false;$('share-link-box').hidden=false;$('share-qr').replaceChildren();$('share-qr-btn').setAttribute('aria-expanded','false');$('share-qr-btn').textContent='Mostrar QR';
  $('share-note').textContent='Enlace web creado. Para conservar el archivo exacto y evitar enlaces cortados, usa preferentemente Compartir GPX.';
  return url;}
-async function shareQR(){if(typeof qrcode==='undefined'){$('share-note').textContent='El generador de QR no cargo. Usa Copiar enlace.';return;}
+async function shareQR(){try{await window.RutasQR();}catch{$('share-note').textContent='El generador de QR no cargo. Usa Copiar enlace.';return;}
  const data=window.Roadbook.getRoute(),name=(data.name||'Ronda').replace(/\.gpx$/i,'');
  for(const eps of [0,2,3,5,10,20,40]){
   const pts=eps?C.simplify(data.pts,eps):data.pts;

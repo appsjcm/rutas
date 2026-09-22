@@ -604,7 +604,7 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
 <div id="net-offline" hidden role="status">Sin conexión · el mapa solo muestra las zonas ya vistas</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+
 <script>
 (function(){
 "use strict";
@@ -1413,14 +1413,14 @@ $("copyall").addEventListener("click", function(){
   copy(CURRENT.map(function(l,i){ return "Tramo "+(i+1)+" ("+fmtKm(l.dist)+")\n"+l.url; }).join("\n\n"),
        CURRENT.length + " enlaces copiados");
 });
-$("legsout").addEventListener("click", function(e){
+$("legsout").addEventListener("click", async function(e){
   var c = e.target.closest("[data-copy]");
   if(c){ copy(CURRENT[+c.dataset.copy].url, "Enlace del tramo "+(+c.dataset.copy+1)+" copiado"); return; }
   var q = e.target.closest("[data-qr]");
   if(!q) return;
   var i = +q.dataset.qr, box = $("legsout").querySelector('[data-qrbox="'+i+'"]');
   if(box.firstChild){ box.innerHTML = ""; q.setAttribute("aria-expanded","false"); return; }
-  if(typeof qrcode === "undefined"){ toast("El generador de QR no cargó. Usa «Copiar» y pega el enlace."); return; }
+  try{ await window.RutasQR(); }catch(e){ toast("El generador de QR no cargó. Usa «Copiar» y pega el enlace."); return; }
   try{
     var qr = qrcode(0,"L"); qr.addData(CURRENT[i].url); qr.make();
     box.innerHTML = '<div class="qr">' + qr.createSvgTag({ cellSize:4, margin:0, scalable:true })
@@ -1742,6 +1742,22 @@ showTab("nav");
 })();
 </script>
 
+<script>
+// El generador de QR son 6 kB de otro servidor y casi nadie pide un QR: se carga
+// cuando se pide uno, no en cada visita.
+window.RutasQR=function(){
+ if(window.qrcode)return Promise.resolve();
+ if(window.__qrPend)return window.__qrPend;
+ window.__qrPend=new Promise(function(ok,fallo){
+  var s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+  s.onload=ok;
+  s.onerror=function(){window.__qrPend=null;s.remove();fallo(new Error('No se pudo cargar el generador de QR.'));};
+  document.head.appendChild(s);
+ });
+ return window.__qrPend;
+};
+</script>
 <script src="vendor/leaflet.js"></script>
 <script src="nav-core.js"></script>
 <script src="gpx-core.js"></script>
@@ -1774,7 +1790,6 @@ showTab("nav");
 
 <script src="premium.js"></script>
 
-<link rel="stylesheet" href="vendor/maplibre-gl.css">
 <link rel="stylesheet" href="map3d.css">
 <script src="map3d.js"></script>
 
