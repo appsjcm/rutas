@@ -347,3 +347,36 @@ html{background:var(--ground);-webkit-text-size-adjust:100%}body{overscroll-beha
  #nav-stage.driving #drive-road-info:not([hidden]){top:calc(var(--drive-banner-height,78px) + 7px);max-width:44%}
  #nav-stage.driving #nav-road-alert{top:calc(var(--drive-banner-height,78px) + 58px);max-width:55%}
 }
+
+/* Mapa nocturno: oscurece solo las teselas de calles. La ruta, las alertas y
+   la vista satelite conservan sus colores para que sigan siendo reconocibles. */
+:root[data-theme=dark] #nav-stage:not(.satellite-view):not(.view-3d) #nav-map .leaflet-tile-pane{
+ filter:brightness(.52) saturate(.62) contrast(1.22);
+}
+:root[data-theme=dark] #nav-stage:not(.satellite-view):not(.view-3d) #nav-map{
+ background:#172533;
+}
+:root[data-theme=dark] #nav-stage .leaflet-bar{
+ border-color:#43566b!important;box-shadow:0 5px 18px #0008!important;
+}
+:root[data-theme=dark] #nav-stage .leaflet-bar a,
+:root[data-theme=dark] #nav-stage .leaflet-control-zoom a{
+ background:#18283aeF;color:#eef5fc;border-color:#34495f!important;
+}
+:root[data-theme=dark] #nav-stage .leaflet-bar a:hover,
+:root[data-theme=dark] #nav-stage .leaflet-control-zoom a:hover{background:#22384d;color:#fff}
+:root[data-theme=dark] #nav-stage .leaflet-control-scale-line{
+ background:#122133d9;color:#edf5fc;border-color:#9db0c4;text-shadow:0 1px #000;
+}
+:root[data-theme=dark] #nav-stage .leaflet-control-attribution{
+ background:#101d2cdb;color:#b9c8d8;
+}
+:root[data-theme=dark] #nav-stage .leaflet-control-attribution a{color:#82dceb}
+:root[data-theme=dark] #nav-stage .nav-map-key{
+ background:#101d2ceB;color:#dce8f4;border:1px solid #ffffff1c;box-shadow:0 4px 16px #0006;
+}
+:root[data-theme=dark] #nav-stage .map-dimension{
+ background:#142335ed;border-color:#3a4f65;box-shadow:0 5px 20px #0008;
+}
+:root[data-theme=dark] #nav-stage .map-dimension button{color:#dce8f4}
+:root[data-theme=dark] #nav-stage .map-dimension button[aria-pressed=true]{color:var(--on-accent)}

@@ -93,6 +93,8 @@ En horizontal, para el soporte del coche, esas dos franjas se apilan en una colu
 
 El tiempo restante no se estima por velocidad sino con las horas del propio GPX: el recorrido grabado ya sabe cuánto se tarda desde cada punto hasta el final, incluidas las paradas. Si el GPX no trae horas se recurre a la velocidad del GPS.
 
+Con esas mismas horas, la cuarta casilla de la hoja dice el ritmo: «A tiempo», «−3 min» o «+12 min» contra la grabación. Se compara el tramo recorrido desde que arrancó el GPS, no la jornada entera, para que un descanso con el GPS parado no falsee el número; el punto de partida es donde estaba el vehículo al arrancar, no el inicio del GPX. El tiempo grabado en un punto intermedio se interpola por distancia entre los dos puntos que lo rodean, igual que la posición, porque quedarse con el punto más cercano saltaría de golpe lo que separe a dos marcas de tiempo. Menos de dos minutos de diferencia se dan por «a tiempo»: por debajo de eso es ruido, no retraso. Si el GPX no trae horas no hay con qué comparar y la casilla lo dice en vez de inventar una cifra.
+
 El botón N orienta el mapa a la marcha en vez de al norte. Al girar teselas de imagen giran también sus rótulos, así que los nombres de calle salen inclinados: por eso es un interruptor y no el comportamiento fijo. La cámara sigue el GPS y ajusta el zoom según la velocidad. Arrastrar el mapa suspende el centrado hasta pulsar Volver a seguir. La vista incluye controles de voz, repetir indicación y Finalizar. Los avisos de sentido contrario permanecen visibles y se apoderan de la franja superior. Al detenerse, llegar al final o denegarse el GPS, se vuelve a la vista normal.
 
 ## Continuidad del recorrido

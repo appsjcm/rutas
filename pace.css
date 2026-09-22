@@ -1,0 +1,19 @@
+/* La celda de ritmo vive en la fila de tiempo, llegada y restante: el mismo vistazo.
+   premium.css fija tres columnas; con la cuarta la fila se reparte en cuatro, y en
+   pantallas estrechas en dos filas de dos, que se lee mejor que tres y media. */
+#nav-stage.driving .drive-eta{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:560px){
+ #nav-stage.driving .drive-eta{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:10px}
+}
+.drive-pace b{font-variant-numeric:tabular-nums}
+.drive-pace[data-tone=behind] b{color:#ffb4a2}
+.drive-pace[data-tone=ahead] b{color:#93e7df}
+.drive-pace[data-tone=idle] b{opacity:.55}
+
+/* Con cuatro datos la fila se aprieta, así que en pantallas estrechas el ritmo encoge.
+   No se oculta: con dos columnas cabe hasta en 320 px, y esconderlo en un móvil de 375
+   -el tamaño más común- dejaba el dato fuera justo donde se conduce. */
+@media(max-width:700px){
+ .drive-pace b{font-size:15px}
+ .drive-pace small{font-size:9.5px}
+}
