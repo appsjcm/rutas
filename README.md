@@ -39,6 +39,12 @@ https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=41.966386,1.880917
 
 La función solo lee el estado que ya existe -posición, progreso, giros y paradas del recorrido-. No toca el GPS simulado, ni el progreso, ni la voz, ni la recuperación de desvíos, y volver a Rutas desde Google no reinicia la simulación.
 
+## Auditor de pantalla
+
+Dentro del simulador, el botón **Auditar pantalla** recorre todos los controles de la página y le pregunta al navegador, con `elementFromPoint`, quién recibe el clic en el centro de cada uno. Señala dos cosas: lo que no se alcanza -un control fijo fuera de la ventana- y lo que está tapado por otro. Distingue lo grave de lo que solo molesta: un control fijo tapado por otro fijo no se destapa nunca, mientras que contenido de la página bajo un panel flotante se destapa bajando, y eso se cuenta aparte en vez de mezclarlo. Un auditor que grita por todo acaba ignorándose.
+
+Existe porque tres fallos seguidos fueron del mismo tipo: un botón tapado o fuera de la pantalla en un tamaño que no se había probado. En su primera pasada encontró seis, uno de ellos recién introducido. Solo se carga con `?sim`, así que no pesa para quien conduce.
+
 ## Simulador de conducción
 
 Abrir la aplicación con `?sim=1` añade un simulador que sustituye el GPS por una posición generada sobre el recorrido cargado. Solo aparece con ese parámetro y nunca sobrevive a una recarga: una posición falsa activada por descuido dentro de un vehículo sería peligrosa. Mientras corre, una franja roja avisa de que la posición no es real.
