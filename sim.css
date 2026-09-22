@@ -45,3 +45,19 @@
    quedaba salida sin teclado. Conduciendo no pasa, porque ahí se sale con Finalizar. */
 body.map-focus #nav-stage.focus:not(.driving) #nav-focus{
  top:12px;bottom:auto;left:60px;right:auto;z-index:2950}
+
+/* El panel medía 364 px de alto: en un móvil en horizontal, o con la barra del navegador
+   comiendo altura, la fila de VELOCIDAD se salía por arriba y no había forma de verla.
+   Ahora nunca es más alto que la pantalla y, si no cabe, se desplaza dentro. */
+#sim-panel{max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain}
+/* A pantalla completa la barra de pestañas no está, así que no hay que dejarle sitio. */
+body.map-focus #sim-panel{bottom:calc(12px + env(safe-area-inset-bottom))}
+
+@media (max-height:540px){
+ #sim-panel{gap:7px;padding:10px;max-height:calc(100dvh - 16px);
+  bottom:calc(8px + env(safe-area-inset-bottom))}
+ #sim-panel label{gap:3px;font-size:10px}
+ #sim-panel .sim-opts button{min-height:32px}
+ #sim-slower,#sim-faster{min-height:32px;font-size:17px}
+ #sim-info{display:none}          /* la explicación sobra cuando no cabe ni el control */
+}
