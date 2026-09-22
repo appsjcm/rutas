@@ -13,6 +13,19 @@ const upload=document.getElementById('nav-file').parentElement;upload.prepend(ic
 
 const tabs=[...document.querySelectorAll('[role=tab]')].filter(t=>!t.hidden);tabs.forEach((t,i)=>t.addEventListener('keydown',e=>{let next;if(e.key==='ArrowRight')next=(i+1)%tabs.length;if(e.key==='ArrowLeft')next=(i+tabs.length-1)%tabs.length;if(e.key==='Home')next=0;if(e.key==='End')next=tabs.length-1;if(next!==undefined){e.preventDefault();tabs[next].click();tabs[next].focus();}}));
 
+// En móvil, las herramientas largas se leen como un menú: una tarjeta abierta cada vez.
+// En escritorio las mismas tarjetas siguen visibles en sus dos columnas.
+for(const selector of ['#p-exp','#p-make']){
+ const panels=[...document.querySelectorAll(selector+' .panel')];
+ panels.forEach((panel,index)=>{
+  const head=panel.querySelector(':scope > .panel-hd'),title=head?.querySelector('h2');if(!head||!title)return;
+  panel.classList.add('mobile-fold');panel.classList.toggle('mobile-collapsed',index>0);
+  const toggle=document.createElement('button');toggle.type='button';toggle.className='mobile-panel-toggle';toggle.setAttribute('aria-expanded',String(index===0));toggle.setAttribute('aria-label',(index?'Abrir ':'Cerrar ')+title.textContent);toggle.textContent='⌄';
+  toggle.onclick=()=>{const opening=panel.classList.contains('mobile-collapsed');if(opening)for(const other of panels){if(other===panel)continue;other.classList.add('mobile-collapsed');const button=other.querySelector('.mobile-panel-toggle');if(button){button.setAttribute('aria-expanded','false');button.setAttribute('aria-label','Abrir '+other.querySelector('.panel-hd h2')?.textContent);}}panel.classList.toggle('mobile-collapsed',!opening);toggle.setAttribute('aria-expanded',String(opening));toggle.setAttribute('aria-label',(opening?'Cerrar ':'Abrir ')+title.textContent);if(opening&&matchMedia('(max-width:700px)').matches)setTimeout(()=>panel.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}),20);};
+  head.append(toggle);
+ });
+}
+
 // Route overview and secondary tools keep the main screen focused on departure.
 const body=document.querySelector('.nav-shell>.panel-bd');
 const hero=document.createElement('section');hero.className='route-overview';hero.setAttribute('aria-label','Resumen de la ruta');
