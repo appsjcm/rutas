@@ -99,6 +99,32 @@ function stackTop(road,stage,gap){
  return Math.round(road.bottom-stage.top+hueco);
 }
 
+// Vuelta atras: los waypoints con tipo propio se reconocen como avisos; los demas no se
+// tocan, porque un waypoint cualquiera de un GPX ajeno no es un aviso de nadie.
+const PREFIX='rutas:';
+function fromWaypoints(wpts){
+ const out=[];
+ for(const w of Array.isArray(wpts)?wpts:[]){
+  if(!w)continue;
+  const tipo=String(w.type||'');
+  if(tipo.slice(0,PREFIX.length)!==PREFIX)continue;
+  const m=normalise({lat:w.lat,lon:w.lon,kind:tipo.slice(PREFIX.length),note:w.desc||''});
+  if(m)out.push(m);
+ }
+ return out;
+}
+// Al importar no se pisa lo propio a lo bruto: vale la misma regla que al marcar a mano.
+function merge(list,incoming){
+ let out=Array.isArray(list)?list.slice():[];
+ let nuevos=0;
+ for(const m of Array.isArray(incoming)?incoming:[]){
+  const antes=out.length;
+  out=add(out,m);
+  if(out.length>antes)nuevos++;
+ }
+ return {list:out,added:nuevos,seen:(Array.isArray(incoming)?incoming:[]).length};
+}
+
 function pack(list){
  return JSON.stringify((Array.isArray(list)?list:[]).map(normalise).filter(Boolean));
 }
@@ -109,7 +135,7 @@ function unpack(text){
  }catch{return [];}
 }
 
-const api={KINDS,kind,normalise,valid,add,remove,anchor,ahead,describe,warning,spoken,stackTop,
+const api={KINDS,kind,normalise,valid,add,remove,anchor,ahead,describe,warning,spoken,stackTop,fromWaypoints,merge,
            metres,pack,unpack,NOTE_MAX,SAME_SPOT,OFF_ROUTE,WINDOW};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasMarksCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

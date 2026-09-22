@@ -825,6 +825,16 @@ function parseGPX(text){
     if(w.length > 1) tracks.push({ name: "Waypoints sueltos", pts: w });
   }
   if(!tracks.length) throw new Error("No hay ninguna traza, ruta ni waypoint con coordenadas dentro del archivo.");
+  // Los avisos del conductor viajan como waypoints con un tipo propio; los de otras
+  // aplicaciones se dejan en paz, que un waypoint cualquiera no es un aviso de nadie.
+  try{
+    var avisos = all(doc,"wpt").map(function(w){
+      var t = w.getElementsByTagNameNS("*","type")[0], d = w.getElementsByTagNameNS("*","desc")[0];
+      return { lat: parseFloat(w.getAttribute("lat")), lon: parseFloat(w.getAttribute("lon")),
+               type: t ? t.textContent.trim() : "", desc: d ? d.textContent.trim() : "" };
+    }).filter(function(w){ return w.type.indexOf("rutas:") === 0; });
+    if(avisos.length) window.dispatchEvent(new CustomEvent("rutas:waypoints",{detail:{waypoints:avisos}}));
+  }catch(e){}
   return tracks;
 }
 function xesc(s){

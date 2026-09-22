@@ -83,7 +83,7 @@ async function unsqueeze(bytes){const buf=await new Response(new Blob([bytes]).s
 async function shareLink(pts,name){const packed=C.packRoute(name,pts),small=await squeeze(packed);
  const payload=small?'2'+b64url(small):'1'+b64url(new TextEncoder().encode(packed));
  return location.origin+location.pathname+'#r='+payload;}
-function shareGPX(){const data=window.Roadbook.getRoute();if(!route||data.sample||access)return null;const name=RutasGPX.safeName(data.name),text=RutasGPX.build(name,data.pts),filename=RutasGPX.filename(name),blob=new Blob([text],{type:'application/gpx+xml;charset=utf-8'});return {name,text,filename,blob};}
+function shareGPX(){const data=window.Roadbook.getRoute();if(!route||data.sample||access)return null;const name=RutasGPX.safeName(data.name),text=RutasGPX.build(name,data.pts,window.RutasMarks?window.RutasMarks.forExport():null),filename=RutasGPX.filename(name),blob=new Blob([text],{type:'application/gpx+xml;charset=utf-8'});return {name,text,filename,blob};}
 function downloadGPX(file){const url=URL.createObjectURL(file.blob),a=document.createElement('a');a.href=url;a.download=file.filename;a.hidden=true;document.body.append(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(url);},1500);}
 async function nativeShareGPX(){const routeFile=shareGPX();$('share-box').hidden=false;$('share-link-box').hidden=true;$('share-qr').replaceChildren();if(!routeFile){$('share-note').textContent=access?'Termina primero el acceso al inicio para compartir tu recorrido.':'Carga primero tu GPX: el ejemplo no se comparte.';return false;}
  const file=typeof File==='function'?new File([routeFile.blob],routeFile.filename,{type:'application/gpx+xml',lastModified:Date.now()}):null;

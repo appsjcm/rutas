@@ -126,3 +126,65 @@ test('el aviso del conductor se coloca debajo del de OpenStreetMap, no encima',(
  assert.equal(M.stackTop(null,escenario),null);
  assert.equal(M.stackTop({height:60},null),null);
 });
+
+const G=require('../gpx-core');
+
+test('los avisos viajan dentro del GPX como waypoints normales',()=>{
+ const marcas=[{lat:41.976474,lon:1.873488,kind:'altura',label:'Paso bajo',note:'gálibo 3,2 m'},
+               {lat:41.98,lon:1.88,kind:'acceso',label:'Prohibido el paso'}];
+ const xml=G.build('Ronda',[{lat:41.9,lon:1.87},{lat:41.91,lon:1.87}],marcas);
+ assert.match(xml,/<wpt lat="41\.9764740" lon="1\.8734880">/);
+ assert.match(xml,/<name>Paso bajo<\/name>/);
+ assert.match(xml,/<desc>gálibo 3,2 m<\/desc>/);
+ assert.match(xml,/<type>rutas:altura<\/type>/);
+ assert.ok(xml.indexOf('<wpt')<xml.indexOf('<trk>'),'los waypoints van antes de la traza');
+ assert.match(xml,/<trkpt /,'la traza sigue estando');
+});
+
+test('un GPX sin avisos sale exactamente como antes',()=>{
+ const pts=[{lat:41.9,lon:1.87},{lat:41.91,lon:1.87}];
+ assert.equal(G.build('Ronda',pts),G.build('Ronda',pts,[]));
+ assert.equal(G.build('Ronda',pts).includes('<wpt'),false);
+ assert.equal(G.build('Ronda',pts,null).includes('<wpt'),false);
+});
+
+test('una coordenada imposible no llega al archivo',()=>{
+ const xml=G.build('Ronda',[{lat:41.9,lon:1.87},{lat:41.91,lon:1.87}],
+  [{lat:95,lon:1.87,kind:'altura'},{lat:'x',lon:1.87},null]);
+ assert.equal(xml.includes('<wpt'),false);
+});
+
+test('al volver del archivo solo se reconocen los avisos propios',()=>{
+ const leidos=M.fromWaypoints([
+  {lat:41.97,lon:1.87,type:'rutas:altura',desc:'gálibo 3,2 m'},
+  {lat:41.98,lon:1.88,type:'rutas:acceso'},
+  {lat:41.99,lon:1.89,type:'Restaurante'},          // waypoint ajeno: no es un aviso
+  {lat:41.99,lon:1.89},                             // sin tipo tampoco
+  {lat:'x',lon:1.89,type:'rutas:peso'}]);           // sin coordenada valida
+ assert.deepEqual(leidos.map(m=>m.kind),['altura','acceso']);
+ assert.equal(leidos[0].note,'gálibo 3,2 m');
+ assert.deepEqual(M.fromWaypoints(null),[]);
+});
+
+test('importar no duplica lo que ya tenias en el mismo sitio',()=>{
+ const mios=M.add([],{lat:41.97,lon:1.87,kind:'altura',note:'mío'});
+ const r=M.merge(mios,[{lat:41.97005,lon:1.87,kind:'altura',note:'del compañero'},
+                       {lat:42.10,lon:1.90,kind:'peso'}]);
+ assert.equal(r.seen,2);
+ assert.equal(r.added,1,'el del mismo puente sustituye, no suma');
+ assert.equal(r.list.length,2);
+ assert.equal(r.list.find(m=>m.kind==='altura').note,'del compañero');
+ assert.deepEqual(M.merge(null,null),{list:[],added:0,seen:0});
+});
+
+test('un aviso da la vuelta completa sin perder nada',()=>{
+ const original=M.add([],{lat:41.976474,lon:1.873488,kind:'estrecho',note:'no pasa el camión'});
+ const conEtiqueta=original.map(m=>({...m,label:M.kind(m.kind).label}));
+ const xml=G.build('Ronda',[{lat:41.9,lon:1.87},{lat:41.91,lon:1.87}],conEtiqueta);
+ // Lo que el lector de GPX del navegador sacaria de ese <wpt>:
+ const leido=M.fromWaypoints([{lat:41.976474,lon:1.873488,type:'rutas:estrecho',desc:'no pasa el camión'}]);
+ assert.equal(leido.length,1);
+ assert.equal(leido[0].kind,'estrecho');
+ assert.equal(leido[0].note,'no pasa el camión');
+ assert.match(xml,/<type>rutas:estrecho<\/type>/);
+});

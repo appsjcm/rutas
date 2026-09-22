@@ -135,12 +135,28 @@ window.addEventListener('rutas:progress',e=>{
  if(state.route!==routeRef)relink();
  check(e.detail&&Number.isFinite(e.detail.distance)?e.detail.distance:state.progress);
 });
-window.addEventListener('rutas:route',()=>{dicho=new Set();setTimeout(relink,0);});
+// Un GPX compartido trae los avisos de quien lo mando: se anaden a los propios sin pisarlos.
+let entrantes=null;
+window.addEventListener('rutas:waypoints',e=>{
+ const leidos=M.fromWaypoints(e.detail&&e.detail.waypoints);
+ if(leidos.length)entrantes=leidos;
+});
+function absorb(){
+ if(!entrantes)return;
+ const r=M.merge(list,entrantes);
+ entrantes=null;
+ list=r.list;save();relink();
+ if(r.added)aviso(r.added+(r.added===1?' aviso nuevo':' avisos nuevos')+' del archivo compartido · '+
+  (r.seen-r.added>0?(r.seen-r.added)+' ya los tenías · ':'')+'solo en este dispositivo');
+}
+window.addEventListener('rutas:route',()=>{dicho=new Set();setTimeout(()=>{relink();absorb();},0);});
 window.addEventListener('rutas:check-route',()=>{dicho=new Set();alerta.hidden=true;});
 window.addEventListener('rutas:navigation-path',()=>setTimeout(relink,0));
 
 load();setTimeout(relink,0);
 window.RutasMarks={all:()=>list.slice(),anchored:()=>anchored.slice(),
+ // Al compartir el GPX solo viajan los avisos de esta ruta: los de otra zona no le sirven a nadie.
+ forExport:()=>anchored.map(m=>({...m,label:M.kind(m.kind).label})),
  add(m){list=M.add(list,m);save();relink();return list.length;},
  clear(){list=[];save();relink();}};
 })();
