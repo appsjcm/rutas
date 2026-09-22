@@ -346,11 +346,6 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
         <section class="panel">
           <div class="panel-hd"><h2>Formato</h2></div>
           <div>
-            <div class="fmt best" hidden>
-              <div class="ft"><em>Recomendado para el cami&oacute;n</em><strong>KML para Google My&nbsp;Maps</strong>
-                <span>La l&iacute;nea exacta, con los tramos numerados y las marcas de sentido. Se sube a My&nbsp;Maps y aparece como capa dentro de la app de Google Maps del conductor, con su punto azul encima.</span></div>
-              <button class="btn primary sm" type="button" data-exp2="kml">Guardar</button>
-            </div>
             <div class="fmt best">
               <div class="ft"><em>Recomendado para compartir</em><strong>GPX de la traza</strong>
                 <span>El recorrido completo, punto por punto. Es el formato que entienden las apps que s&iacute; siguen una traza y avisan si te sales de ella.</span></div>
@@ -377,16 +372,6 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
         <section class="panel">
           <div class="panel-hd"><h2>Ponerlo en el m&oacute;vil del conductor</h2></div>
           <div class="panel-bd howto">
-            <div hidden>
-              <h3>Opci&oacute;n A &middot; El Google Maps que ya conoce</h3>
-              <ol class="steps">
-                <li>Guarda el <b>KML</b> y entra en <b>mymaps.google.com</b> con la cuenta de la empresa.</li>
-                <li><b>Crear un mapa nuevo</b> &rarr; <b>Importar</b> &rarr; sube el archivo. Si sale en .zip, descompr&iacute;melo antes.</li>
-                <li>Comparte el mapa con la cuenta de Google del conductor.</li>
-                <li>En el m&oacute;vil: app de Google Maps &rarr; <b>Guardados</b> &rarr; <b>Mapas</b> &rarr; abre el mapa.</li>
-                <li>La l&iacute;nea queda dibujada sobre el mapa normal y su posici&oacute;n se ve encima. Sin voz ni giro a giro: &eacute;l ve por d&oacute;nde va y qu&eacute; le queda.</li>
-              </ol>
-            </div>
             <div>
               <h3>Abrir el GPX en otra aplicaci&oacute;n</h3>
               <ol class="steps">
@@ -399,11 +384,6 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
             </div>
           </div>
         </section>
-
-        <div class="note" hidden>
-          <span aria-hidden="true">&#9888;</span>
-          <div><b>Por qu&eacute; aqu&iacute; no sirve la navegaci&oacute;n de Google Maps.</b> Maps calcula la ruta m&aacute;s r&aacute;pida entre puntos y nunca repite una calle. Una ronda de recogida es justo lo contrario: sube una calle, baja la siguiente y vuelve a pasar. Maps la &laquo;arreglar&iacute;a&raquo; salt&aacute;ndose pasadas. Por eso la respuesta es la l&iacute;nea dibujada, no el guiado por voz.</div>
-        </div>
 
       </div>
     </div>
@@ -1566,9 +1546,8 @@ function renderPts(){
   if(n >= 2){
     var d = pathLen(M.pts);
     $("pthint").textContent = "Distancia en línea recta encadenando los puntos: " + fmtKm(d)
-      + ". Maps la convertirá en kilómetros reales de carretera."
-      + (n > 11 ? " Ojo: son más de 11 puntos, así que «Abrir en Maps» solo usará los 11 primeros; guarda el GPX y pásalo por la pestaña Convertir para trocearlo." : "");
-    $("ptmaps").href = mapsUrl(M.pts.slice(0,11), true);
+      + ". Guarda el GPX para reconocer las calles y seguirlo desde Navegar."
+      + (n > 11 ? " La ruta conserva todos los puntos y su orden." : "");
   }else $("pthint").textContent = "";
   drawTrack($("mkmap"), M.pts.length ? M.pts : (R.pts.length ? R.pts : []), { dots: M.pts.length > 0 });
   try{ localStorage.setItem("roadbook-pts", JSON.stringify(M.pts)); }catch(e){}
@@ -1789,7 +1768,6 @@ window.RutasQR=function(){
  });
 })();
 </script>
-</html>
 
 <script src="premium.js"></script>
 
@@ -1820,11 +1798,8 @@ window.RutasQR=function(){
 <script src="segments.js"></script>
 <script src="street-imagery-core.js"></script>
 <script src="layout-audit-core.js"></script>
-<script src="streetview-core.js"></script>
 <script src="sim-core.js"></script>
 <script src="sim.js"></script>
-<link rel="stylesheet" href="streetview.css">
-<script src="streetview.js"></script>
 <script src="layout-audit.js"></script>
 <link rel="stylesheet" href="street-imagery.css">
 <script src="street-imagery.js"></script>
@@ -1842,3 +1817,5 @@ window.RutasQR=function(){
 <link rel="stylesheet" href="overlays.css">
 <script src="overlays.js"></script>
 <script src="checklist.js"></script>
+</body>
+</html>

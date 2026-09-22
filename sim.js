@@ -147,6 +147,7 @@ function arrancar(opts){
  banner.hidden=false;panel.dataset.running='yes';
  $('sim-go').disabled=true;$('sim-stop').disabled=false;$('sim-state').textContent='en marcha';
  timer=setInterval(paso,STEP);paso();
+ plegar(false);
  abrirMapa(state);
 }
 // Simular es para ver la ruta en marcha, asi que arranca la navegacion y abre el mapa:

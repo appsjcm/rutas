@@ -44,22 +44,6 @@ Dentro del simulador, **Vista de calle** intenta enseñar una fotografía real t
 
 **Cobertura.** Depende de lo que haya subido la gente, y se comprueba sola en cada punto. Medido al desarrollarlo: en Puig-reig y Gironella no había imágenes en ninguno de los dos servicios dentro de 300 m; en Berga sí. Que un pueblo no tenga fotos no es un fallo de la aplicación.
 
-## Abrir en Google Maps
-
-Durante la simulación, el panel tiene una sección **Vista real** con cuatro botones: la calle por la que va el vehículo, el próximo giro, la próxima parada y un paseo que avanza 150 m por el recorrido en cada pulsación. Cada uno abre Google Maps en una pestaña nueva, en esa ubicación, con la cámara orientada hacia donde se circula según el propio GPX.
-
-**No usa ninguna clave de API.** No carga la Maps JavaScript API, ni la Street View API, ni la Maps Embed API, ni ningún SDK de Google; no incrusta nada en un iframe. Solo construye un enlace del formato público que Google documenta como Maps URLs, del que dice expresamente que no hace falta clave:
-
-```
-https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=41.966386,1.880917&heading=145&pitch=0&fov=90
-```
-
-**Lo que se comparte con Google es únicamente ese punto:** dos coordenadas con seis decimales y el rumbo. Nunca el GPX, ni la lista de puntos, ni las horas, ni la biblioteca de rutas, ni el perfil de vehículo. La sección lo dice debajo de los botones.
-
-**Limitaciones, dichas tal cual son.** Sin credenciales no se puede preguntar a Google si hay panorámica en un punto, así que la app no lo promete ni lo aparenta: los botones dicen «abrir esta ubicación», no «Street View disponible». Si Google tiene imágenes de esa calle, se verá Street View; si no, enseñará el mapa. En zonas rurales y en caminos privados es normal que no haya. La primera vez puede aparecer la pantalla de consentimiento de cookies de Google antes de llegar al mapa: eso es de Google, no de Rutas. Hace falta conexión: sin ella los botones se apagan y lo dicen, y el resto de la simulación y la navegación siguen funcionando igual.
-
-La función solo lee el estado que ya existe -posición, progreso, giros y paradas del recorrido-. No toca el GPS simulado, ni el progreso, ni la voz, ni la recuperación de desvíos, y volver a Rutas desde Google no reinicia la simulación.
-
 ## Auditor de pantalla
 
 Dentro del simulador, el botón **Auditar pantalla** recorre todos los controles de la página y le pregunta al navegador, con `elementFromPoint`, quién recibe el clic en el centro de cada uno. Señala dos cosas: lo que no se alcanza -un control fijo fuera de la ventana- y lo que está tapado por otro. Distingue lo grave de lo que solo molesta: un control fijo tapado por otro fijo no se destapa nunca, mientras que contenido de la página bajo un panel flotante se destapa bajando, y eso se cuenta aparte en vez de mezclarlo. Un auditor que grita por todo acaba ignorándose.
@@ -188,15 +172,15 @@ Validación: carga real de calles y edificios, GPS simulado con rumbo, pausa y r
 
 ## Llegar al comienzo
 
-Al iniciar, la primera posición GPS reciente con precisión de 60 metros o mejor se compara con el punto seleccionado del GPX. Si queda a más de 100 metros en línea recta, se detiene el seguimiento sin avanzar por la traza y se ofrece llegar con Google Maps. El botón Llegar al inicio permite abrir este acceso antes de activar el GPS. Si se ha elegido una pasada posterior, ese punto es el destino.
+Al iniciar, la primera posición GPS reciente con precisión de 60 metros o mejor se compara con el punto seleccionado del GPX. Si queda a más de 100 metros en línea recta, se detiene el seguimiento sin avanzar por la traza y se ofrece calcular un acceso interno por calles. El botón Llegar al inicio permite abrir este acceso antes de activar el GPS. Si se ha elegido una pasada posterior, ese punto es el destino.
 
-El enlace usa Maps URLs (https://developers.google.com/maps/architecture/maps-url), modo driving y dir_action=navigate; omite el origen para que Google Maps utilice la ubicación del dispositivo. Solo incluye el destino, nunca el GPX completo. Dependiendo del dispositivo y de la ubicación disponible, Google Maps abre navegación o vista previa. No es un itinerario adaptado a las dimensiones del camión. Al regresar a Rutas hay que pulsar Iniciar navegación; no se inicia automáticamente ni se altera el recorrido.
+El acceso se calcula con OSRM/FOSSGIS y aparece dentro del mismo navegador de Rutas. Solo se envían las coordenadas necesarias para calcular ese tramo; el GPX completo permanece en el dispositivo. Al llegar al punto elegido, Rutas enlaza con el recorrido original sin perder su orden.
 
 Comprobado en navegador con GPS simulado: lejos no avanza el GPX, cerca comienza el seguimiento, baja precisión mantiene la espera, cambiar la pasada actualiza el destino y Escape cierra el diálogo. Las 39 pruebas existentes siguen pasando.
 
 ### Volver del acceso
 
-Al abrir Google Maps se guarda localmente la huella de la ruta y el punto seleccionado, durante un máximo de 24 horas. La tarjeta «Tu ruta te espera» sobrevive a una recarga. «Ya he llegado · comprobar GPS» recupera ese punto y solicita una posición fiable antes de comenzar; no inicia nada automáticamente al volver a la app. El recordatorio se borra al comenzar cerca del destino, al descartarlo, al cambiar a otra ruta o al caducar.
+Al calcular el acceso se guarda localmente la huella de la ruta y el punto seleccionado, durante un máximo de 24 horas. La tarjeta «Tu ruta te espera» sobrevive a una recarga. «Ya he llegado · comprobar GPS» recupera ese punto y solicita una posición fiable antes de comenzar; no inicia nada automáticamente al volver a la app. El recordatorio se borra al comenzar cerca del destino, al descartarlo, al cambiar a otra ruta o al caducar.
 
 La carga inicial del mapa 3D mantiene visible el mapa 2D, señala que está cargando y permite cancelar y reintentar. Validado en navegador con respuesta de cartografía retrasada y con GPS simulado para regreso cercano y lejano después de recargar la página.
 
@@ -232,4 +216,4 @@ Guiarme en Rutas calcula un acceso temporal para coche desde la posición actual
 
 La recuperación de un desvío utiliza el mismo sistema: después de dos posiciones fiables fuera de la traza, busca entre los siguientes 100 y 1.500 metros del orden del GPX y favorece el punto futuro más próximo sin saltar una vuelta lejana. El conductor decide si calcula el regreso, en una tarjeta con dos salidas del mismo tamaño: «Te has salido 84 m», y debajo «Volver a la ruta» o «Seguir sin recalcular». Mientras calcula dice «Buscando el mejor punto para volver…» y la segunda opción pasa a ser Cancelar, que devuelve la tarjeta al estado anterior sin dar el cálculo por fallido. Si el servicio no responde, ofrece Reintentar sin cerrar la puerta a seguir sin recalcular. Al aceptarlo, el acceso temporal se guía por calles y al llegar continúa la ronda desde ese punto. El cálculo es para coche y no aplica las dimensiones del camión.
 
-Este acceso no considera altura, peso ni anchura del vehículo. El GPX guardado y su progreso no se sustituyen por el trayecto calculado. Se conserva Google Maps como alternativa si el servicio de cálculo no responde.
+Este acceso no considera altura, peso ni anchura del vehículo. El GPX guardado y su progreso no se sustituyen por el trayecto calculado. Si el servicio de cálculo no responde, la ruta permanece intacta y se puede reintentar.

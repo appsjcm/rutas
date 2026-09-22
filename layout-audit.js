@@ -93,7 +93,13 @@ function pinta(r){
  }
 }
 $('audit-run').onclick=()=>{
+ // El panel del simulador es la herramienta, no parte de la app que se revisa. Si se
+ // deja visible, elementFromPoint informa correctamente de que él mismo tapa el mapa y
+ // el resultado queda lleno de falsos problemas. Se aparta solo durante la medición.
+ const anterior=panel.style.visibility;
+ panel.style.visibility='hidden';
  const r=run();
+ panel.style.visibility=anterior;
  // También por consola, que es donde se mira cuando se está cambiando algo.
  if(window.console&&console.table)console.table(r.malos.length?r.malos:[{q:'sin problemas'}]);
 };
