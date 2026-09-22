@@ -27,7 +27,7 @@ Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap c
 
 Abrir la aplicación con `?sim=1` añade un simulador que sustituye el GPS por una posición generada sobre el recorrido cargado. Solo aparece con ese parámetro y nunca sobrevive a una recarga: una posición falsa activada por descuido dentro de un vehículo sería peligrosa. Mientras corre, una franja roja avisa de que la posición no es real.
 
-La velocidad sube y baja con más y menos, por una escalera de 5 a 200 km/h con escalones finos abajo -5, 10, 15, 20- y gruesos arriba -80, 100, 120, 160, 200-. Abajo se ve cómo se comportan los avisos parando y arrancando, al ritmo real de una recogida; arriba se adelanta recorrido sin esperar. Se puede cambiar con la simulación en marcha: cada paso lee la velocidad del momento.
+La velocidad sube y baja con más y menos, por una escalera de 5 a 200 km/h con escalones finos abajo -5, 10, 15, 20- y gruesos arriba -80, 100, 120, 160, 200-. Abajo se ve cómo se comportan los avisos parando y arrancando, al ritmo real de una recogida; arriba se adelanta recorrido sin esperar. Se puede cambiar con la simulación en marcha: cada paso lee la velocidad del momento. Reproducir abre el mapa a pantalla completa, que es para lo que se pulsa; en simulación el botón de Reducir mapa se aparta a la esquina superior izquierda, porque el panel del simulador ocupa la inferior derecha y lo tapaba entero.
 
 Simular arranca también la navegación y abre el mapa a pantalla completa: la simulación sirve para ver la ruta en marcha, y tener que pulsar después «Iniciar navegación» y «Ampliar mapa» sobraba.
 

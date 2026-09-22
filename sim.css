@@ -39,3 +39,9 @@
  font-variant-numeric:tabular-nums}
 #sim-slower,#sim-faster{min-width:38px;min-height:38px;font-size:19px;font-weight:800;line-height:1}
 #sim-slower:disabled,#sim-faster:disabled{opacity:.4}
+
+/* En simulación el panel ocupa la esquina inferior derecha, justo donde está «Reducir
+   mapa», y lo tapaba entero: al abrir el mapa a pantalla completa desde Reproducir no
+   quedaba salida sin teclado. Conduciendo no pasa, porque ahí se sale con Finalizar. */
+body.map-focus #nav-stage.focus:not(.driving) #nav-focus{
+ top:12px;bottom:auto;left:60px;right:auto;z-index:2950}
