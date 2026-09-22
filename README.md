@@ -170,6 +170,12 @@ Fuentes de integración: https://openfreemap.org/quick_start/ y https://maplibre
 
 Validación: carga real de calles y edificios, GPS simulado con rumbo, pausa y recuperación de cámara, cambio 2D/3D durante navegación, avisos sobre el mapa y limpieza al cambiar de ruta. Verificado también el retorno a 2D sin WebGL y las 94 pruebas del motor existente. Pendiente la comprobación de rendimiento con GPS real en el teléfono.
 
+## Google Street View
+
+El control **Street View** abre Google Maps en la posición actual del navegador y orienta la cámara según el sentido de marcha del GPX. Durante la navegación usa la posición GPS; en la vista previa usa el punto seleccionado de la ruta. Funciona con un enlace público de Google y no necesita clave de API.
+
+Solo se comparte con Google la coordenada elegida y el rumbo. El archivo GPX, sus horas, la biblioteca de rutas y las medidas del vehículo permanecen en el dispositivo. La panorámica depende de la cobertura de Street View; si Google no tiene imágenes en ese punto puede mostrar únicamente el mapa.
+
 ## Llegar al comienzo
 
 Al iniciar, la primera posición GPS reciente con precisión de 60 metros o mejor se compara con el punto seleccionado del GPX. Si queda a más de 100 metros en línea recta, se detiene el seguimiento sin avanzar por la traza y se ofrece calcular un acceso interno por calles. El botón Llegar al inicio permite abrir este acceso antes de activar el GPS. Si se ha elegido una pasada posterior, ese punto es el destino.
