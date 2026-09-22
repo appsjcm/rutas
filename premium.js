@@ -44,7 +44,14 @@ function cleanNavigation(){
  const voice=actions.querySelector('.switch');if(voice){const preference=document.createElement('div');preference.className='route-setting-line';preference.append(voice);content.append(preference);}
  const fixed=new Set([stage,actions,message,arrival]);for(const node of [...body.children])if(!fixed.has(node))content.append(node);
  body.replaceChildren(home);if(arrival)body.append(arrival);body.append(stage,actions,message,settings);
- const motion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';open.onclick=()=>{settings.open=true;settings.scrollIntoView({behavior:motion(),block:'start'});settingsHead.querySelector('button').focus({preventScroll:true});};settingsHead.querySelector('button').onclick=()=>{settings.open=false;home.scrollIntoView({behavior:motion(),block:'start'});open.focus({preventScroll:true});};
+ const motion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',mobile=matchMedia('(max-width:700px)');
+ const bodyLock=()=>document.body.classList.toggle('route-settings-open',settings.open&&mobile.matches);
+ const openSettings=()=>{settings.open=true;bodyLock();if(!mobile.matches)settings.scrollIntoView({behavior:motion(),block:'start'});settingsHead.querySelector('button').focus({preventScroll:true});};
+ const closeSettings=(returnFocus=true)=>{settings.open=false;bodyLock();if(!mobile.matches)home.scrollIntoView({behavior:motion(),block:'start'});if(returnFocus)open.focus({preventScroll:true});};
+ open.onclick=openSettings;settingsHead.querySelector('button').onclick=()=>closeSettings();
+ settings.addEventListener('toggle',bodyLock);settings.addEventListener('click',e=>{if(e.target===settings)closeSettings();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&settings.open)closeSettings();});
+ mobile.addEventListener('change',bodyLock);tabs.forEach(t=>t.addEventListener('click',()=>{if(t.id!=='tab-nav'&&settings.open)closeSettings(false);}));
  overview();setTimeout(()=>window.dispatchEvent(new Event('rutas:visible')),50);
 }
 addEventListener('load',cleanNavigation,{once:true});
