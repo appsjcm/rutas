@@ -49,6 +49,14 @@ Enlazar los cortes si tiene reserva, porque ahi basta con dos puntos por peticio
 
 Al pulsar Iniciar navegación aparece una tarjeta con el estado real del turno: Ruta, GPS, Voz, Mapas y Restricciones. No bloquea nada -la navegación arranca en ese mismo toque-; si todo está en orden la tarjeta se retira sola a los tres segundos, y si hay algo que leer espera a que se cierre. El permiso de GPS se consulta al navegador, no se supone: distingue concedido, por pedir y denegado. El apartado de restricciones cuenta lo que depende del vehículo y deja fuera los avisos de sentido de circulación.
 
+## Tus avisos en la ruta
+
+La comprobación de alturas, pesos y accesos depende de que OpenStreetMap los tenga etiquetados, y en calles de pueblo casi nunca los tiene: en los 26 km de una ronda real, medidos bajando el perfil hasta 1,5 m y 1 t, no salta ni un aviso dimensional porque no hay ni una etiqueta. Quien conduce la ronda sí sabe dónde no cabe.
+
+Marcar este punto guarda un aviso donde estás -o donde tengas puesto el control del recorrido- con un tipo: paso bajo, límite de peso, calle estrecha, prohibido el paso o una nota suelta, con hasta 80 caracteres de texto libre. Cada aviso se ata al recorrido una vez y después aparece en el mapa con su letra y sobre la conducción cuando faltan menos de 300 metros, contando hacia abajo; la voz lo dice una sola vez por vuelta, a 200 metros. Marcar dos veces el mismo punto no crea dos avisos: se queda el último con su nota, y altura y peso en el mismo sitio siguen siendo dos cosas distintas. Un aviso a más de 35 metros del trazado no se ata a él y se queda guardado para otra ruta que sí pase por allí.
+
+El aviso dice siempre de dónde viene -«lo marcaste tú»- porque no es una comprobación: es memoria del conductor. Se guarda solo en este dispositivo, junto a la ruta y el progreso, y no se envía a ningún sitio.
+
 ## Bajo consumo
 
 Una jornada entera con el GPS activo, la pantalla encendida y el mapa 3D gasta batería. Cuando el navegador da el nivel de batería -Chrome en Android sí, Safari no- y el teléfono baja del 20 % sin estar cargando, se quitan las animaciones y el desenfoque de fondo de las tarjetas, y el mapa vuelve a 2D; por debajo del 10 % el aviso se marca en rojo. Enchufado no se ahorra nunca, que es como suele ir en la cabina. Sin dato de batería el único indicio fiable es el tiempo: a partir de 45 minutos de navegación seguida se reducen las animaciones, pero no se toca el 3D, porque no hay motivo para quitarlo. Si el sistema pide menos movimiento, se respeta siempre. Volver a 2D se hace una sola vez por cambio de estado: si el conductor reactiva el 3D, no se le insiste.
