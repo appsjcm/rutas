@@ -23,6 +23,22 @@ Los GPX se procesan en el dispositivo y no se suben al repositorio. La ruta carg
 
 Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap contributors. Satélite: Esri, Maxar, Earthstar Geographics y GIS User Community.
 
+## Vista real con Google Maps
+
+Durante la simulación, el panel tiene una sección **Vista real** con cuatro botones: la calle por la que va el vehículo, el próximo giro, la próxima parada y un paseo que avanza 150 m por el recorrido en cada pulsación. Cada uno abre Google Maps en una pestaña nueva, en esa ubicación, con la cámara orientada hacia donde se circula según el propio GPX.
+
+**No usa ninguna clave de API.** No carga la Maps JavaScript API, ni la Street View API, ni la Maps Embed API, ni ningún SDK de Google; no incrusta nada en un iframe. Solo construye un enlace del formato público que Google documenta como Maps URLs, del que dice expresamente que no hace falta clave:
+
+```
+https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=41.966386,1.880917&heading=145&pitch=0&fov=90
+```
+
+**Lo que se comparte con Google es únicamente ese punto:** dos coordenadas con seis decimales y el rumbo. Nunca el GPX, ni la lista de puntos, ni las horas, ni la biblioteca de rutas, ni el perfil de vehículo. La sección lo dice debajo de los botones.
+
+**Limitaciones, dichas tal cual son.** Sin credenciales no se puede preguntar a Google si hay panorámica en un punto, así que la app no lo promete ni lo aparenta: los botones dicen «abrir esta ubicación», no «Street View disponible». Si Google tiene imágenes de esa calle, se verá Street View; si no, enseñará el mapa. En zonas rurales y en caminos privados es normal que no haya. La primera vez puede aparecer la pantalla de consentimiento de cookies de Google antes de llegar al mapa: eso es de Google, no de Rutas. Hace falta conexión: sin ella los botones se apagan y lo dicen, y el resto de la simulación y la navegación siguen funcionando igual.
+
+La función solo lee el estado que ya existe -posición, progreso, giros y paradas del recorrido-. No toca el GPS simulado, ni el progreso, ni la voz, ni la recuperación de desvíos, y volver a Rutas desde Google no reinicia la simulación.
+
 ## Simulador de conducción
 
 Abrir la aplicación con `?sim=1` añade un simulador que sustituye el GPS por una posición generada sobre el recorrido cargado. Solo aparece con ese parámetro y nunca sobrevive a una recarga: una posición falsa activada por descuido dentro de un vehículo sería peligrosa. Mientras corre, una franja roja avisa de que la posición no es real.
