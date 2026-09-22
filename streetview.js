@@ -18,7 +18,8 @@ bloque.innerHTML='<span class="sv-title">Vista real</span>'+
   '<button type="button" id="sv-walk" class="sv-second">'+V.label('walk')+' →</button>'+
  '</div>'+
  '<p class="sv-note" id="sv-note"></p>';
-panel.append(bloque);
+// Dentro del cuerpo plegable del panel, para que al plegarlo se pliegue todo.
+(document.getElementById('sim-body')||panel).append(bloque);
 
 let paseo=null;                    // por dónde va el paseo, aparte del progreso real
 

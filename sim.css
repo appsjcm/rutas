@@ -8,8 +8,17 @@
  border:1px solid var(--rule,#e1e8f0);box-shadow:0 10px 30px -12px #0006;
  font:500 13px/1.4 var(--font-ui,sans-serif);display:flex;flex-direction:column;gap:9px}
 #sim-panel[data-running]{border-color:#a8201a;box-shadow:0 0 0 2px #a8201a33,0 10px 30px -12px #0006}
-#sim-panel header{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-#sim-panel header b{font-size:13px}
+#sim-panel>#sim-toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;
+ width:100%;padding:0;border:0;background:none;color:inherit;cursor:pointer;font:inherit;text-align:left}
+#sim-panel>#sim-toggle:focus-visible{outline:3px solid var(--focus,#096c83);outline-offset:3px}
+#sim-panel>#sim-toggle i{margin-left:2px;font-style:normal;font-size:12px;color:var(--muted,#607389);
+ transition:transform .15s ease}
+#sim-panel>#sim-toggle i::before{content:'BC'}
+#sim-panel[data-open=no]>#sim-toggle i{transform:rotate(-90deg)}
+#sim-body{display:flex;flex-direction:column;gap:inherit}
+#sim-body[hidden]{display:none}
+#sim-panel[data-open=no]{gap:0}
+#sim-panel>#sim-toggle b{font-size:13px}
 #sim-state{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#607389)}
 #sim-panel[data-running] #sim-state{color:#a8201a}
 #sim-panel label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:700;
@@ -64,7 +73,10 @@ body.map-focus #sim-panel{bottom:calc(12px + env(safe-area-inset-bottom))}
 
 /* La velocidad es lo que más se toca mientras se mira la ruta, así que se queda pegada
    arriba del panel: si el resto no cabe y hay que desplazar dentro, ella no se va. */
-#sim-panel header,#sim-panel .sim-speed-row{position:sticky;top:0;z-index:2;
- background:var(--surface,#fff)}
-#sim-panel .sim-speed-row{top:28px;padding-bottom:6px;
- box-shadow:0 6px 8px -8px #0004}
+#sim-panel .sim-speed-row{position:sticky;top:0;z-index:2;background:var(--surface,#fff)}
+#sim-panel .sim-speed-row{padding-bottom:6px;box-shadow:0 6px 8px -8px #0004}
+
+/* Fuera de pantalla completa, «Ampliar mapa» vive en la esquina inferior derecha del mapa,
+   que es donde se pone el panel del simulador. Se lleva a la izquierda: allí queda 50 px
+   por debajo de «Repetir indicación», sin tocarlo. */
+#nav-stage:not(.focus) #nav-focus{right:auto;left:10px}

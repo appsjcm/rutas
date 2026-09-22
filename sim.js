@@ -19,7 +19,9 @@ const banner=document.createElement('div');banner.id='sim-banner';banner.hidden=
 banner.textContent='SIMULACIÓN · la posición no es real';
 const panel=document.createElement('section');panel.id='sim-panel';
 panel.innerHTML=
- '<header><b>Simulador de conducción</b><span id="sim-state">parado</span></header>'
+ '<button type="button" id="sim-toggle" aria-expanded="true" aria-controls="sim-body">'
+ +'<b>Simulador de conducción</b><span id="sim-state">parado</span><i aria-hidden="true"></i></button>'
+ +'<div id="sim-body">'
  +'<label class="sim-speed-row">Velocidad<span class="sim-opts sim-speedbox" id="sim-speed">'
  +'<button type="button" id="sim-slower" aria-label="Más despacio">−</button>'
  +'<output id="sim-speed-value">50</output>'
@@ -34,10 +36,22 @@ panel.innerHTML=
  +'<label class="sim-check"><input type="checkbox" id="sim-offline"><span>Simular sin Internet</span></label>'
  +'<div class="sim-actions"><button type="button" class="btn primary" id="sim-go">Simular</button>'
  +'<button type="button" class="btn" id="sim-stop" disabled>Parar</button></div>'
- +'<p id="sim-info">Carga un GPX y pulsa Simular. La posición la genera esta página.</p>';
+ +'<p id="sim-info">Carga un GPX y pulsa Simular. La posición la genera esta página.</p>'
+ +'</div>';
 document.body.append(banner,panel);
 
 const $=id=>document.getElementById(id);
+// El panel flota sobre la pagina y tapaba los mandos que tiene debajo -la pestaña Guia,
+// el conmutador 2D/Satelite/3D, Ampliar mapa-. Se pliega, y la eleccion se recuerda.
+const ABIERTO='rutas-sim-abierto';
+function plegar(abierto){
+ panel.dataset.open=abierto?'yes':'no';
+ $('sim-toggle').setAttribute('aria-expanded',String(abierto));
+ $('sim-body').hidden=!abierto;
+ try{localStorage.setItem(ABIERTO,abierto?'1':'0');}catch{}
+}
+$('sim-toggle').onclick=()=>plegar(panel.dataset.open!=='yes');
+(function(){let v='1';try{v=localStorage.getItem(ABIERTO)??'1';}catch{}plegar(v!=='0');})();
 let speed=50,cal=S.quality('bueno'),drift=0;
 
 function pick(group,attr,set){
