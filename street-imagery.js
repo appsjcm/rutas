@@ -79,7 +79,10 @@ control.innerHTML='<span class="si-title">Vista de calle</span>'+
  '<div class="si-controls"><button type="button" id="si-prev" aria-label="Foto anterior">◀</button>'+
  '<button type="button" id="si-auto" aria-label="Volver a seguir la posición">🎯 Automático</button>'+
  '<button type="button" id="si-next" aria-label="Foto siguiente">▶</button></div>'+
- '<p class="si-state" id="si-state"></p>';
+ '<p class="si-state" id="si-state"></p>'+
+ // Ultimo eslabon: donde KartaView y Panoramax no llegan, Google casi siempre si. No se
+ // abre solo -manda el usuario- y solo sale de aqui la coordenada de este punto.
+ '<button type="button" id="si-google" hidden>Verla en Google Street View</button>';
 // Delante de las secciones secundarias: es lo que se mira, no un ajuste de mas.
 (function(){
  const cuerpo=document.getElementById('sim-body')||panel;
@@ -107,12 +110,18 @@ if(barra){
 
 function cambiarModo(v){
  modo=v;guardarModo(modo);marcaModo();manual=false;
- if(modo==='mapa'){ocultar();estado('');return;}
+ if(modo==='mapa'){ocultar();estado('');google(false);return;}
  ultimoPunto=null;ultimaBusqueda=null;
  refrescar(true);
 }
 
 function estado(texto){const e=$('si-state');if(e)e.textContent=texto||'';}
+// El boton solo aparece si el visor de Google esta cargado y hay conexion: prometer una
+// vista que no se puede abrir seria peor que no ofrecerla.
+function google(ofrecer){
+ const b=$('si-google');
+ if(b)b.hidden=!(ofrecer&&window.RutasStreetViewUI&&window.RutasStreetViewUI.openAt&&navigator.onLine!==false);
+}
 function marcaModo(){
  for(const b of control.querySelectorAll('.si-modes button'))
   b.setAttribute('aria-pressed',String(b.dataset.modo===modo));
@@ -201,12 +210,14 @@ async function buscar(p,h){
     manual=false;fallo=0;
     mostrar(elegida,p);
     estado(prov.nombre);
+    google(false);
     return;
    }
   }
   juego=[];actual=null;ocultar();
   fallo++;
   estado(S.status('none'));
+  google(true);
   volverAlMapa();
  }finally{buscando=false;}
 }
@@ -244,12 +255,17 @@ function refrescar(forzar){
 $('si-prev').onclick=()=>{const v=S.neighbour(juego,actual,-1);if(v){manual=true;mostrar(v,punto());}};
 $('si-next').onclick=()=>{const v=S.neighbour(juego,actual,1);if(v){manual=true;mostrar(v,punto());}};
 $('si-auto').onclick=()=>{manual=false;ultimoPunto=null;refrescar(true);};
+$('si-google').onclick=()=>{
+ const p=punto();
+ if(!p||!window.RutasStreetViewUI||!window.RutasStreetViewUI.openAt)return;
+ window.RutasStreetViewUI.openAt(p,rumbo(),'Street View abierto en la posición actual.');
+};
 
 // ---- enganches, todos de solo lectura ----
 window.addEventListener('rutas:progress',()=>{try{refrescar(false);}catch(e){if(window.console)console.debug('[vista de calle]',e);}});
-window.addEventListener('rutas:route',()=>{juego=[];actual=null;ultimoPunto=null;ultimaBusqueda=null;manual=false;ocultar();});
+window.addEventListener('rutas:route',()=>{juego=[];actual=null;ultimoPunto=null;ultimaBusqueda=null;manual=false;ocultar();google(false);});
 window.addEventListener('rutas:check-route',()=>{juego=[];actual=null;ocultar();});
-window.addEventListener('offline',()=>{ocultar();estado(S.status('offline'));});
+window.addEventListener('offline',()=>{ocultar();estado(S.status('offline'));google(false);});
 window.addEventListener('online',()=>{estado('');ultimoPunto=null;ultimaBusqueda=null;refrescar(true);});
 
 estado(navigator.onLine===false?S.status('offline'):'');

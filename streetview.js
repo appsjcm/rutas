@@ -37,15 +37,22 @@ function cancel(note=false){
  document.getElementById('nav-stage').classList.remove('streetview-picking');
  if(note)message('Selección cancelada.');
 }
+// Abrir el visor en un punto concreto. Lo usa el toque en el mapa y tambien la vista de
+// calle del simulador cuando KartaView y Panoramax no tienen nada por aqui.
+function openAt(point,bearing,note){
+ if(navigator.onLine===false){message('Street View necesita conexión.');return false;}
+ const embed=V.embedUrl(point,bearing),url=V.url(point,bearing);
+ if(!embed||!url){message('No se pudo abrir ese punto.');return false;}
+ clearTimeout(frameTimer);frameWrap.classList.remove('loaded');loading.textContent='Cargando la panorámica…';external.href=url;frame.src=embed;
+ dialog.showModal();if(note)message(note);
+ frameTimer=setTimeout(()=>{if(dialog.open&&!frameWrap.classList.contains('loaded'))loading.textContent='La panorámica tarda en cargar. Puedes abrir este punto en Google Maps.';},10000);
+ return true;
+}
 function choose(e){
  const s=state(),hit=V.routePosition(s.route,{lat:e.latlng.lat,lon:e.latlng.lng});
  cancel();
  if(!hit){message('No se encontró ese punto de la ruta.');return;}
- const bearing=heading(s,hit.d),embed=V.embedUrl(hit.point,bearing),url=V.url(hit.point,bearing);
- if(!embed||!url){message('No se pudo abrir ese punto.');return;}
- clearTimeout(frameTimer);frameWrap.classList.remove('loaded');loading.textContent='Cargando la panorámica…';external.href=url;frame.src=embed;
- dialog.showModal();message('Street View abierto en el punto elegido.');
- frameTimer=setTimeout(()=>{if(dialog.open&&!frameWrap.classList.contains('loaded'))loading.textContent='La panorámica tarda en cargar. Puedes abrir este punto en Google Maps.';},10000);
+ openAt(hit.point,heading(s,hit.d),'Street View abierto en el punto elegido.');
 }
 function select(){
  const s=state();
@@ -87,5 +94,5 @@ window.addEventListener('keydown',e=>{if(e.key==='Escape'&&picking)cancel(true);
 for(const name of ['rutas:route','rutas:visible','online','offline'])window.addEventListener(name,()=>{if(name==='rutas:route')cancel();refresh();});
 refresh();
 
-window.RutasStreetViewUI={select,cancel,close:closeDialog,isPicking:()=>picking,refresh};
+window.RutasStreetViewUI={select,cancel,openAt,close:closeDialog,isPicking:()=>picking,refresh};
 })();

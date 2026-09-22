@@ -38,11 +38,11 @@ Dentro del simulador, **Vista de calle** intenta enseñar una fotografía real t
 
 **Pocas peticiones.** Cada búsqueda trae las fotos de alrededor y se camina por ellas mientras el vehículo siga cerca; solo se vuelve a preguntar al alejarse, y nunca antes de 45 m. Medido en una simulación real: cinco fotografías distintas a lo largo de 95 m con **una sola petición**. La imagen siguiente y la anterior se precargan, y se guardan como mucho 24 en memoria.
 
-**Si no hay fotos**, dice «Sin imágenes de calle en este tramo» y sigue el mapa; si el 3D ya estaba cargado y funcionando, se vuelve a él. Sin conexión ni siquiera se pregunta: se apaga y lo dice. La simulación y la navegación no se detienen nunca por esto.
+**Si no hay fotos**, dice «Sin imágenes de calle en este tramo» y ofrece **Verla en Google Street View**, que abre el mismo visor del control Street View en la posición actual. Ese es el último eslabón de la cadena: KartaView, Panoramax, Google y, si nada de eso, el mapa -volviendo al 3D si ya estaba cargado y funcionando-. El botón no aparece sin conexión ni si el visor de Google no está cargado: ofrecer una vista que luego no abriría sería peor que no ofrecerla. Tampoco se abre solo; manda el usuario. Sin conexión ni siquiera se pregunta a los proveedores: se apaga y lo dice. La simulación y la navegación no se detienen nunca por esto.
 
 **Privacidad.** Las búsquedas de imágenes comparten únicamente una pequeña zona alrededor del punto actual -un cuadrado de unos 200 m de lado, o el punto y un radio-. El GPX completo permanece en el dispositivo: no se envían la traza, ni las horas, ni las paradas, ni la biblioteca, ni el perfil del vehículo, ni el nombre del archivo.
 
-**Cobertura.** Depende de lo que haya subido la gente, y se comprueba sola en cada punto. Medido al desarrollarlo: en Puig-reig y Gironella no había imágenes en ninguno de los dos servicios dentro de 300 m; en Berga sí. Que un pueblo no tenga fotos no es un fallo de la aplicación.
+**Cobertura.** Depende de lo que haya subido la gente, y se comprueba sola en cada punto. Medido al desarrollarlo: en Puig-reig y Gironella no había imágenes en ninguno de los dos servicios dentro de 300 m; en Berga sí -126 fotos en 900 m, una secuencia de 2015-. Que un pueblo no tenga fotos no es un fallo de la aplicación, y por eso existe el paso a Google: comprobado que en Puig-reig, donde los dos servicios libres están vacíos, Google sí tiene panorámica de la calle.
 
 ## Auditor de pantalla
 
@@ -172,7 +172,9 @@ Validación: carga real de calles y edificios, GPS simulado con rumbo, pausa y r
 
 ## Google Street View
 
-El control **Street View** activa la selección sobre el mapa: después de pulsarlo se puede tocar cualquier punto de la línea GPX, sin iniciar la navegación. Rutas ajusta el toque al trazado y abre una panorámica dentro de un modal, con la cámara orientada según el sentido del recorrido. El modal se puede cerrar para volver exactamente al mismo punto del mapa y conserva un enlace para abrir Google Maps aparte si el visor incrustado no carga.
+El control **Street View** activa la selección sobre el mapa: después de pulsarlo se puede tocar cualquier punto de la línea GPX, sin iniciar la navegación. Rutas ajusta el toque al trazado y abre una panorámica dentro de un modal, con la cámara orientada según el sentido del recorrido. El modal se puede cerrar para volver exactamente al mismo punto del mapa y conserva un enlace para abrir Google Maps aparte si el visor incrustado no carga. Al cerrarlo el iframe se suelta -se le pone `about:blank`-: si no, la página de Google seguía cargada de fondo gastando red y batería. El evento `close` del `<dialog>` no llega a dispararse aquí -medido-, así que la limpieza se hace también a mano desde el botón de cerrar y desde `cancel`, que sí llega con Escape.
+
+El mismo visor es el último eslabón de la vista de calle del simulador: donde KartaView y Panoramax no tienen nada, aparece **Verla en Google Street View** y se abre en la posición actual. A Google solo le llegan esa coordenada y el rumbo.
 
 Solo se comparte con Google la coordenada elegida y el rumbo. El archivo GPX, sus horas, la biblioteca de rutas y las medidas del vehículo permanecen en el dispositivo. La panorámica depende de la cobertura de Street View; si Google no tiene imágenes en ese punto puede mostrar únicamente el mapa.
 

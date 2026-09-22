@@ -37,6 +37,17 @@ body.low-power #si-caption{backdrop-filter:none!important;-webkit-backdrop-filte
 .si-modes button:focus-visible{outline:3px solid var(--focus,#096c83);outline-offset:2px}
 .si-state{margin:0;font-size:10.5px;line-height:1.35;font-weight:500;letter-spacing:0;
  text-transform:none;color:var(--muted,#607389)}
+/* La salida cuando no hay foto libre por aqui. Se ve como lo que es: una alternativa,
+   no el modo normal. Las longhands van sueltas porque el atajo font: con inherit no es
+   CSS valido y el navegador tira la declaracion entera. */
+#si-google{min-height:44px;padding:8px 10px;border-radius:10px;cursor:pointer;
+ border:1px dashed var(--rule-strong,#bdcad8);background:var(--surface-2,#f6f8fb);
+ color:var(--ink,#172b43);
+ font-family:inherit;font-weight:650;font-size:12px;line-height:1.2;letter-spacing:0;
+ text-transform:none}
+#si-google:hover{border-style:solid;border-color:var(--accent,#096c83)}
+#si-google:focus-visible{outline:3px solid var(--focus,#096c83);outline-offset:2px}
+#si-google[hidden]{display:none}
 
 @media(max-width:700px){
  #si-caption{font-size:10px;left:8px;bottom:8px}
