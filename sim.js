@@ -20,7 +20,7 @@ banner.textContent='SIMULACIÓN · la posición no es real';
 const panel=document.createElement('section');panel.id='sim-panel';
 panel.innerHTML=
  '<header><b>Simulador de conducción</b><span id="sim-state">parado</span></header>'
- +'<label>Velocidad<span class="sim-opts sim-speedbox" id="sim-speed">'
+ +'<label class="sim-speed-row">Velocidad<span class="sim-opts sim-speedbox" id="sim-speed">'
  +'<button type="button" id="sim-slower" aria-label="Más despacio">−</button>'
  +'<output id="sim-speed-value">50</output>'
  +'<button type="button" id="sim-faster" aria-label="Más rápido">+</button>'

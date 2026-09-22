@@ -61,3 +61,10 @@ body.map-focus #sim-panel{bottom:calc(12px + env(safe-area-inset-bottom))}
  #sim-slower,#sim-faster{min-height:32px;font-size:17px}
  #sim-info{display:none}          /* la explicación sobra cuando no cabe ni el control */
 }
+
+/* La velocidad es lo que más se toca mientras se mira la ruta, así que se queda pegada
+   arriba del panel: si el resto no cabe y hay que desplazar dentro, ella no se va. */
+#sim-panel header,#sim-panel .sim-speed-row{position:sticky;top:0;z-index:2;
+ background:var(--surface,#fff)}
+#sim-panel .sim-speed-row{top:28px;padding-bottom:6px;
+ box-shadow:0 6px 8px -8px #0004}
