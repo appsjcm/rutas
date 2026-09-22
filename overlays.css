@@ -1,0 +1,3 @@
+/* El aviso que no es el más urgente espera su turno: sigue vivo para su módulo, pero no
+   ocupa pantalla. Vuelve a salir en cuanto el de delante desaparece. */
+.overlay-waiting{display:none!important}

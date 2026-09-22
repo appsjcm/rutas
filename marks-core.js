@@ -91,14 +91,6 @@ function spoken(m,gap){
  return 'Atención: '+kind(m.kind).voice+(d?' en '+d:'')+', marcado por ti.';
 }
 
-// El aviso de OpenStreetMap y el del conductor pueden coincidir en pantalla. El alto del
-// primero depende de su texto, asi que el sitio del segundo se calcula, no se fija.
-function stackTop(road,stage,gap){
- if(!road||!stage||!(road.height>0))return null;
- const hueco=Number.isFinite(gap)?gap:8;
- return Math.round(road.bottom-stage.top+hueco);
-}
-
 // Vuelta atras: los waypoints con tipo propio se reconocen como avisos; los demas no se
 // tocan, porque un waypoint cualquiera de un GPX ajeno no es un aviso de nadie.
 const PREFIX='rutas:';
@@ -135,7 +127,7 @@ function unpack(text){
  }catch{return [];}
 }
 
-const api={KINDS,kind,normalise,valid,add,remove,anchor,ahead,describe,warning,spoken,stackTop,fromWaypoints,merge,
+const api={KINDS,kind,normalise,valid,add,remove,anchor,ahead,describe,warning,spoken,fromWaypoints,merge,
            metres,pack,unpack,NOTE_MAX,SAME_SPOT,OFF_ROUTE,WINDOW};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasMarksCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

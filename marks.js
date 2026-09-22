@@ -103,22 +103,12 @@ $('mark-save').onclick=()=>{
 };
 
 // ---- avisar antes de llegar ----
-// El aviso de OpenStreetMap y el del conductor pueden coincidir; su alto cambia con el
-// texto, asi que el sitio se calcula al mostrarlo en vez de fijarlo en la hoja de estilo.
-function stack(){
- const road=$('nav-road-alert');
- const arriba=road&&!road.hidden&&road.offsetParent
-  ?M.stackTop(road.getBoundingClientRect(),stage.getBoundingClientRect())
-  :null;
- alerta.style.top=arriba===null?'':arriba+'px';
-}
 function check(d){
  const proximo=M.ahead(anchored,d,M.WINDOW)[0];
  alerta.hidden=!proximo;
  if(!proximo)return;
  alerta.textContent=M.warning(proximo);
  alerta.dataset.kind=proximo.kind;
- stack();
  // Una vez por marca y por vuelta: repetirlo cada segundo seria insoportable.
  if(proximo.gap<=200&&!dicho.has(proximo.id)){
   dicho.add(proximo.id);

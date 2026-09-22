@@ -114,18 +114,6 @@ test('la descripcion sirve para una lista, con y sin nota',()=>{
  assert.equal(M.kind('sin-nombre').id,'nota');
 });
 
-test('el aviso del conductor se coloca debajo del de OpenStreetMap, no encima',()=>{
- // Rectangulos como los que da el navegador: el escenario empieza en 100 y el aviso vial
- // ocupa de 190 a 250, asi que el del conductor empieza en 158 relativos al escenario.
- const escenario={top:100,bottom:700,height:600};
- assert.equal(M.stackTop({top:190,bottom:250,height:60},escenario),158);
- assert.equal(M.stackTop({top:190,bottom:310,height:120},escenario),218,'si crece, baja mas');
- assert.equal(M.stackTop({top:190,bottom:250,height:60},escenario,20),170);
- // Sin aviso vial no se toca el sitio: manda la hoja de estilo.
- assert.equal(M.stackTop({top:0,bottom:0,height:0},escenario),null);
- assert.equal(M.stackTop(null,escenario),null);
- assert.equal(M.stackTop({height:60},null),null);
-});
 
 const G=require('../gpx-core');
 
