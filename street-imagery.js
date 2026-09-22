@@ -80,20 +80,47 @@ control.innerHTML='<span class="si-title">Vista de calle</span>'+
  '<button type="button" id="si-auto" aria-label="Volver a seguir la posición">🎯 Automático</button>'+
  '<button type="button" id="si-next" aria-label="Foto siguiente">▶</button></div>'+
  '<p class="si-state" id="si-state"></p>';
-(document.getElementById('sim-body')||panel).append(control);
+// Delante de las secciones secundarias: es lo que se mira, no un ajuste de mas.
+(function(){
+ const cuerpo=document.getElementById('sim-body')||panel;
+ const despues=document.getElementById('sim-info');
+ if(despues&&despues.parentElement===cuerpo)despues.after(control);else cuerpo.append(control);
+})();
+
+// Un atajo donde la gente busca una vista: junto a 2D, Satélite y 3D. Estaba solo dentro
+// del panel, el último de nueve apartados, y así no lo encontraba nadie.
+const barra=document.querySelector('.map-dimension');
+let atajo=null;
+if(barra){
+ atajo=document.createElement('button');
+ atajo.type='button';atajo.id='si-quick';atajo.textContent='📷 Calle';
+ atajo.title='Fotografías reales de la calle durante la simulación';
+ barra.append(atajo);
+ atajo.addEventListener('click',()=>cambiarModo(modo==='mapa'?'calle':'mapa'));
+ // Elegir un mapa es decir que ahora se quiere el mapa.
+ barra.addEventListener('click',e=>{
+  const b=e.target.closest('button');
+  if(!b||b===atajo||b.id==='map-places')return;
+  if(modo!=='mapa')cambiarModo('mapa');
+ });
+}
+
+function cambiarModo(v){
+ modo=v;guardarModo(modo);marcaModo();manual=false;
+ if(modo==='mapa'){ocultar();estado('');return;}
+ ultimoPunto=null;ultimaBusqueda=null;
+ refrescar(true);
+}
 
 function estado(texto){const e=$('si-state');if(e)e.textContent=texto||'';}
 function marcaModo(){
  for(const b of control.querySelectorAll('.si-modes button'))
   b.setAttribute('aria-pressed',String(b.dataset.modo===modo));
+ if(atajo)atajo.setAttribute('aria-pressed',String(modo!=='mapa'));
 }
 control.querySelector('.si-modes').addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b)return;
- modo=b.dataset.modo;guardarModo(modo);marcaModo();
- manual=false;
- if(modo==='mapa'){ocultar();estado('');return;}
- ultimoPunto=null;ultimaBusqueda=null;
- refrescar(true);
+ cambiarModo(b.dataset.modo);
 });
 marcaModo();
 

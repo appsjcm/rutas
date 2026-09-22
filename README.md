@@ -25,6 +25,8 @@ Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap c
 
 ## Vista de calle con fotografías reales
 
+Junto a **2D · Satélite · 3D**, sobre el mapa, hay un botón **📷 Calle**: es un modo de vista más y está donde se buscan los modos de vista. Elegir un mapa lo apaga. El control completo -con los tres modos y los botones de recorrer la secuencia- está en el panel del simulador.
+
 Dentro del simulador, **Vista de calle** intenta enseñar una fotografía real tomada cerca del punto por el que avanza la simulación. Tres modos: **Mapa** (solo el mapa de siempre), **Calle** (intenta la foto) y **Automático** (foto donde la haya, mapa donde no). La elección se guarda en el dispositivo.
 
 **Sin claves ni tokens, y sin registro.** Se usan dos servicios públicos, por este orden:

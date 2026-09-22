@@ -45,3 +45,7 @@ body.low-power #si-caption{backdrop-filter:none!important;-webkit-backdrop-filte
 @media (orientation:landscape) and (max-height:560px){
  #nav-stage.driving #si-caption{max-width:calc(100% - var(--rail,330px) - 24px)}
 }
+
+/* El atajo vive en la misma barra que 2D, Satélite y 3D, y se ve igual que ellos: es un
+   modo de vista más, no un ajuste escondido. */
+#si-quick[aria-pressed=true]{background:var(--accent,#096c83);color:var(--on-accent,#fff)}
