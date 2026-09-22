@@ -23,7 +23,26 @@ Los GPX se procesan en el dispositivo y no se suben al repositorio. La ruta carg
 
 Leaflet 1.9.4 se distribuye en vendor con su licencia. Mapas: © OpenStreetMap contributors. Satélite: Esri, Maxar, Earthstar Geographics y GIS User Community.
 
-## Vista real con Google Maps
+## Vista de calle con fotografías reales
+
+Dentro del simulador, **Vista de calle** intenta enseñar una fotografía real tomada cerca del punto por el que avanza la simulación. Tres modos: **Mapa** (solo el mapa de siempre), **Calle** (intenta la foto) y **Automático** (foto donde la haya, mapa donde no). La elección se guarda en el dispositivo.
+
+**Sin claves ni tokens, y sin registro.** Se usan dos servicios públicos, por este orden:
+
+- **KartaView** · `POST https://api.kartaview.org/1.0/list/nearby-photos/` con `lat`, `lng` y `radius`. Sin autenticación. Devuelve `sequence_id`, `sequence_index`, `heading`, `shot_date` y `username`; las imágenes cuelgan de `https://kartaview.org/` + la ruta que da el campo `name`. Atribución: autor y KartaView (CC BY-SA).
+- **Panoramax** · `GET https://api.panoramax.xyz/api/search?bbox=…`, API STAC pública sin token. Devuelve `view:azimuth`, `datetime`, `collection`, `geovisio:rank_in_collection`, `geovisio:producer`, la licencia de cada foto y los enlaces `hd`/`sd`/`thumb`.
+
+**Cómo se elige la foto.** No vale la más cercana sin más: en una carretera de doble sentido, la foto de la otra mano está igual de cerca y mira al revés. La puntuación suma la distancia en metros más la diferencia de rumbo pesada a la mitad -180° de desvío cuestan lo mismo que 90 m- y resta diez metros si la foto sigue en la secuencia que ya se venía viendo. Se descarta lo que esté a más de 60 m o mire a más de 135° del rumbo de la ruta: una fotografía a 500 m no es mejor que no enseñar ninguna. La diferencia de rumbo se calcula por el camino corto, así que 355° y 5° distan 10°, no 350. Esto es lo que distingue la ida de la vuelta cuando la ronda repite calle.
+
+**Pocas peticiones.** Cada búsqueda trae las fotos de alrededor y se camina por ellas mientras el vehículo siga cerca; solo se vuelve a preguntar al alejarse, y nunca antes de 45 m. Medido en una simulación real: cinco fotografías distintas a lo largo de 95 m con **una sola petición**. La imagen siguiente y la anterior se precargan, y se guardan como mucho 24 en memoria.
+
+**Si no hay fotos**, dice «Sin imágenes de calle en este tramo» y sigue el mapa; si el 3D ya estaba cargado y funcionando, se vuelve a él. Sin conexión ni siquiera se pregunta: se apaga y lo dice. La simulación y la navegación no se detienen nunca por esto.
+
+**Privacidad.** Las búsquedas de imágenes comparten únicamente una pequeña zona alrededor del punto actual -un cuadrado de unos 200 m de lado, o el punto y un radio-. El GPX completo permanece en el dispositivo: no se envían la traza, ni las horas, ni las paradas, ni la biblioteca, ni el perfil del vehículo, ni el nombre del archivo.
+
+**Cobertura.** Depende de lo que haya subido la gente, y se comprueba sola en cada punto. Medido al desarrollarlo: en Puig-reig y Gironella no había imágenes en ninguno de los dos servicios dentro de 300 m; en Berga sí. Que un pueblo no tenga fotos no es un fallo de la aplicación.
+
+## Abrir en Google Maps
 
 Durante la simulación, el panel tiene una sección **Vista real** con cuatro botones: la calle por la que va el vehículo, el próximo giro, la próxima parada y un paseo que avanza 150 m por el recorrido en cada pulsación. Cada uno abre Google Maps en una pestaña nueva, en esa ubicación, con la cámara orientada hacia donde se circula según el propio GPX.
 

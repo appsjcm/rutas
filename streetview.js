@@ -10,7 +10,7 @@ const $=id=>document.getElementById(id);
 
 const bloque=document.createElement('div');
 bloque.id='sv-box';
-bloque.innerHTML='<span class="sv-title">Vista real</span>'+
+bloque.innerHTML='<span class="sv-title">Abrir en Google</span>'+
  '<div class="sv-buttons">'+
   '<button type="button" id="sv-now">📷 '+V.label('current')+'</button>'+
   '<button type="button" id="sv-turn">↱ '+V.label('turn')+'</button>'+

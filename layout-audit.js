@@ -21,17 +21,36 @@ function fijo(e){
   if(getComputedStyle(n).position==='fixed')return true;
  return false;
 }
+// Dentro de una caja que se desplaza por su cuenta -el panel del simulador- se llega
+// igual, aunque ahora mismo quede por debajo del borde.
+function enCajaDesplazable(e){
+ for(let n=e.parentElement;n&&n!==document.body;n=n.parentElement){
+  const o=getComputedStyle(n).overflowY;
+  if((o==='auto'||o==='scroll')&&n.scrollHeight>n.clientHeight+2)return true;
+ }
+ return false;
+}
 function oculto(e){
  const c=getComputedStyle(e);
  return c.visibility==='hidden'||c.opacity==='0'||c.pointerEvents==='none';
 }
 
+// El escenario a pantalla completa cubre la pagina; lo que esta fuera de el no compite.
+function tapadoPorPantallaCompleta(e){
+ if(!document.body.classList.contains('map-focus'))return false;
+ const escenario=document.getElementById('nav-stage');
+ if(escenario&&escenario.contains(e))return false;
+ return !fijo(e);
+}
 function recoger(){
  const items=[];
  // Si la pagina se desplaza, lo que tape un panel fijo se destapa bajando.
  const scrolls=document.documentElement.scrollHeight>innerHeight+2;
  for(const e of document.querySelectorAll(CONTROLES)){
   if(e.disabled||e.hidden||!e.offsetParent||e.closest(FUERA)||oculto(e))continue;
+  // Con el mapa a pantalla completa, lo de la pagina queda detras a proposito: eso no es
+  // un fallo de colocacion, es la pantalla completa haciendo su trabajo.
+  if(tapadoPorPantallaCompleta(e))continue;
   const r=e.getBoundingClientRect();
   const rect={top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height};
   let hit='self';
@@ -41,7 +60,8 @@ function recoger(){
    // Que el clic caiga en un hijo -el <b> de un botón- sigue siendo el propio control.
    hit=(!encima||encima===e||e.contains(encima)||encima.contains(e))?'self':nombre(encima);
   }
-  items.push({name:nombre(e),rect,vw:innerWidth,vh:innerHeight,fixed:fijo(e),scrolls,hit});
+  items.push({name:nombre(e),rect,vw:innerWidth,vh:innerHeight,
+   fixed:fijo(e)&&!enCajaDesplazable(e),scrolls,hit});
  }
  return items;
 }

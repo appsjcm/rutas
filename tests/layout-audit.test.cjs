@@ -106,3 +106,11 @@ test('una lista vacia no es un fallo',()=>{
  assert.equal(r.revisados,0);
  assert.equal(A.report(null).limpio,true);
 });
+
+test('lo que vive en una caja que se desplaza se alcanza igual',()=>{
+ // El recorrido del DOM marca fixed solo si ademas no hay caja desplazable encima;
+ // aqui se comprueba el trato que le da el nucleo a ese dato.
+ const fuera=item({rect:caja(900,100,120,44),fixed:true});
+ assert.deepEqual(A.judge(fuera),{q:'no se alcanza',name:'boton',grave:true});
+ assert.equal(A.judge({...fuera,fixed:false}),null,'si se puede desplazar, no es un fallo');
+});
