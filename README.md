@@ -62,6 +62,8 @@ La velocidad sube y baja con más y menos, por una escalera de 5 a 200 km/h con 
 
 Simular arranca también la navegación y abre el mapa a pantalla completa: la simulación sirve para ver la ruta en marcha, y tener que pulsar después «Iniciar navegación» y «Ampliar mapa» sobraba.
 
+Y por eso **Parar también detiene la navegación**: si no, el GPS real tomaba el relevo desde donde estuviera el vehículo de verdad -normalmente lejos del recorrido- y la posición saltaba. Desde fuera eso se ve como si la simulación volviera al principio. Ahora el recorrido se queda parado en el punto al que llegó, y volver a pulsar Simular sigue desde ahí. Medido: parada a 153 m, y al reanudar arrancó en 194 -no en cero-. Vale igual desde el botón de arriba y desde el Parar del panel.
+
 **Simular** está además al lado de **Iniciar navegación**, que es donde se busca; el mismo botón para y arranca, y dice cuál de las dos cosas hace. Sigue existiendo solo con `?sim`: no puede aparecer en el móvil de quien conduce de verdad. Sin GPX cargado, el panel se abre solo para que se lea el motivo, que antes quedaba escrito dentro de un panel plegado.
 
 Al arrancar, el panel se pliega para dejar ver el mapa, pero **plegado en marcha no es esconderlo todo**: se quedan velocidad, avance y Parar, y se va el resto. Antes arrancar escondía justo los mandos que se tocan mientras se mira la ruta. Medido con el panel plegado y la simulación en marcha: 233 px de alto, con la fila de velocidad y la de avance dentro; abierto son 632. Al parar, plegado vuelve a ser plegado del todo -62 px-.

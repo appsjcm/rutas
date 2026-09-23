@@ -215,11 +215,21 @@ function abrirMapa(state){
  },250);
 }
 function parar(){
+ const parada=Number.isFinite(distance)?Math.max(0,distance):0;
  running=false;if(timer)clearInterval(timer);timer=null;
  plegar(panel.dataset.open==='yes');      // al parar vuelve a valer lo que eligio el usuario
  banner.hidden=true;delete panel.dataset.running;
  pintaBotones();
+ // Simular arranca la navegacion, asi que parar tiene que pararla. Si no, el GPS real toma
+ // el relevo desde donde este el vehiculo de verdad -normalmente lejos del recorrido- y la
+ // posicion salta: desde fuera se ve como si volviera al principio.
+ try{const b=document.getElementById('nav-stop');if(b&&!b.disabled)b.click();}catch{}
  for(const s of subs.values())if(s.realId==null){try{s.realId=real.watch(s.ok,s.fail);}catch{}}
+ // Y el recorrido se queda parado en el punto al que se llego, no al principio: volver a
+ // pulsar Simular sigue desde ahi.
+ // pos() necesita el recorrido, y parar() corre tambien en pagehide, cuando puede no haber
+ // nada: se protege entero en vez de confiar en que siempre lo haya.
+ if(parada>0)try{window.RutasMap.seek(parada);info(pos());}catch{}
 }
 $('sim-go').onclick=arrancar;
 $('sim-stop').onclick=parar;
