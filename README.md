@@ -78,6 +78,8 @@ Ese assert vive en `tests/assert-shim.js` y lo comprueba `tests/shim.test.cjs`, 
 
 El service worker no toca `/tests/`: la estrategia es cache-first para todo el origen, y servir una prueba vieja diría que todo va bien sin haber comprobado nada. Se descubrió justamente así, midiendo por qué un fichero recién roto seguía pasando.
 
+`tests/fuentes.test.cjs` comprueba que **todo lo que se publica se lee como JavaScript**: cada `.js` del `SHELL` del service worker y cada `<script>` de dentro de `index.html`. Existe porque un paréntesis de más en ese script dejó sin funcionar el mecanismo de actualización entero -la aplicación seguía abriéndose, así que no se notaba- y ninguna prueba lo vio: las demás solo cargan los módulos `-core`. La lista sale del propio `SHELL`, así que no hay una segunda lista que mantener, y de paso se comprueba que el `SHELL` no nombra ficheros que no existan. Comprobado rompiendo `index.html` y `pace.js` a propósito: los dos salen nombrados, con el bloque exacto.
+
 Compartir ruta genera un enlace que lleva la ronda entera dentro: las coordenadas van codificadas y comprimidas en la parte del enlace que nunca viaja al servidor, asi que no se sube nada a ningun sitio. La ronda de ejemplo con la que se prueba, 26 km y 4933 puntos, cabe en unos 9 KB de enlace. Quien lo abre ve la ronda cargada y guardada en su dispositivo. El codigo QR tiene mucha menos capacidad: si la ronda no cabe se ofrece una version aligerada, diciendo cuantos puntos conserva y con cuanta desviacion, y el enlace sigue llevando la version completa. El codificador redondea a cinco decimales, unos 30 cm, asi que la distancia total puede variar medio punto porcentual.
 
 Publicación mediante GitHub Pages desde main.
@@ -122,7 +124,17 @@ El resto de la carga es lo que hace falta desde el primer momento: Leaflet -144 
 
 ## Cómo llega una versión nueva
 
-El service worker sirve desde su propio almacén, así que una versión recién publicada no entra sola: hay que aplicarla. Antes eso dependía de ver y pulsar el botón «Nueva versión · actualizar», y quien no lo viera se quedaba con la copia anterior sin saberlo, echando en falta cosas que ya estaban publicadas. Ahora, si la app se acaba de abrir -menos de treinta segundos- y no se está navegando, la versión nueva se aplica sola con una recarga que apenas se nota. Pasados esos treinta segundos, o con el GPS en marcha, no se toca nada y aparece el botón, porque a media jornada una recarga sí molesta. Con la navegación activa el botón avisa de que hay que detenerla antes.
+El service worker sirve desde su propio almacén, así que una versión recién publicada no entra sola: hay que aplicarla. **En el móvil no se actualizaba**, y eran tres cosas a la vez.
+
+La primera y la que más pesaba: **nadie preguntaba**. Una aplicación instalada en la pantalla de inicio se abre y se cierra sin navegar a ninguna página, y entonces el navegador no vuelve a pedir `sw.js` por su cuenta. Sin un `registration.update()` explícito, podía pasar días sin enterarse de que había versión nueva. Ahora se pregunta al abrir, al volver a la aplicación, al recuperar el foco y cada quince minutos, nunca más de una vez por minuto y nunca navegando.
+
+La segunda: la versión nueva solo se aplicaba sola dentro de los **treinta segundos** siguientes a abrir la página, y bajar setenta ficheros por datos móviles tarda más que eso. Pasado el plazo quedaba solo el botón «Nueva versión · actualizar», que además está oculto a pantalla completa, que es donde se pasa la jornada. Ahora se aplica siempre que no se esté navegando; con el GPS en marcha se espera, porque recargar con el camión en marcha sí sería peor, y se aplica en cuanto se detiene la navegación.
+
+La tercera: `ready()` se rendía si todavía no había controlador, y no volvía a mirar. Si la versión nueva ya estaba esperando desde antes de cargar la página, `updatefound` no volvía a dispararse y se quedaba en cola para siempre. Ahora se repasa también al tomar el control y unas cuantas veces al arrancar.
+
+**La versión se ve.** Al final de la pestaña Guía: «Versión instalada: rutas-…-v112», que es la que sirve los archivos de verdad -la dice el propio service worker-, con un botón **Buscar actualización** que contesta «Ya tienes la última versión» o avisa de que hay una nueva. Sin eso, «no se actualiza» no había forma de comprobarlo: la pantalla es la misma lleve lo que lleve.
+
+Comprobado de punta a punta: con la v110 instalada se publicó la v111 y, sin pulsar nada, solo al volver a la aplicación, quedó la v111 sirviendo, la página recargada y la caché anterior borrada.
 
 ## Sin conexión
 
@@ -168,7 +180,7 @@ La cabecera pausa las indicaciones cuando el GPS no es fiable y muestra el tipo 
 
 Los avisos revisados se guardan por tramo y tipo: silenciar un aviso de sentido no silencia uno de peso en la misma calle. Las marcas antiguas sin tipo deben revisarse de nuevo. Cambiar de ruta descarta los datos de calles asociados a la anterior. Las excepciones de acceso más específicas prevalecen sobre las generales.
 
-Cuando hay una versión preparada aparece «Nueva versión · actualizar». Solo se aplica al pulsar el botón con la navegación detenida. La limpieza de versiones anteriores conserva las cachés de otras aplicaciones del mismo dominio.
+Cuando hay una versión preparada y se está navegando, aparece «Nueva versión · actualizar» y se aplica al pulsarlo con la navegación detenida; fuera de la navegación entra sola, sin que nadie tenga que saber qué es eso. La limpieza de versiones anteriores conserva las cachés de otras aplicaciones del mismo dominio.
 
 ## Mapa 3D de calles
 

@@ -11,9 +11,9 @@ const MODULOS=['nav-core','gpx-core','restrictions-core','street-match-core','st
  'vehicle-core','checklist-core','power-core','hud-core','marks-core','pace-core',
  'overlay-core','recovery-core','access-core','library-core','sim-core',
  'layout-audit-core','street-imagery-core'];
-const FICHEROS=['access','checklist','gpx','hud','layout-audit','library','marks','navigation',
- 'overlay','pace','power','recovery','restrictions','shim','sim','street-imagery','street-match',
- 'streetview','vehicle'];
+const FICHEROS=['access','checklist','fuentes','gpx','hud','layout-audit','library','marks',
+ 'navigation','overlay','pace','power','recovery','restrictions','shim','sim','street-imagery',
+ 'street-match','streetview','vehicle'];
 
 const exportado=new Map();
 const fallosDeCarga=new Map();
@@ -30,6 +30,26 @@ function cargarScript(src){
   s.src=src;s.onload=()=>ok();s.onerror=()=>mal(Error('no se pudo cargar '+src));
   document.head.append(s);
  });
+}
+// fuentes.test.cjs comprueba que todo lo publicado se lee como JavaScript. Bajo node lee
+// del disco; aqui hay que traerlo por red, y eso no se puede hacer dentro de una prueba
+// sincrona, asi que se deja preparado antes de empezar.
+async function cargarFuentes(){
+ const out={};
+ async function trae(ruta){
+  const r=await fetch('../'+ruta+SELLO,{cache:'no-store'});
+  if(!r.ok)throw Error(ruta+' respondio '+r.status);
+  out[ruta]=await r.text();
+ }
+ try{
+  await trae('sw.js');
+  await trae('index.html');
+  const m=out['sw.js'].match(/const SHELL=\[([^\]]*)\]/);
+  const lista=m?m[1].split(',').map(x=>x.trim().replace(/^['"]|['"]$/g,''))
+   .filter(x=>x.endsWith('.js')&&!x.startsWith('vendor/')):[];
+  for(const f of lista){try{await trae(f);}catch(e){}}
+ }catch(e){if(window.console)console.debug('[pruebas] fuentes',e&&e.message);}
+ window.__fuentes=out;
 }
 async function cargarModulos(){
  for(const nombre of MODULOS){
@@ -190,7 +210,7 @@ $('copiar').onclick=async e=>{
 if(!assert){
  document.getElementById('titular').textContent='No cargó assert-shim.js';
  document.getElementById('titular').dataset.tono='mal';
-}else cargarModulos().then(()=>{
+}else cargarFuentes().then(cargarModulos).then(()=>{
  if(fallosDeCarga.size)console.warn('[pruebas] modulos sin cargar',Array.from(fallosDeCarga));
  return pasarTodo();
 });

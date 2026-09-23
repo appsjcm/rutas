@@ -576,6 +576,9 @@ textarea{resize:vertical;min-height:70px;line-height:1.45}
           </div>
         </div>
         <p class="colophon">La ruta y el progreso se guardan localmente en este dispositivo. El archivo GPX no se publica ni se envía a un servidor de Rutas.</p>
+        <p class="colophon" id="app-version">Versión instalada: <b>comprobando…</b>
+          <button type="button" class="btn sm" id="app-check">Buscar actualización</button>
+          <span id="app-check-note" role="status"></span></p>
       </div>
     </section>
   </section>
@@ -1757,14 +1760,75 @@ window.RutasQR=function(){
  function net(){if(badge)badge.hidden=navigator.onLine;}
  addEventListener('online',net);addEventListener('offline',net);net();
  if('serviceWorker' in navigator)addEventListener('load',function(){
-  let pending=null,reloading=false;
-  const update=document.createElement('button');update.id='app-update';update.className='btn';update.type='button';update.hidden=true;update.textContent='Nueva versión · actualizar';document.body.appendChild(update);
-  update.onclick=function(){if(!document.getElementById('nav-stop').disabled){update.textContent='Detén la navegación para actualizar';return;}if(pending){reloading=true;pending.postMessage('skip-waiting');}};
-  navigator.serviceWorker.addEventListener('controllerchange',function(){if(reloading)location.reload();});
-  var abierta=Date.now();
-  navigator.serviceWorker.register('sw.js').then(function(reg){function ready(){if(!reg.waiting||!navigator.serviceWorker.controller)return;pending=reg.waiting;var navegando=!document.getElementById('nav-stop').disabled;// Recien abierta y sin navegar: se aplica sola. Nadie tiene por que saber que es esto
-  // ni pulsar nada; y a media jornada no se toca, que ahi si molestaria.
-  if(!navegando&&Date.now()-abierta<30000){reloading=true;pending.postMessage('skip-waiting');return;}update.hidden=false;}ready();reg.addEventListener('updatefound',function(){const worker=reg.installing;if(worker)worker.addEventListener('statechange',ready);});}).catch(function(){});
+  var pending=null,reloading=false,ultima=0,version='';
+  var update=document.createElement('button');update.id='app-update';update.className='btn';update.type='button';update.hidden=true;update.textContent='Nueva versión · actualizar';document.body.appendChild(update);
+  var linea=document.getElementById('app-version'),nota=document.getElementById('app-check-note'),boton=document.getElementById('app-check');
+  function navegando(){var s=document.getElementById('nav-stop');return s&&!s.disabled;}
+  function pintaVersion(){if(linea)linea.querySelector('b').textContent=version||'desconocida';}
+  function pideVersion(){var c=navigator.serviceWorker.controller;if(c)c.postMessage('version');}
+  navigator.serviceWorker.addEventListener('message',function(e){
+   if(e.data&&e.data.rutasVersion){version=e.data.rutasVersion;pintaVersion();}
+  });
+  // Con addEventListener la cola de mensajes del service worker no se arranca sola: la
+  // respuesta llega y se queda sin entregar. Hay que pedirlo.
+  if(navigator.serviceWorker.startMessages)navigator.serviceWorker.startMessages();
+  var alTomarControl=function(){};
+  navigator.serviceWorker.addEventListener('controllerchange',function(){if(reloading)location.reload();else{pideVersion();alTomarControl();}});
+  navigator.serviceWorker.register('sw.js').then(function(reg){
+   function aplicar(){if(!reg.waiting)return false;pending=reg.waiting;reloading=true;reg.waiting.postMessage('skip-waiting');return true;}
+   alTomarControl=function(){ready();};
+   function ready(){
+    if(!reg.waiting||!navigator.serviceWorker.controller)return;
+    pending=reg.waiting;
+    // Se aplica sola siempre que no se este navegando. Antes solo se aplicaba en los
+    // primeros 30 s desde que se abrio la pagina, y bajar setenta ficheros por datos
+    // moviles tarda mas que eso: pasado el plazo quedaba solo un boton, que ademas esta
+    // oculto a pantalla completa, que es donde se pasa la jornada. Recargar con el camion
+    // en marcha si seria peor que esperar, asi que ahi se espera.
+    if(!navegando()){aplicar();return;}
+    update.hidden=false;
+   }
+   // Una PWA instalada puede pasar dias sin navegar a ninguna pagina, y entonces el
+   // navegador no vuelve a pedir sw.js por su cuenta: si nadie pregunta, no se entera
+   // nunca de que hay version nueva. Esa era la causa de que no se actualizara en el movil.
+   function buscar(forzada){
+    if(!forzada&&(navegando()||Date.now()-ultima<60000))return Promise.resolve(false);
+    ultima=Date.now();
+    return reg.update().then(function(){ready();return !!(reg.waiting||reg.installing);}).catch(function(){return false;});
+   }
+   update.onclick=function(){
+    if(navegando()){update.textContent='Detén la navegación para actualizar';return;}
+    if(!aplicar())update.hidden=true;
+   };
+   if(boton)boton.onclick=function(){
+    if(navigator.onLine===false){nota.textContent='Sin conexión: inténtalo más tarde.';return;}
+    nota.textContent='Buscando…';
+    buscar(true).then(function(hay){
+     if(hay){nota.textContent='Hay una versión nueva. Se aplicará al salir de la navegación.';ready();}
+     else nota.textContent='Ya tienes la última versión.';
+    });
+   };
+   ready();
+   reg.addEventListener('updatefound',function(){var w=reg.installing;if(w)w.addEventListener('statechange',ready);});
+   // Al volver a la aplicacion y al soltar la navegacion, se mira otra vez.
+   document.addEventListener('visibilitychange',function(){if(!document.hidden)buscar(false);});
+   window.addEventListener('focus',function(){buscar(false);});
+   setInterval(function(){buscar(false);},15*60*1000);
+   var stop=document.getElementById('nav-stop');
+   if(stop)new MutationObserver(function(){if(!navegando())ready();}).observe(stop,{attributes:true,attributeFilter:['disabled']});
+   buscar(false);
+   // Al arrancar puede que aun no haya controlador -el service worker se acaba de activar-.
+   // ready() se rinde sin el, y si la version nueva ya estaba esperando desde antes de
+   // cargar la pagina, updatefound no vuelve a dispararse: se quedaba esperando para
+   // siempre. Por eso se vuelve a mirar unas cuantas veces y en cuanto llega el control.
+   (function insiste(n){
+    ready();
+    if(version||n>6)return;
+    pideVersion();
+    setTimeout(function(){insiste(n+1);},400);
+   })(0);
+   navigator.serviceWorker.ready.then(function(){pideVersion();ready();});
+  }).catch(function(){if(linea)linea.querySelector('b').textContent='sin service worker';});
  });
 })();
 </script>
