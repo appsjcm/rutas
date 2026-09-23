@@ -67,6 +67,27 @@ function stepSpeed(current,direction){
 function atFloor(v){return Number(v)<=SPEEDS[0];}
 function atCeiling(v){return Number(v)>=SPEEDS[SPEEDS.length-1];}
 
-const api={advance,sidestep,jitter,quality,drops,speedOf,stepSpeed,atFloor,atCeiling,SPEEDS,QUALITY};
+// Marchas con nombre. Subir la escalera de una en una para pasar de un ritmo de recogida
+// a recorrer un GPX largo son ocho pulsaciones; esto es una. Lento es el ritmo real de una
+// ronda puerta a puerta, rapido sirve para ver la ronda entera de un vistazo.
+const PACES=[{key:'lento',label:'Lento',speed:10},
+             {key:'normal',label:'Normal',speed:50},
+             {key:'rapido',label:'Rápido',speed:120}];
+function paceSpeed(key){
+ const p=PACES.find(x=>x.key===key);
+ return p?p.speed:null;
+}
+// Que marcha esta puesta, o ninguna si se ha ajustado a mano con - y +. Number(null) es 0,
+// que es un numero finito, asi que un valor vacio entraria como si fuera una velocidad.
+function paceOf(speed){
+ if(speed===null||speed===undefined||speed==='')return null;
+ const v=Number(speed);
+ if(!Number.isFinite(v))return null;
+ const p=PACES.find(x=>x.speed===v);
+ return p?p.key:null;
+}
+
+const api={advance,sidestep,jitter,quality,drops,speedOf,stepSpeed,atFloor,atCeiling,
+           paceOf,paceSpeed,SPEEDS,PACES,QUALITY};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasSimCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

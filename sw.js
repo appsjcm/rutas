@@ -1,4 +1,4 @@
-const VERSION='rutas-pruebas-navegador-v105',TILES='rutas-tiles-v1',FONTS='rutas-fonts-v1',TILE_CAP=1500;
+const VERSION='rutas-marchas-sim-v106',TILES='rutas-tiles-v1',FONTS='rutas-fonts-v1',TILE_CAP=1500;
 const SHELL=['./','index.html','navigation.css','premium.css','premium.js','map3d.js','map3d.css','streetview-core.js','streetview.js','streetview.css','approach.js','approach.css','library-core.js','library.js','library.css','gps-setup.js','gps-setup.css','street-match-core.js','street-match.js','street-match.css','segments.js','sim-core.js','sim.js','vehicle-core.js','vehicle.js','vehicle.css','checklist-core.js','checklist.js','checklist.css','recovery-core.js','landscape.css','power-core.js','power.js','power.css','hud-core.js','hud.css','marks-core.js','marks.js','marks.css','pace-core.js','pace.js','pace.css','overlay-core.js','overlays.js','overlays.css','sim.css','layout-audit-core.js','layout-audit.js','street-imagery-core.js','street-imagery.js','street-imagery.css','segments.css','access-core.js','access.js','audit.js','gpx-core.js','vendor/maplibre-gl.js','vendor/maplibre-gl.css','nav-core.js','restrictions-core.js','navigation.js','restrictions.js','manifest.webmanifest','icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png','vendor/leaflet.js','vendor/leaflet.css'];
 self.addEventListener('install',e=>{e.waitUntil((async()=>{const c=await caches.open(VERSION);await Promise.all(SHELL.map(async u=>{const r=await fetch(u,{cache:'reload'});if(r&&r.ok)await c.put(u,r);else throw Error('No se pudo guardar '+u);}));})())});
 self.addEventListener('activate',e=>{e.waitUntil((async()=>{const keep=[VERSION,TILES,FONTS];for(const k of await caches.keys())if(k.startsWith('rutas-')&&!keep.includes(k))await caches.delete(k);await self.clients.claim();})())});
@@ -6,7 +6,13 @@ self.addEventListener('message',e=>{if(e.data==='skip-waiting')self.skipWaiting(
 async function trim(cache){const keys=await cache.keys();if(keys.length<=TILE_CAP)return;for(const k of keys.slice(0,keys.length-TILE_CAP))await cache.delete(k);}
 async function tile(req){const cache=await caches.open(TILES),hit=await cache.match(req);if(hit)return hit;try{const res=await fetch(req);if(res&&(res.ok||res.type==='opaque')){await cache.put(req,res.clone());trim(cache);}return res;}catch{return new Response('',{status:504,statusText:'Sin conexión y sin tesela guardada'});}}
 async function fromCache(req,name){const cache=await caches.open(name),hit=await cache.match(req);const live=fetch(req).then(res=>{if(res&&(res.ok||res.type==='opaque'))cache.put(req,res.clone());return res;}).catch(()=>null);if(hit){live;return hit;}return await live||Response.error();}
-// Las comprobaciones (/tests/) van siempre a la red: aqui la estrategia es cache-first
-// para todo el origen, y servir una prueba vieja es peor que no tener pruebas. Tampoco
-// tienen por que ocupar sitio en el almacen de quien conduce.
-self.addEventListener('fetch',e=>{const req=e.request;if(req.method!=='GET')return;let url;try{url=new URL(req.url);}catch{return;}if(url.hostname.includes('overpass'))return;if(url.hostname.endsWith('tile.openstreetmap.org')||url.hostname.endsWith('tiles.openfreemap.org')||url.hostname==='services.arcgisonline.com'){e.respondWith(tile(req));return;}if(url.hostname==='fonts.googleapis.com'||url.hostname==='fonts.gstatic.com'){e.respondWith(fromCache(req,FONTS));return;}if(url.origin===self.location.origin&&!url.pathname.includes('/tests/'))e.respondWith(fromCache(req,VERSION));});
+// Las comprobaciones van siempre a la red: aqui la estrategia es cache-first para todo el
+// origen, y una pagina de pruebas que lee la copia guardada dice que todo va bien sin
+// haber comprobado nada. Se mira tambien de donde viene la peticion, porque los modulos
+// que carga la pagina de pruebas (/sim-core.js y companyia) no viven bajo /tests/ y si no
+// se probaria la version guardada en vez de la del servidor. Y asi tampoco ocupan sitio en
+// el almacen de quien conduce.
+function deLasPruebas(url,req){
+ return url.pathname.includes('/tests/')||String(req.referrer||'').includes('/tests/');
+}
+self.addEventListener('fetch',e=>{const req=e.request;if(req.method!=='GET')return;let url;try{url=new URL(req.url);}catch{return;}if(url.hostname.includes('overpass'))return;if(url.hostname.endsWith('tile.openstreetmap.org')||url.hostname.endsWith('tiles.openfreemap.org')||url.hostname==='services.arcgisonline.com'){e.respondWith(tile(req));return;}if(url.hostname==='fonts.googleapis.com'||url.hostname==='fonts.gstatic.com'){e.respondWith(fromCache(req,FONTS));return;}if(url.origin!==self.location.origin)return;if(deLasPruebas(url,req))return;e.respondWith(fromCache(req,VERSION));});

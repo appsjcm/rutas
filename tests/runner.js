@@ -18,6 +18,12 @@ const FICHEROS=['access','checklist','gpx','hud','layout-audit','library','marks
 const exportado=new Map();
 const fallosDeCarga=new Map();
 
+// Un sello por carga de pagina. Sin el, el <script src> de los modulos lo sirve el cache
+// del navegador y se prueba la version de ayer creyendo que es la de ahora -medido: las
+// pruebas nuevas fallaban contra un sim-core.js viejo mientras el del servidor ya estaba
+// bien-. Una suite que prueba codigo que no es el de disco es peor que ninguna.
+const SELLO='?v='+Date.now();
+
 function cargarScript(src){
  return new Promise((ok,mal)=>{
   const s=document.createElement('script');
@@ -29,7 +35,7 @@ async function cargarModulos(){
  for(const nombre of MODULOS){
   const antes=new Set(Object.keys(window));
   try{
-   await cargarScript('../'+nombre+'.js');
+   await cargarScript('../'+nombre+'.js'+SELLO);
    const nuevas=Object.keys(window).filter(k=>!antes.has(k)&&/^Rutas/.test(k));
    if(!nuevas.length)throw Error('no registro ningun objeto global');
    exportado.set(nombre,window[nuevas[nuevas.length-1]]);
@@ -69,7 +75,7 @@ async function pasarFichero(nombre){
  const salida={nombre,casos:[],error:null};
  let codigo;
  try{
-  const r=await fetch(nombre+'.test.cjs',{cache:'no-store'});
+  const r=await fetch(nombre+'.test.cjs'+SELLO,{cache:'no-store'});
   if(!r.ok)throw Error('respondio '+r.status);
   codigo=await r.text();
  }catch(e){salida.error='no se pudo leer: '+(e.message||e);return salida;}

@@ -80,3 +80,42 @@ test('un valor que no este en la escalera se engancha al siguiente',()=>{
  assert.equal(S.stepSpeed(NaN,1),5);
  assert.equal(S.stepSpeed(undefined,-1),5);
 });
+
+test('las marchas con nombre dan la velocidad que dicen',()=>{
+ assert.equal(S.paceSpeed('lento'),10);
+ assert.equal(S.paceSpeed('normal'),50);
+ assert.equal(S.paceSpeed('rapido'),120);
+ assert.equal(S.paceSpeed('inventada'),null);
+ assert.equal(S.paceSpeed(null),null);
+ assert.equal(S.paceSpeed(''),null);
+});
+
+test('cada marcha esta en la escalera de velocidades, no fuera de ella',()=>{
+ for(const p of S.PACES)
+  assert.ok(S.SPEEDS.includes(p.speed),p.key+' debe ser un escalon real: '+p.speed);
+ // Y ordenadas de menos a mas, que es como se leen en la fila.
+ for(let i=1;i<S.PACES.length;i++)
+  assert.ok(S.PACES[i].speed>S.PACES[i-1].speed,'las marchas van de menos a mas');
+});
+
+test('se sabe que marcha esta puesta, y cuando no hay ninguna',()=>{
+ assert.equal(S.paceOf(10),'lento');
+ assert.equal(S.paceOf(50),'normal');
+ assert.equal(S.paceOf(120),'rapido');
+ assert.equal(S.paceOf(40),null,'ajustado a mano con - y + no es ninguna marcha');
+ assert.equal(S.paceOf(200),null);
+ // Number(null) y Number('') son 0: un valor vacio no puede colarse como velocidad.
+ assert.equal(S.paceOf(null),null);
+ assert.equal(S.paceOf(''),null);
+ assert.equal(S.paceOf(undefined),null);
+ assert.equal(S.paceOf('x'),null);
+ assert.equal(S.paceOf(NaN),null);
+});
+
+test('subir y bajar desde una marcha cae en el escalon de al lado',()=>{
+ assert.equal(S.stepSpeed(S.paceSpeed('lento'),1),15);
+ assert.equal(S.stepSpeed(S.paceSpeed('lento'),-1),5);
+ assert.equal(S.stepSpeed(S.paceSpeed('rapido'),1),160);
+ // Y volver a pulsar la marcha devuelve exactamente su velocidad.
+ assert.equal(S.paceOf(S.paceSpeed('rapido')),'rapido');
+});

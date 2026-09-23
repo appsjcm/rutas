@@ -22,11 +22,18 @@ panel.innerHTML=
  '<button type="button" id="sim-toggle" aria-expanded="true" aria-controls="sim-body">'
  +'<b>Simulador de conducción</b><span id="sim-state">parado</span><i aria-hidden="true"></i></button>'
  +'<div id="sim-body">'
+ +'<div class="sim-mandos">'
  +'<label class="sim-speed-row">Velocidad<span class="sim-opts sim-speedbox" id="sim-speed">'
  +'<button type="button" id="sim-slower" aria-label="Más despacio">−</button>'
  +'<output id="sim-speed-value">50</output>'
  +'<button type="button" id="sim-faster" aria-label="Más rápido">+</button>'
  +'<i>km/h</i></span></label>'
+ +'<label class="sim-pace-row">Avance<span class="sim-opts" id="sim-pace">'
+ +'<button type="button" data-p="lento">🐢 Lento</button>'
+ +'<button type="button" data-p="normal">Normal</button>'
+ +'<button type="button" data-p="rapido">🐇 Rápido</button>'
+ +'</span></label>'
+ +'</div>'
  +'<label>Señal GPS<span class="sim-opts" id="sim-quality">'
  +'<button type="button" data-q="bueno" aria-pressed="true">Buena</button><button type="button" data-q="regular">Irregular</button><button type="button" data-q="malo">Mala</button>'
  +'</span></label>'
@@ -47,7 +54,9 @@ const ABIERTO='rutas-sim-abierto';
 function plegar(abierto){
  panel.dataset.open=abierto?'yes':'no';
  $('sim-toggle').setAttribute('aria-expanded',String(abierto));
- $('sim-body').hidden=!abierto;
+ // En marcha, plegar no es esconderlo todo: velocidad, avance y Parar se quedan. Si no,
+ // arrancar escondia justo los mandos que se tocan mientras se mira la ruta.
+ $('sim-body').hidden=!abierto&&!running;
  try{localStorage.setItem(ABIERTO,abierto?'1':'0');}catch{}
 }
 $('sim-toggle').onclick=()=>plegar(panel.dataset.open!=='yes');
@@ -65,11 +74,20 @@ function pintaVelocidad(){
  $('sim-speed-value').textContent=speed;
  $('sim-slower').disabled=S.atFloor(speed);
  $('sim-faster').disabled=S.atCeiling(speed);
+ const marcha=S.paceOf(speed);
+ for(const b of $('sim-pace').querySelectorAll('button'))
+  b.setAttribute('aria-pressed',String(b.dataset.p===marcha));
 }
 // Se puede cambiar en marcha: cada paso lee la velocidad del momento.
 function cambiaVelocidad(dir){speed=S.stepSpeed(speed,dir);pintaVelocidad();}
 $('sim-slower').onclick=()=>cambiaVelocidad(-1);
 $('sim-faster').onclick=()=>cambiaVelocidad(1);
+$('sim-pace').addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ const v=S.paceSpeed(b.dataset.p);
+ if(v===null)return;
+ speed=v;pintaVelocidad();
+});
 pintaVelocidad();
 pick('sim-quality','q',q=>{cal=S.quality(q);});
 pick('sim-drift','d',d=>{drift=Number(d);});
@@ -137,15 +155,41 @@ function pos(){
 }
 function info(t){$('sim-info').textContent=t;}
 
+// Simular estaba solo dentro del panel flotante, que ademas se pliega. El sitio donde se
+// busca es al lado de Iniciar navegacion. Se crea aqui, no en el HTML, para que siga sin
+// existir sin ?sim: nunca debe aparecer en el movil de quien conduce de verdad.
+const botonNav=(()=>{
+ const arranque=document.getElementById('nav-start');
+ if(!arranque||!arranque.parentElement)return null;
+ const b=document.createElement('button');
+ b.type='button';b.className='btn';b.id='nav-sim';b.textContent='Simular';
+ b.setAttribute('aria-pressed','false');
+ b.title='Recorrer el GPX con una posición inventada, sin conducir';
+ arranque.after(b);
+ b.onclick=()=>{running?parar():arrancar();};
+ return b;
+})();
+
+// Los dos botones dicen lo mismo porque son el mismo mando.
+function pintaBotones(){
+ $('sim-go').disabled=running;
+ $('sim-stop').disabled=!running;
+ $('sim-state').textContent=running?'en marcha':'parado';
+ if(botonNav){
+  botonNav.textContent=running?'Parar simulación':'Simular';
+  botonNav.setAttribute('aria-pressed',String(running));
+ }
+}
+
 function arrancar(opts){
  if(opts&&Number.isFinite(Number(opts.speed))){speed=Number(opts.speed);pintaVelocidad();}
  const state=RutasMap.get();
- if(!state||!state.route||state.route.total<1){info('Carga un GPX antes de simular.');return;}
+ if(!state||!state.route||state.route.total<1){info('Carga un GPX antes de simular.');plegar(true);return;}
  running=true;tick=0;
  distance=Number.isFinite(state.progress)&&state.progress>0?state.progress:0;
  for(const s of subs.values())if(s.realId!=null){real.clear(s.realId);s.realId=null;}
  banner.hidden=false;panel.dataset.running='yes';
- $('sim-go').disabled=true;$('sim-stop').disabled=false;$('sim-state').textContent='en marcha';
+ pintaBotones();
  timer=setInterval(paso,STEP);paso();
  plegar(false);
  abrirMapa(state);
@@ -172,8 +216,9 @@ function abrirMapa(state){
 }
 function parar(){
  running=false;if(timer)clearInterval(timer);timer=null;
+ plegar(panel.dataset.open==='yes');      // al parar vuelve a valer lo que eligio el usuario
  banner.hidden=true;delete panel.dataset.running;
- $('sim-go').disabled=false;$('sim-stop').disabled=true;$('sim-state').textContent='parado';
+ pintaBotones();
  for(const s of subs.values())if(s.realId==null){try{s.realId=real.watch(s.ok,s.fail);}catch{}}
 }
 $('sim-go').onclick=arrancar;
