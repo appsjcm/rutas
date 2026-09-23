@@ -44,6 +44,7 @@ async function cargarFuentes(){
  try{
   await trae('sw.js');
   await trae('index.html');
+  await trae('reparar.html');
   const m=out['sw.js'].match(/const SHELL=\[([^\]]*)\]/);
   const lista=m?m[1].split(',').map(x=>x.trim().replace(/^['"]|['"]$/g,''))
    .filter(x=>x.endsWith('.js')&&!x.startsWith('vendor/')):[];

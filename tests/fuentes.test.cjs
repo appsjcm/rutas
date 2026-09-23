@@ -11,7 +11,9 @@ function fuentes(){
  if(globalThis.__fuentes)return globalThis.__fuentes;
  const fs=require('fs'),path=require('path'),raiz=path.join(__dirname,'..');
  const sw=fs.readFileSync(path.join(raiz,'sw.js'),'utf8');
- const out={'sw.js':sw,'index.html':fs.readFileSync(path.join(raiz,'index.html'),'utf8')};
+ const out={'sw.js':sw,
+  'index.html':fs.readFileSync(path.join(raiz,'index.html'),'utf8'),
+  'reparar.html':fs.readFileSync(path.join(raiz,'reparar.html'),'utf8')};
  for(const f of listaDelShell(sw))out[f]=fs.readFileSync(path.join(raiz,f),'utf8');
  return out;
 }
@@ -52,13 +54,28 @@ test('todos los .js publicados se leen como JavaScript',()=>{
  assert.deepEqual(malos,[],'hay ficheros que no parsean');
 });
 
-test('los <script> de dentro de index.html tambien se leen',()=>{
+test('los <script> de dentro de las paginas tambien se leen',()=>{
  const f=fuentes();
- const guiones=guionesDe(f['index.html']);
- assert.ok(guiones.length>0,'index.html debe traer algun script inline');
  const malos=[];
- guiones.forEach((src,i)=>{const fallo=seLee(src);if(fallo)malos.push('bloque '+(i+1)+': '+fallo);});
+ for(const pagina of ['index.html','reparar.html']){
+  const guiones=guionesDe(f[pagina]||'');
+  assert.ok(guiones.length>0,pagina+' debe traer algun script inline');
+  guiones.forEach((src,i)=>{const fallo=seLee(src);if(fallo)malos.push(pagina+' bloque '+(i+1)+': '+fallo);});
+ }
  assert.deepEqual(malos,[],'hay scripts inline que no parsean');
+});
+
+test('la pagina de reparar no depende de nada que pueda estar roto',()=>{
+ const r=fuentes()['reparar.html'];
+ // Si cargara los modulos de la aplicacion, una version rota se llevaria por delante la
+ // herramienta para arreglarla. Tiene que valerse sola.
+ assert.equal(/<script[^>]+src=/i.test(r),false,'no debe cargar ningun script externo');
+ assert.match(r,/getRegistrations/,'debe poder ver los service workers');
+ assert.match(r,/unregister/,'debe poder desregistrarlos');
+ assert.match(r,/caches\.delete/,'debe poder vaciar los almacenes');
+ // Lee la version publicada del propio sw.js: asi puede decir si estas al dia o no.
+ assert.ok(r.includes("fetch('sw.js"),'debe consultar el sw.js publicado');
+ assert.ok(r.includes('VERSION='),'debe extraer la version de ahi');
 });
 
 test('el mecanismo de actualizacion sigue entero',()=>{

@@ -136,6 +136,16 @@ La tercera: `ready()` se rendía si todavía no había controlador, y no volvía
 
 Comprobado de punta a punta: con la v110 instalada se publicó la v111 y, sin pulsar nada, solo al volver a la aplicación, quedó la v111 sirviendo, la página recargada y la caché anterior borrada.
 
+### Cuando ya se ha quedado atrás
+
+Ese arreglo no puede aplicarse a sí mismo: un teléfono que lleva la versión anterior lleva precisamente el código que no sabe buscar. Y **borrar la caché del navegador no lo desatasca**, porque los archivos del service worker no están ahí: viven en Cache Storage, que es otro almacén, y en una aplicación instalada en la pantalla de inicio el navegador ni lo toca.
+
+Para eso está **[reparar.html](reparar.html)**. Es una página suelta, sin un solo `<script src>`: si cargara los módulos de la aplicación, una versión rota se llevaría por delante la herramienta para arreglarla. Y funciona sobre una instalación vieja porque su URL es nueva: el service worker antiguo no la tiene guardada, así que la pide a la red.
+
+Enseña qué versión hay guardada -el nombre del almacén la lleva dentro, así que se sabe aunque el service worker viejo no sepa contestar-, cuál está publicada, cuántos service workers hay registrados y si alguno espera turno. Debajo, dos botones: **Ponerla al día**, que pregunta por la versión nueva y la activa, y **Borrado completo**, que desregistra y vacía los almacenes de Rutas. Las rutas guardadas y el progreso no se tocan -comprobado-; lo que habrá que volver a descargar es el mapa de las calles.
+
+Se llega desde la pestaña Guía, junto a la versión. El service worker no la guarda nunca, igual que `/tests/`: una herramienta para arreglar copias viejas que se quedara vieja ella misma sería el último chiste.
+
 ## Sin conexión
 
 Las teselas del mapa 3D se guardan igual que las del 2D, asi que cambiar de vista sin cobertura ya no deja la pantalla en blanco. Un service worker guarda la aplicación entera -código, estilos, Leaflet y los iconos- la primera vez que se abre, así que arranca sin cobertura. Las teselas del mapa se guardan solo cuando el mapa las ha pedido de verdad, mientras exploras la ruta o conduces, con un tope de 1500: no hay descarga por lotes, que es lo que desaconseja la política de uso de OpenStreetMap. Preparar la ronda en el depósito, con datos, deja esas calles disponibles después. Una zona que no se haya visto nunca aparecerá vacía, y un aviso en pantalla lo indica mientras no haya conexión. Las consultas a Overpass nunca pasan por ese almacén: tienen su propia caducidad de 24 horas. La instalación pide cada archivo a la red y no a la caché del navegador: leyéndola, una versión nueva podía guardarse con un archivo viejo dentro y servirlo para siempre, porque después siempre responde desde su propio almacén.

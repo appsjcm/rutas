@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Rutas · Poner al día</title>
+<!--
+ Página suelta, sin depender de nada de la aplicación. Existe porque borrar la caché del
+ navegador NO desregistra el service worker: sus archivos viven en Cache Storage, que es
+ otro almacén, y en una aplicación instalada en la pantalla de inicio el navegador ni lo
+ toca. El resultado es una copia vieja que se sirve a sí misma para siempre.
+ Esta URL es nueva, así que el service worker antiguo no la tiene guardada y la pide a la
+ red: por eso este código puede correr en una instalación vieja y sacarla del pozo.
+-->
+<style>
+:root{
+ --fondo:#f4f7fa;--papel:#fff;--tinta:#172b43;--suave:#607389;
+ --regla:#e1e8f0;--fuerte:#bdcad8;--acento:#096c83;--bien:#0a7d5a;--mal:#b3261e;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){
+ --fondo:#0e1620;--papel:#16212e;--tinta:#e8eef5;--suave:#93a5b8;
+ --regla:#243344;--fuerte:#33465c;--acento:#4bc0d9;--bien:#5ddca9;--mal:#ff8a80;
+}}
+*{box-sizing:border-box}
+body{margin:0;padding:18px;background:var(--fondo);color:var(--tinta);
+ font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;
+ padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+main{max-width:620px;margin:0 auto}
+h1{font-size:21px;margin:0 0 4px}
+.sub{margin:0 0 16px;color:var(--suave);font-size:14px}
+.caja{background:var(--papel);border:1px solid var(--fuerte);border-radius:14px;
+ padding:15px;margin-bottom:13px}
+h2{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave);margin:0 0 9px}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:14px}
+dt{color:var(--suave)}
+dd{margin:0;font-weight:600;word-break:break-word}
+dd.bien{color:var(--bien)} dd.mal{color:var(--mal)}
+button{width:100%;min-height:52px;padding:12px;border-radius:12px;cursor:pointer;
+ border:1px solid var(--fuerte);background:var(--papel);color:var(--tinta);
+ font-family:inherit;font-size:15px;font-weight:650;margin-top:9px}
+button.fuerte{background:var(--acento);border-color:var(--acento);color:#fff}
+button:focus-visible{outline:3px solid var(--acento);outline-offset:2px}
+button[disabled]{opacity:.5;cursor:default}
+p.nota{font-size:13px;color:var(--suave);margin:9px 0 0}
+#diario{margin:0;font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;
+ font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+a{color:var(--acento)}
+</style>
+<main>
+<h1>Poner Rutas al día</h1>
+<p class="sub">Para cuando la aplicación se queda con una versión vieja y no hay forma de que entre la nueva.</p>
+
+<div class="caja">
+ <h2>Lo que hay ahora en este teléfono</h2>
+ <dl>
+  <dt>Versión guardada</dt><dd id="v-actual">—</dd>
+  <dt>Versión publicada</dt><dd id="v-servidor">—</dd>
+  <dt>Service worker</dt><dd id="v-sw">—</dd>
+  <dt>Almacenes</dt><dd id="v-caches">—</dd>
+ </dl>
+</div>
+
+<div class="caja">
+ <h2>Qué hacer</h2>
+ <button type="button" id="al-dia" class="fuerte">Ponerla al día</button>
+ <p class="nota">Descarga la versión publicada y la activa. Es lo primero que hay que probar.</p>
+ <button type="button" id="a-cero">Borrado completo y volver a empezar</button>
+ <p class="nota">Desregistra el service worker y vacía sus almacenes. No borra tus rutas
+ guardadas ni el progreso: eso está aparte. Sí habrá que volver a descargar el mapa de las
+ calles por las que pases.</p>
+ <p class="nota" id="salida" role="status"></p>
+</div>
+
+<div class="caja">
+ <h2>Diario</h2>
+ <pre id="diario">Mirando…</pre>
+</div>
+
+<p class="nota"><a href="./">← Volver a Rutas</a></p>
+</main>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var lineas=[];
+function apunta(t){lineas.push(t);$('diario').textContent=lineas.join('\n');}
+function di(t,tono){var s=$('salida');s.textContent=t;s.style.color=tono==='mal'?'var(--mal)':(tono==='bien'?'var(--bien)':'');}
+
+// El nombre del almacen lleva dentro la version, asi que se puede saber que hay instalado
+// aunque el service worker viejo no sepa contestar a la pregunta.
+function versionDeCaches(claves){
+ var propias=claves.filter(function(k){return /^rutas-/.test(k)&&!/tiles|fonts/.test(k);});
+ return propias.length?propias.join(', '):'';
+}
+async function versionPublicada(){
+ try{
+  var r=await fetch('sw.js?mirar='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw Error('respondió '+r.status);
+  var t=await r.text(),m=t.match(/const VERSION='([^']+)'/);
+  return m?m[1]:'no se pudo leer';
+ }catch(e){return navigator.onLine===false?'sin conexión':'no se pudo consultar';}
+}
+
+async function mirar(){
+ var claves=[];
+ try{claves=await caches.keys();}catch(e){}
+ var instalada=versionDeCaches(claves);
+ $('v-actual').textContent=instalada||'ninguna guardada';
+ $('v-caches').textContent=claves.length?claves.join(', '):'ninguno';
+
+ var regs=[];
+ try{regs=await navigator.serviceWorker.getRegistrations();}catch(e){}
+ var esperando=regs.some(function(r){return !!r.waiting;});
+ $('v-sw').textContent=regs.length?(regs.length+' registrado'+(regs.length>1?'s':'')+
+  (esperando?' · hay una versión esperando turno':'')):'ninguno';
+
+ var publicada=await versionPublicada();
+ $('v-servidor').textContent=publicada;
+
+ var alDia=instalada&&publicada&&instalada.indexOf(publicada)!==-1;
+ $('v-actual').className=alDia?'bien':(instalada?'mal':'');
+ apunta(alDia?'Estás al día: '+publicada
+  :(instalada?'Tienes '+instalada+' y lo publicado es '+publicada+'.'
+   :'No hay nada guardado todavía.'));
+ if(esperando)apunta('Hay una versión descargada esperando a que se cierre la aplicación.');
+ return {regs:regs,claves:claves,alDia:alDia,publicada:publicada};
+}
+
+$('al-dia').onclick=async function(){
+ $('al-dia').disabled=true;di('Buscando…');
+ try{
+  var regs=await navigator.serviceWorker.getRegistrations();
+  if(!regs.length){di('No hay nada instalado; abre Rutas una vez y vuelve.','mal');$('al-dia').disabled=false;return;}
+  for(var i=0;i<regs.length;i++){
+   apunta('Preguntando por una versión nueva…');
+   try{await regs[i].update();}catch(e){apunta('No se pudo preguntar: '+(e.message||e));}
+  }
+  await new Promise(function(r){setTimeout(r,2500);});
+  regs=await navigator.serviceWorker.getRegistrations();
+  var aplicada=false;
+  for(var j=0;j<regs.length;j++){
+   if(regs[j].waiting){regs[j].waiting.postMessage('skip-waiting');aplicada=true;apunta('Activando la versión nueva…');}
+  }
+  if(!aplicada){
+   apunta('No hay ninguna versión esperando.');
+   var est=await mirar();
+   di(est.alDia?'Ya tienes la última versión.':'No consigo que entre. Prueba el borrado completo.',est.alDia?'bien':'mal');
+   $('al-dia').disabled=false;return;
+  }
+  await new Promise(function(r){setTimeout(r,2000);});
+  di('Listo. Volviendo a Rutas…','bien');
+  setTimeout(function(){location.replace('./?puestaaldia='+Date.now());},900);
+ }catch(e){di('No se pudo: '+(e.message||e),'mal');$('al-dia').disabled=false;}
+};
+
+$('a-cero').onclick=async function(){
+ $('a-cero').disabled=true;di('Borrando…');
+ try{
+  var regs=await navigator.serviceWorker.getRegistrations();
+  for(var i=0;i<regs.length;i++){await regs[i].unregister();apunta('Service worker desregistrado.');}
+  var claves=await caches.keys();
+  for(var j=0;j<claves.length;j++){
+   if(/^rutas-/.test(claves[j])){await caches.delete(claves[j]);apunta('Borrado '+claves[j]);}
+  }
+  di('Borrado. Volviendo a Rutas para instalarla de nuevo…','bien');
+  setTimeout(function(){location.replace('./?limpia='+Date.now());},1200);
+ }catch(e){di('No se pudo: '+(e.message||e),'mal');$('a-cero').disabled=false;}
+};
+
+if(!('serviceWorker' in navigator)){
+ $('v-sw').textContent='este navegador no lo admite';
+ apunta('Sin service worker no hay nada que reparar aquí.');
+ $('al-dia').disabled=true;$('a-cero').disabled=true;
+}else{
+ mirar().catch(function(e){apunta('No se pudo mirar: '+(e.message||e));});
+}
+})();
+</script>
+</html>
