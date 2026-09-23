@@ -380,3 +380,9 @@ html{background:var(--ground);-webkit-text-size-adjust:100%}body{overscroll-beha
 }
 :root[data-theme=dark] #nav-stage .map-dimension button{color:#dce8f4}
 :root[data-theme=dark] #nav-stage .map-dimension button[aria-pressed=true]{color:var(--on-accent)}
+
+/* Modo simulacion: el interruptor arriba y la explicacion debajo. En fila, como el resto
+   de ajustes, el texto se colocaba al lado y partia «Modo simulación» en dos lineas. */
+.sim-mode-line{flex-direction:column;align-items:stretch;gap:6px}
+.sim-mode-line .switch{align-self:flex-start}
+.sim-mode-line .hint{margin:0;max-width:52ch}
