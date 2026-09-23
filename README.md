@@ -68,6 +68,12 @@ Como no toca la navegación sino la fuente de posiciones, lo que se prueba es ex
 
 `node --test tests/*.cjs`
 
+Las mismas pruebas corren también en el navegador, sin node instalado: **[tests/run.html](tests/run.html)**, o `https://appsjcm.github.io/rutas/tests/run.html` desde el propio móvil. No duplica ni un caso: lee los `.cjs` tal cual y les da un `require` que devuelve los módulos ya cargados como scripts y un `node:assert/strict` compatible. Dice cuántas pasan, deja ver solo los fallos con el valor que llegó frente al esperado, y copia el informe en texto.
+
+Ese assert vive en `tests/assert-shim.js` y lo comprueba `tests/shim.test.cjs`, que no lo usa para dar sus propios veredictos -si estuviera roto y no saltara nunca, una prueba escrita con él pasaría vacía-. Bajo node, cada caso se contrasta además contra el `assert` de verdad, así que una divergencia se ve ahí. Comprobado rompiendo una aserción a propósito y pidiendo un módulo inexistente: las dos salen como fallo con su mensaje, no en silencio.
+
+El service worker no toca `/tests/`: la estrategia es cache-first para todo el origen, y servir una prueba vieja diría que todo va bien sin haber comprobado nada. Se descubrió justamente así, midiendo por qué un fichero recién roto seguía pasando.
+
 Compartir ruta genera un enlace que lleva la ronda entera dentro: las coordenadas van codificadas y comprimidas en la parte del enlace que nunca viaja al servidor, asi que no se sube nada a ningun sitio. La ronda de ejemplo con la que se prueba, 26 km y 4933 puntos, cabe en unos 9 KB de enlace. Quien lo abre ve la ronda cargada y guardada en su dispositivo. El codigo QR tiene mucha menos capacidad: si la ronda no cabe se ofrece una version aligerada, diciendo cuantos puntos conserva y con cuanta desviacion, y el enlace sigue llevando la version completa. El codificador redondea a cinco decimales, unos 30 cm, asi que la distancia total puede variar medio punto porcentual.
 
 Publicación mediante GitHub Pages desde main.
