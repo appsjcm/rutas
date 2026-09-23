@@ -1774,8 +1774,21 @@ window.RutasQR=function(){
   // respuesta llega y se queda sin entregar. Hay que pedirlo.
   if(navigator.serviceWorker.startMessages)navigator.serviceWorker.startMessages();
   var alTomarControl=function(){};
-  navigator.serviceWorker.addEventListener('controllerchange',function(){if(reloading)location.reload();else{pideVersion();alTomarControl();}});
-  navigator.serviceWorker.register('sw.js').then(function(reg){
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+   if(reloading){try{sessionStorage.setItem('rutas-actualizada','1');}catch(e){}location.reload();}
+   else{pideVersion();alTomarControl();}
+  });
+  // Tras la recarga que aplica una version nueva se dice, y se quita solo. Asi no hay que
+  // creerse que se actualiza: se ve.
+  function avisaSiSeActualizo(){
+   var hubo=false;
+   try{hubo=sessionStorage.getItem('rutas-actualizada')==='1';sessionStorage.removeItem('rutas-actualizada');}catch(e){}
+   if(!hubo)return;
+   update.textContent='Rutas actualizada';update.disabled=true;update.hidden=false;
+   setTimeout(function(){update.hidden=true;update.disabled=false;update.textContent='Nueva versión · actualizar';},5000);
+  }
+  avisaSiSeActualizo();
+  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(reg){
    function aplicar(){if(!reg.waiting)return false;pending=reg.waiting;reloading=true;reg.waiting.postMessage('skip-waiting');return true;}
    alTomarControl=function(){ready();};
    function ready(){
@@ -1814,6 +1827,12 @@ window.RutasQR=function(){
    // Al volver a la aplicacion y al soltar la navegacion, se mira otra vez.
    document.addEventListener('visibilitychange',function(){if(!document.hidden)buscar(false);});
    window.addEventListener('focus',function(){buscar(false);});
+   // Al volver a una aplicacion instalada la pagina se restaura de la memoria del
+   // navegador: ahi llega pageshow, y visibilitychange puede no llegar.
+   window.addEventListener('pageshow',function(e){if(e.persisted)buscar(false);});
+   // Y si se abrio sin cobertura, la busqueda fallo: cuando vuelve la red se reintenta
+   // sin esperar al plazo, que es la senal que de verdad ha cambiado.
+   window.addEventListener('online',function(){buscar(true);});
    setInterval(function(){buscar(false);},15*60*1000);
    var stop=document.getElementById('nav-stop');
    if(stop)new MutationObserver(function(){if(!navegando())ready();}).observe(stop,{attributes:true,attributeFilter:['disabled']});

@@ -128,7 +128,7 @@ El resto de la carga es lo que hace falta desde el primer momento: Leaflet -144 
 
 El service worker sirve desde su propio almacén, así que una versión recién publicada no entra sola: hay que aplicarla. **En el móvil no se actualizaba**, y eran tres cosas a la vez.
 
-La primera y la que más pesaba: **nadie preguntaba**. Una aplicación instalada en la pantalla de inicio se abre y se cierra sin navegar a ninguna página, y entonces el navegador no vuelve a pedir `sw.js` por su cuenta. Sin un `registration.update()` explícito, podía pasar días sin enterarse de que había versión nueva. Ahora se pregunta al abrir, al volver a la aplicación, al recuperar el foco y cada quince minutos, nunca más de una vez por minuto y nunca navegando.
+La primera y la que más pesaba: **nadie preguntaba**. Una aplicación instalada en la pantalla de inicio se abre y se cierra sin navegar a ninguna página, y entonces el navegador no vuelve a pedir `sw.js` por su cuenta. Sin un `registration.update()` explícito, podía pasar días sin enterarse de que había versión nueva. Ahora se pregunta en cinco momentos: al abrir, al volver a la aplicación (`visibilitychange` y también `pageshow` con `persisted`, que es como llega en una aplicación instalada que se restaura de memoria), al recuperar el foco, **al volver la cobertura** -si se abrió sin red la consulta falló, y reconectar es la señal que de verdad ha cambiado, así que esa no espera plazo- y cada quince minutos. Nunca más de una vez por minuto y nunca navegando. El registro va con `updateViaCache:'none'`, para que `sw.js` no se lea jamás de la caché del navegador.
 
 La segunda: la versión nueva solo se aplicaba sola dentro de los **treinta segundos** siguientes a abrir la página, y bajar setenta ficheros por datos móviles tarda más que eso. Pasado el plazo quedaba solo el botón «Nueva versión · actualizar», que además está oculto a pantalla completa, que es donde se pasa la jornada. Ahora se aplica siempre que no se esté navegando; con el GPS en marcha se espera, porque recargar con el camión en marcha sí sería peor, y se aplica en cuanto se detiene la navegación.
 
@@ -136,7 +136,9 @@ La tercera: `ready()` se rendía si todavía no había controlador, y no volvía
 
 **La versión se ve.** Al final de la pestaña Guía: «Versión instalada: rutas-…-v112», que es la que sirve los archivos de verdad -la dice el propio service worker-, con un botón **Buscar actualización** que contesta «Ya tienes la última versión» o avisa de que hay una nueva. Sin eso, «no se actualiza» no había forma de comprobarlo: la pantalla es la misma lleve lo que lleve.
 
-Comprobado de punta a punta: con la v110 instalada se publicó la v111 y, sin pulsar nada, solo al volver a la aplicación, quedó la v111 sirviendo, la página recargada y la caché anterior borrada.
+**Y se nota.** Después de la recarga que aplica una versión nueva aparece cinco segundos un aviso: «Rutas actualizada». Un mecanismo invisible que funciona se parece demasiado a uno roto.
+
+Comprobado de punta a punta: con la v110 instalada se publicó la v111 y, sin pulsar nada, solo al volver a la aplicación, quedó la v111 sirviendo, la página recargada y la caché anterior borrada. Y después, tres saltos seguidos -v115→v116→v117→v118- aplicándose solos, dos de ellos disparados por el evento de reconexión.
 
 ### Cuando ya se ha quedado atrás
 
