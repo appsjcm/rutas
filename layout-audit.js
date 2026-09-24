@@ -35,12 +35,15 @@ function oculto(e){
  return c.visibility==='hidden'||c.opacity==='0'||c.pointerEvents==='none';
 }
 
-// El escenario a pantalla completa cubre la pagina; lo que esta fuera de el no compite.
-function tapadoPorPantallaCompleta(e){
- if(!document.body.classList.contains('map-focus'))return false;
+// El escenario a pantalla completa cubre la pagina a proposito. Lo que queda debajo no es
+// un fallo de colocacion siempre que sea el propio escenario quien lo tape: la barra de
+// pestañas es fija y estaba dando cuatro falsos problemas cada vez, que es la mejor forma
+// de que un auditor deje de leerse. Si lo tapa otra cosa -un panel flotante-, eso si.
+function porLaPantallaCompleta(e,encima){
+ if(!document.body.classList.contains('map-focus')||!encima)return false;
  const escenario=document.getElementById('nav-stage');
- if(escenario&&escenario.contains(e))return false;
- return !fijo(e);
+ if(!escenario||escenario.contains(e))return false;
+ return escenario.contains(encima)||escenario===encima;
 }
 function recoger(){
  const items=[];
@@ -48,27 +51,58 @@ function recoger(){
  const scrolls=document.documentElement.scrollHeight>innerHeight+2;
  for(const e of document.querySelectorAll(CONTROLES)){
   if(e.disabled||e.hidden||!e.offsetParent||e.closest(FUERA)||oculto(e))continue;
-  // Con el mapa a pantalla completa, lo de la pagina queda detras a proposito: eso no es
-  // un fallo de colocacion, es la pantalla completa haciendo su trabajo.
-  if(tapadoPorPantallaCompleta(e))continue;
   const r=e.getBoundingClientRect();
   const rect={top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height};
-  let hit='self';
+  let hit='self',saltar=false;
   if(A.big(rect)&&A.inside(rect,innerWidth,innerHeight)){
    const c=A.centre(rect);
    const encima=document.elementFromPoint(c.x,c.y);
+   if(porLaPantallaCompleta(e,encima))saltar=true;
    // Que el clic caiga en un hijo -el <b> de un botón- sigue siendo el propio control.
-   hit=(!encima||encima===e||e.contains(encima)||encima.contains(e))?'self':nombre(encima);
+   else hit=(!encima||encima===e||e.contains(encima)||encima.contains(e))?'self':nombre(encima);
   }
+  if(saltar)continue;
   items.push({name:nombre(e),rect,vw:innerWidth,vh:innerHeight,
    fixed:fijo(e)&&!enCajaDesplazable(e),scrolls,hit});
  }
  return items;
 }
 
+// Las capas que flotan sobre el mapa mientras se conduce. Se comparan cajas enteras, no
+// centros: una tarjeta puede cubrir media barra de botones sin tocar ningun centro.
+// «aviso» es lo que advierte, «mando» lo que se pulsa y «dato» lo que solo se lee; tapar
+// los dos primeros es grave.
+const CAPAS=[
+ ['cartel de maniobra','#drive-banner','dato'],
+ ['tarjeta de la calle','#drive-road-info','dato'],
+ ['aviso de vía','#nav-road-alert','aviso'],
+ ['límite de velocidad','#drive-speed-limit','aviso'],
+ ['tarjeta de desvío','#route-recovery','aviso'],
+ ['barra de vistas','.map-dimension','mando'],
+ ['mandos de conducción','#drive-tools','mando'],
+ ['repetir indicación','#nav-repeat','mando'],
+ ['ampliar mapa','#nav-focus','mando'],
+ ['zoom','.leaflet-control-zoom','mando'],
+ ['velocímetro','#drive-speedo','dato'],
+ ['panel de conducción','#drive-panel','dato']
+];
+function capas(){
+ const out=[];
+ for(const [nombre,sel,kind] of CAPAS){
+  const e=document.querySelector(sel);
+  if(!e||e.hidden||!e.offsetParent||oculto(e))continue;
+  const r=e.getBoundingClientRect();
+  if(r.width<1||r.height<1)continue;
+  out.push({name:nombre,kind,z:getComputedStyle(e).zIndex,
+   rect:{top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}});
+ }
+ return out;
+}
+
 function run(){
  const r=A.report(recoger(),
-  {overflowX:document.documentElement.scrollWidth>document.documentElement.clientWidth});
+  {panels:capas(),
+   overflowX:document.documentElement.scrollWidth>document.documentElement.clientWidth});
  pinta(r);
  return r;
 }
@@ -104,5 +138,5 @@ $('audit-run').onclick=()=>{
  if(window.console&&console.table)console.table(r.malos.length?r.malos:[{q:'sin problemas'}]);
 };
 
-window.RutasLayoutAudit={run,collect:recoger};
+window.RutasLayoutAudit={run,collect:recoger,layers:capas};
 })();

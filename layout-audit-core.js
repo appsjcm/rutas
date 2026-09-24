@@ -32,6 +32,36 @@ function judge(item){
  return null;
 }
 
+// ---- capas que flotan sobre el mapa ----
+// elementFromPoint solo ve el centro de cada control, asi que una tarjeta que cubre media
+// barra de botones pasaba desapercibida si los centros quedaban libres. Eso fue justo lo
+// que paso: la tarjeta de la calle tapaba 2D, Satelite y 3D y el auditor decia "sin
+// problemas". Aqui se comparan las cajas enteras.
+function overlap(a,b){
+ if(!a||!b)return null;
+ const x=Math.min(a.right,b.right)-Math.max(a.left,b.left);
+ const y=Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top);
+ return x>MIN&&y>MIN?{x:Math.round(x),y:Math.round(y)}:null;
+}
+// Tapar una advertencia o unos botones es grave; dos paneles de datos rozandose, no tanto.
+const TAPAR_ES_GRAVE=['aviso','mando'];
+// list: [{name, rect, z, kind}] en orden del documento.
+function panels(list){
+ const p=(Array.isArray(list)?list:[]).filter(x=>x&&big(x.rect));
+ const out=[];
+ for(let i=0;i<p.length;i++)for(let j=i+1;j<p.length;j++){
+  const o=overlap(p[i].rect,p[j].rect);
+  if(!o)continue;
+  const za=Number(p[i].z)||0,zb=Number(p[j].z)||0;
+  // A igual z manda el orden del documento: pinta encima el ultimo.
+  const arriba=za===zb?j:(za>zb?i:j);
+  const abajo=arriba===i?j:i;
+  out.push({q:'tapado por otro panel',name:p[abajo].name,por:p[arriba].name,
+            solape:o,grave:TAPAR_ES_GRAVE.indexOf(p[abajo].kind)>=0});
+ }
+ return out;
+}
+
 function report(items,extra){
  const lista=Array.isArray(items)?items:[];
  const malos=[],avisos=[];
@@ -41,11 +71,14 @@ function report(items,extra){
   (m.grave?malos:avisos).push(m);
  }
  const o=extra||{};
+ for(const m of panels(o.panels))(m.grave?malos:avisos).push(m);
  if(o.overflowX)malos.push({q:'la página se desplaza de lado',name:'documento',grave:true});
  return {malos,avisos,revisados:lista.length,limpio:malos.length===0};
 }
 
 function line(m){
+ if(m.q==='tapado por otro panel')
+  return m.name+' — tapado por '+m.por+' ('+m.solape.x+'×'+m.solape.y+' px)';
  return m.q==='tapado'?m.name+' — tapado por '+m.por:m.name+' — '+m.q;
 }
 function headline(r){
@@ -56,6 +89,6 @@ function headline(r){
  return r.malos.length+(r.malos.length===1?' problema':' problemas')+' en '+r.revisados+' controles.'+cola;
 }
 
-const api={judge,report,line,headline,big,inside,centre,MIN};
+const api={judge,report,line,headline,big,inside,centre,overlap,panels,MIN};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasLayoutAuditCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

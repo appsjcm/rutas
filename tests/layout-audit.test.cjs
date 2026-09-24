@@ -114,3 +114,84 @@ test('lo que vive en una caja que se desplaza se alcanza igual',()=>{
  assert.deepEqual(A.judge(fuera),{q:'no se alcanza',name:'boton',grave:true});
  assert.equal(A.judge({...fuera,fixed:false}),null,'si se puede desplazar, no es un fallo');
 });
+
+// ---- capas que flotan sobre el mapa ----
+// Se comparan cajas enteras porque elementFromPoint solo mira el centro de cada control:
+// una tarjeta puede cubrir media barra de botones sin tocar ningun centro, y eso paso.
+function marco(l,r,t,b){return {left:l,right:r,top:t,bottom:b,width:r-l,height:b-t};}
+
+test('dos cajas separadas no se solapan, y rozarse tampoco cuenta',()=>{
+ assert.equal(A.overlap(marco(0,100,0,50),marco(0,100,60,90)),null,'una debajo de la otra');
+ assert.equal(A.overlap(marco(0,100,0,50),marco(120,200,0,50)),null,'una al lado de la otra');
+ assert.equal(A.overlap(marco(0,100,0,50),marco(0,100,50,90)),null,'borde con borde no es solape');
+ assert.equal(A.overlap(marco(0,100,0,50),marco(0,100,49,90)),null,'un pixel es redondeo');
+ assert.equal(A.overlap(null,marco(0,10,0,10)),null);
+ assert.equal(A.overlap(marco(0,10,0,10),null),null);
+});
+
+test('cuando se solapan dice cuanto',()=>{
+ assert.deepEqual(A.overlap(marco(0,100,0,50),marco(50,200,20,90)),{x:50,y:30});
+ assert.deepEqual(A.overlap(marco(0,100,0,100),marco(10,20,10,20)),{x:10,y:10},'una dentro de otra');
+});
+
+test('manda el z-index para saber cual queda debajo',()=>{
+ const arriba={name:'tarjeta',kind:'dato',z:'615',rect:marco(12,230,133,195)};
+ const abajo={name:'barra',kind:'mando',z:'530',rect:marco(12,363,142,196)};
+ const r=A.panels([arriba,abajo]);
+ assert.equal(r.length,1);
+ assert.equal(r[0].name,'barra','debajo queda la de menos z');
+ assert.equal(r[0].por,'tarjeta');
+ assert.equal(r[0].grave,true,'tapar botones es grave');
+});
+
+test('a igual z manda el orden del documento',()=>{
+ const primera={name:'primera',kind:'mando',z:'500',rect:marco(0,100,0,100)};
+ const segunda={name:'segunda',kind:'dato',z:'500',rect:marco(50,150,50,150)};
+ const r=A.panels([primera,segunda]);
+ assert.equal(r[0].name,'primera','pinta encima la ultima del documento');
+ assert.equal(r[0].por,'segunda');
+});
+
+test('tapar una advertencia es grave; dos datos rozandose, no',()=>{
+ const encima={name:'tarjeta',kind:'dato',z:'615',rect:marco(0,200,0,60)};
+ const aviso={name:'aviso de vía',kind:'aviso',z:'510',rect:marco(0,200,40,90)};
+ assert.equal(A.panels([encima,aviso])[0].grave,true);
+ const dato={name:'velocímetro',kind:'dato',z:'510',rect:marco(0,200,40,90)};
+ assert.equal(A.panels([encima,dato])[0].grave,false);
+});
+
+test('el caso real que se escapo: la tarjeta tapaba la barra de vistas',()=>{
+ // Medido a 375x667 antes de arreglarlo.
+ const antes=A.panels([
+  {name:'tarjeta de la calle',kind:'dato',z:'615',rect:marco(12,230,133,195)},
+  {name:'barra de vistas',kind:'mando',z:'530',rect:marco(12,363,142,196)}
+ ]);
+ assert.equal(antes.length,1,'debia detectarse');
+ assert.equal(antes[0].grave,true);
+ assert.deepEqual(antes[0].solape,{x:218,y:53});
+ // Y despues del arreglo, con la barra debajo de la tarjeta.
+ const despues=A.panels([
+  {name:'tarjeta de la calle',kind:'dato',z:'615',rect:marco(12,230,133,195)},
+  {name:'barra de vistas',kind:'mando',z:'530',rect:marco(12,363,206,259)}
+ ]);
+ assert.deepEqual(despues,[],'ya no se tocan');
+});
+
+test('el informe junta los solapes con el resto',()=>{
+ const r=A.report([],{panels:[
+  {name:'tarjeta',kind:'dato',z:'615',rect:marco(0,200,0,60)},
+  {name:'barra',kind:'mando',z:'530',rect:marco(0,200,40,90)},
+  {name:'panel',kind:'dato',z:'400',rect:marco(0,200,80,120)}
+ ]});
+ assert.equal(r.limpio,false);
+ assert.equal(r.malos.length,1,'solo el que tapa un mando');
+ assert.equal(r.avisos.length,1,'el roce entre datos va aparte');
+ assert.match(A.line(r.malos[0]),/barra — tapado por tarjeta \(200×20 px\)/);
+});
+
+test('sin capas el informe sigue funcionando igual que antes',()=>{
+ assert.equal(A.report([]).limpio,true);
+ assert.equal(A.report([],{}).limpio,true);
+ assert.equal(A.report([],{panels:null}).limpio,true);
+ assert.equal(A.report([],{panels:[]}).limpio,true);
+});
