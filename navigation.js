@@ -2,6 +2,11 @@
 'use strict';
 const $=id=>document.getElementById(id),C=window.RutasNav,H=window.RutasHudCore;
 new ResizeObserver(entries=>{const height=entries[0].target.getBoundingClientRect().height;if(height)$('nav-stage').style.setProperty('--drive-banner-height',height+'px');}).observe($('drive-banner'));
+// La tarjeta de la calle empuja hacia abajo la barra de vistas: en un movil no caben en la
+// misma fila y la tarjeta tapaba 2D, Satelite y 3D. Cuando no hay tarjeta, cero.
+new ResizeObserver(entries=>{const h=entries[0].target.getBoundingClientRect().height;$('nav-stage').style.setProperty('--drive-road-height',h?(h+8)+'px':'0px');}).observe($('drive-road-info'));
+// Y el aviso de via empuja la barra un escalon mas: primero se lee la advertencia.
+new ResizeObserver(entries=>{const h=entries[0].target.getBoundingClientRect().height;$('nav-stage').style.setProperty('--drive-alert-height',h?(h+8)+'px':'0px');}).observe($('nav-road-alert'));
 let checkingStart=false,access=null;
 let resumeKey=null,lastSaved=0,resumePoint=null,lastSpeedVoice=0,lastSpeedLimit=null;
 let voiceStages=new Map(),liveSpeed=0,currentInstruction="Inicia la navegación para recibir indicaciones.",lastReceived=0,gpsTimer=null,guideState="preview";

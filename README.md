@@ -172,6 +172,20 @@ Se muestra la fecha de los datos, cobertura de coincidencia, señales sobre el m
 
 Si el servidor público falla, Cargar datos de calles permite importar un JSON de Overpass (out tags geom) y realizar la misma comprobación local, mostrando siempre la fecha de sus datos. El JSON también permanece en el dispositivo.
 
+## Menús sobre el mapa
+
+Mientras se conduce hay cuatro cosas apiladas sobre el mapa y ninguna puede taparse con otra: el cartel de maniobra, la tarjeta de la calle, el aviso de vía y la barra de vistas. Iban colocadas con distancias fijas, y la barra creció -2D, Satélite, 3D, Lugares, Street View, Calle- hasta ocupar todo el ancho en un móvil, justo donde vive la tarjeta.
+
+Medido a 375×667 antes de tocarlo: tarjeta de 12 a 230, barra de 12 a 363, y la tarjeta tapaba **2D, Satélite y 3D**. El aviso de vía era peor: iba a 66 px del cartel, o sea dentro de la tarjeta, y con z-index 510 contra 615 y 530 quedaba **detrás de las dos**. Una advertencia de sentido contrario escondida tras un menú.
+
+Ahora se apilan de verdad. La altura del cartel ya la medía un `ResizeObserver`; ahora también se miden la tarjeta y el aviso, y cada uno empuja al siguiente. El orden es el de la urgencia: primero qué maniobra viene, luego por dónde vas, luego la advertencia si la hay, y al final la barra, que es lo único que no corre prisa. Cuando algo no está, no deja hueco.
+
+En horizontal la maquetación es otra -las indicaciones van en una columna a la derecha y los mandos del mapa a la izquierda- y allí la barra tenía un `top` fijo de 68 px con la tarjeta acabando en 70. Ahora es `max(68px, 12px + alto de la tarjeta)`: mantiene los 68 de siempre cuando no hay tarjeta, y baja cuando la hay.
+
+**La instrucción ya no se corta.** «En la rotonda, toma la salida 1» pedía 254 px en una caja de 231 y se quedaba en «…toma la sal…». Perder el número de salida es perder la instrucción entera. Ahora usa hasta dos líneas y de ahí no pasa; el cartel crece y lo de debajo baja solo.
+
+Comprobado en 360×640, 375×667, 390×844, 412×915, 430×932 y en horizontal 667×375 y 844×390, con la instrucción más larga que genera la aplicación y con y sin aviso de vía: nada fuera de la pantalla, ningún solape, y cada botón de la barra recibiendo su propio clic.
+
 ## Vista de conducción
 
 Iniciar navegación abre el mapa a pantalla completa con una franja superior negra: flecha del giro, distancia en grande y nombre de la calle de destino cuando OpenStreetMap lo ha podido identificar. Abajo, una hoja con el tiempo que queda, la hora de llegada y la distancia, la barra de avance y la siguiente parada de la ronda. El velocímetro es el círculo de la esquina inferior izquierda.

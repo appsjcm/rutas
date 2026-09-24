@@ -3,9 +3,14 @@
    distancia, que es como se lee de un vistazo con las manos en el volante. */
 #nav-stage.driving #drive-turn-dist{font-size:33px;font-weight:800;line-height:1;
  letter-spacing:-.04em;color:#fff;white-space:nowrap}
+/* En una linea, «En la rotonda, toma la salida 1» se quedaba en «...toma la sal...»:
+   medido, pedia 254 px en una caja de 231. Perder el numero de salida es perder la
+   instruccion entera. Se permiten dos lineas -el alto del cartel lo mide un
+   ResizeObserver, asi que lo de debajo baja solo- y de ahi ya no pasa. */
 #nav-stage.driving #drive-turn-action{margin-top:2px;font-size:21px;font-weight:750;
  line-height:1.12;letter-spacing:-.02em;color:#fff;
- overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+ overflow:hidden}
 #nav-stage.driving #drive-turn-street{margin-top:1px;font-size:14.5px;font-weight:650;
  line-height:1.2;color:var(--cockpit-cyan,#93e7df);
  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

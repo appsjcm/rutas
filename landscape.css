@@ -14,7 +14,11 @@
 
  /* --- el mapa, y sus mandos, a la izquierda --- */
  #nav-stage.focus #drive-exit{left:12px;right:auto;top:12px}
- #nav-stage.focus .map-dimension{left:12px;right:auto;top:68px}
+ /* La barra va debajo de la tarjeta de la calle, que vive arriba a la izquierda. Con un
+    top fijo de 68 px se pisaban: medido, tarjeta de 12 a 70 y barra desde 68. El max()
+    mantiene los 68 de siempre cuando no hay tarjeta, que es cuando ahi no hay nada. */
+ #nav-stage.focus .map-dimension{left:12px;right:auto;
+  top:max(68px, calc(12px + var(--drive-road-height,0px)))}
  #nav-stage.focus #drive-speedo{left:12px;right:auto;top:auto;bottom:12px}
  #nav-stage.focus #drive-speed-limit{left:76px;right:auto;top:auto;bottom:12px}
  #nav-stage.focus #drive-tools{left:12px;right:auto;top:auto;bottom:76px;

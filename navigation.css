@@ -72,6 +72,21 @@
 
 /* Información vial en directo: conserva visible la maniobra y añade contexto de la calle. */
 #drive-road-info{display:none}
+/* La barra de vistas crecio -2D, Satelite, 3D, Lugares, Street View, Calle- y en un movil
+   ocupa todo el ancho, justo donde vive la tarjeta de la calle. Medido a 375 px: tarjeta
+   de 12 a 230, barra de 12 a 363, y la tarjeta tapaba 2D, Satelite y 3D. No caben en la
+   misma fila, asi que se apilan: cartel, calle, y debajo la barra. La altura de la tarjeta
+   la mide navigation.js, que es como ya se hace con el cartel. */
+/* Orden de arriba abajo mientras se conduce: cartel de maniobra, tarjeta de la calle,
+   aviso de via si lo hay, y por ultimo la barra de vistas. El aviso iba fijo a 66 px del
+   cartel, que con la tarjeta delante caia justo detras de ella y de la barra -z 510 contra
+   615 y 530-: una advertencia de sentido contrario escondida tras un menu. Ahora tiene su
+   sitio, y la barra, que es lo menos urgente, baja cuando aparece. */
+#nav-stage.driving #nav-road-alert:not([hidden]){
+ top:calc(var(--drive-banner-height,160px) + 12px + var(--drive-road-height,0px))}
+#nav-stage.driving .map-dimension{
+ top:calc(var(--drive-banner-height,160px) + 12px + var(--drive-road-height,0px)
+          + var(--drive-alert-height,0px))}
 #nav-stage.driving #drive-road-info:not([hidden]){position:absolute;z-index:615;top:calc(var(--drive-banner-height,112px) + 10px);left:12px;display:flex;align-items:center;gap:11px;max-width:min(430px,calc(100% - 84px));padding:9px 13px 9px 9px;border:1px solid #ffffffb8;border-radius:15px;background:#ffffffed;color:#14283b;box-shadow:0 5px 20px #0a203a2b;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 #drive-road-icon{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:12px;background:#e6f1fa;color:#176dcc;font-size:22px;font-weight:800}
 #drive-road-info>div{min-width:0;display:grid;line-height:1.15}#drive-road-kind{font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#557087}#drive-road-name{margin-top:2px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#drive-road-extra{margin-top:3px;font-size:10px;color:#647589;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
