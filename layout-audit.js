@@ -84,13 +84,22 @@ const CAPAS=[
  ['ampliar mapa','#nav-focus','mando'],
  ['zoom','.leaflet-control-zoom','mando'],
  ['velocímetro','#drive-speedo','dato'],
- ['panel de conducción','#drive-panel','dato']
+ ['panel de conducción','#drive-panel','dato'],
+ ['panel del simulador','#sim-panel','mando'],
+ // Fuera de pantalla completa, la fila de «Iniciar navegación» y «Simular» es el mando
+ // principal de la pantalla. Dentro, esta detras del mapa a proposito y no compite.
+ ['botones de la ruta','.btnrow.nav-actions','mando']
 ];
+const SOLO_FUERA_DE_PANTALLA_COMPLETA=new Set(['botones de la ruta']);
 function capas(){
- const out=[];
+ const out=[],completa=document.body.classList.contains('map-focus');
  for(const [nombre,sel,kind] of CAPAS){
+  if(completa&&SOLO_FUERA_DE_PANTALLA_COMPLETA.has(nombre))continue;
   const e=document.querySelector(sel);
-  if(!e||e.hidden||!e.offsetParent||oculto(e))continue;
+  // offsetParent es null en todo lo que es position:fixed, y justo los paneles que flotan
+  // lo son: con ese filtro el panel del simulador nunca entraba en la lista. Se mira si
+  // tiene caja de verdad.
+  if(!e||e.hidden||oculto(e)||!e.getClientRects().length)continue;
   const r=e.getBoundingClientRect();
   if(r.width<1||r.height<1)continue;
   out.push({name:nombre,kind,z:getComputedStyle(e).zIndex,

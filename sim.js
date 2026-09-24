@@ -2,9 +2,10 @@
    en un vehiculo, porque sustituye la posicion real por una inventada. */
 (()=>{
 'use strict';
-if(!new URLSearchParams(location.search).has('sim'))return;
 const C=window.RutasNav,S=window.RutasSimCore;
 if(!C||!S)return;
+let elegido=null;try{elegido=localStorage.getItem(S.SIM_KEY);}catch{}
+if(!S.simAvailable(location.search,elegido))return;
 
 const real={
  watch:navigator.geolocation.watchPosition.bind(navigator.geolocation),
@@ -46,6 +47,10 @@ panel.innerHTML=
  +'<p id="sim-info">Carga un GPX y pulsa Simular. La posición la genera esta página.</p>'
  +'</div>';
 document.body.append(banner,panel);
+// El panel flota abajo. Antes solo aparecia en una sesion suelta con ?sim; ahora puede
+// quedarse puesto, asi que la pagina tiene que dejarle sitio o tapa «Iniciar navegacion» y
+// «Simular» -medido: 21 px de solape-. La clase la lee sim.css.
+document.body.classList.add('con-simulador');
 
 const $=id=>document.getElementById(id);
 // El panel flota sobre la pagina y tapaba los mandos que tiene debajo -la pestaña Guia,

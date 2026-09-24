@@ -54,7 +54,13 @@ Existe porque tres fallos seguidos fueron del mismo tipo: un botón tapado o fue
 
 Abrir la aplicación con `?sim=1` añade un simulador que sustituye el GPS por una posición generada sobre el recorrido cargado. Solo aparece con ese parámetro y nunca sobrevive a una recarga: una posición falsa activada por descuido dentro de un vehículo sería peligrosa. Mientras corre, una franja roja avisa de que la posición no es real.
 
-Pero desde el icono del móvil no hay forma de escribir eso: una aplicación instalada abre siempre la misma dirección. El simulador estaba ahí y no se podía llegar a él, y desde fuera eso se ve igual que si no se hubiera actualizado nada. El interruptor **Modo simulación** vive ahora dentro de **Ruta y ajustes**, que es un sitio al que hay que ir a propósito y desde el que se vuelve; enciende y apaga recargando con `?sim` y sin él, porque el simulador sustituye la geolocalización al arrancar y encenderlo a medias dejaría la página en un estado que no es ninguno de los dos. El aviso dice lo que hace y lo que no: «sustituye el GPS, así que no debe usarse al volante».
+Pero desde el icono del móvil no hay forma de escribir eso: una aplicación instalada abre siempre la misma dirección. El interruptor **Modo simulación** vive dentro de **Ruta y ajustes**, que es un sitio al que hay que ir a propósito y desde el que se vuelve.
+
+**La elección se recuerda.** Una vez encendido, cada apertura trae **Simular junto a Iniciar navegación** y se elige una cosa u otra sin volver a pasar por los ajustes. La dirección se queda limpia -manda lo guardado-, y `?sim` sigue valiendo para una sesión suelta sin cambiar la preferencia.
+
+Disponible no es en marcha, y esa es la distinción que importa: la posición inventada **solo empieza al pulsar Simular**, nunca al abrir, y mientras corre hay una franja roja avisando de que la posición no es real. Lo que no puede pasar por descuido dentro de un vehículo es que se ponga a correr sola, y eso sigue sin poder pasar. Encender y apagar recarga la página, porque el simulador sustituye la geolocalización al arrancar y hacerlo a medias dejaría la página en un estado que no es ninguno de los dos.
+
+Con el simulador puesto de forma permanente apareció un efecto que antes no existía: su panel flota abajo y, plegado, se quedaba **encima de «Iniciar navegación» y «Simular»** -21 px medidos-, y ahí no se destapa bajando, porque el panel es fijo y baja con la página. Ahora la página termina por encima de él.
 
 El panel se pliega pulsando su título, y la elección se recuerda. Flota sobre la página y, abierto, tapa lo que tiene debajo: la pestaña Guía, el conmutador 2D/Satélite/3D y Ampliar mapa. Plegado ocupa 58 px y no tapa nada -comprobado midiendo qué elemento recibe el clic en cada control de la página-. Además, en simulación el botón Ampliar mapa se aparta a la izquierda del mapa, porque la esquina inferior derecha es donde vive el panel.
 

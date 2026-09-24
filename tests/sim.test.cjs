@@ -119,3 +119,29 @@ test('subir y bajar desde una marcha cae en el escalon de al lado',()=>{
  // Y volver a pulsar la marcha devuelve exactamente su velocidad.
  assert.equal(S.paceOf(S.paceSpeed('rapido')),'rapido');
 });
+
+test('el simulador esta disponible por la direccion o porque se dejo encendido',()=>{
+ assert.equal(S.simAvailable('?sim',null),true,'la direccion de siempre sigue valiendo');
+ assert.equal(S.simAvailable('?sim=1','0'),true,'la direccion manda sobre lo guardado');
+ assert.equal(S.simAvailable('?a=1&sim','0'),true);
+ assert.equal(S.simAvailable('','1'),true,'recordado de otra vez');
+ assert.equal(S.simAvailable('','0'),false,'apagado a proposito');
+ assert.equal(S.simAvailable('',null),false,'por defecto no');
+ assert.equal(S.simAvailable('?otra=1',null),false);
+});
+
+test('nada raro enciende el simulador por accidente',()=>{
+ // Lo que no puede pasar es que se ponga solo dentro de un vehiculo.
+ assert.equal(S.simAvailable(undefined,undefined),false);
+ assert.equal(S.simAvailable(null,null),false);
+ assert.equal(S.simAvailable('',''),false);
+ assert.equal(S.simAvailable('','si'),false,'solo el 1 exacto cuenta');
+ assert.equal(S.simAvailable('','true'),false);
+ assert.equal(S.simAvailable('',1),false,'el numero uno no es la cadena "1"');
+ assert.equal(S.simAvailable('?simulacion=1',null),false,'otro parametro parecido no vale');
+ assert.equal(S.simAvailable('?nosim',null),false);
+});
+
+test('la clave de guardado tiene nombre propio y no cambia sola',()=>{
+ assert.equal(S.SIM_KEY,'rutas-modo-simulacion');
+});

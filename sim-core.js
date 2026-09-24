@@ -87,7 +87,19 @@ function paceOf(speed){
  return p?p.key:null;
 }
 
+// El simulador esta disponible si lo pide la direccion -?sim, como siempre- o si se dejo
+// encendido en los ajustes. Disponible no es en marcha: la posicion inventada solo empieza
+// al pulsar Simular, nunca al abrir, y mientras corre hay una franja roja avisando. Lo que
+// no puede pasar por descuido dentro de un vehiculo es que se ponga a correr sola, y eso
+// sigue sin poder pasar.
+const SIM_KEY='rutas-modo-simulacion';
+function simAvailable(search,stored){
+ try{if(new URLSearchParams(search||'').has('sim'))return true;}catch(e){}
+ return stored==='1';
+}
+
 const api={advance,sidestep,jitter,quality,drops,speedOf,stepSpeed,atFloor,atCeiling,
-           paceOf,paceSpeed,SPEEDS,PACES,QUALITY};
+           paceOf,paceSpeed,SPEEDS,PACES,QUALITY,
+           simAvailable,SIM_KEY};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasSimCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

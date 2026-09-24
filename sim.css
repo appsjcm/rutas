@@ -121,3 +121,12 @@ body.map-focus #sim-panel{--sim-abajo:12px}
 #audit-out[data-tone=soft]{color:var(--warn,#8a6206)}
 #audit-list li[data-grave=no]{opacity:.72}
 #audit-list li[data-grave=si]{border-left:3px solid var(--danger,#a8201a)}
+
+/* Con el simulador puesto, la pagina termina por encima de su panel: si no, el panel
+   plegado se queda encima de «Iniciar navegacion» y «Simular» -21 px medidos- y ahi no se
+   destapa bajando, porque el panel es fijo y baja con la pagina. */
+body.con-simulador .wrap{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+@media(max-width:700px){
+ body.con-simulador .wrap{padding-bottom:calc(196px + env(safe-area-inset-bottom))}
+}
+body.con-simulador.map-focus .wrap{padding-bottom:0}
