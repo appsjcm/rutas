@@ -1,0 +1,18 @@
+/* Aviso de tramos sin pasar. Va en la cabecera del recorrido, que se ve siempre, y no en
+   un desplegable: enterarse de que falta una calle cuando ya estas en el deposito no sirve
+   de nada. Rojo apagado, no de alarma: es algo que revisar, no una emergencia. */
+#cobertura-aviso{display:block;width:100%;margin:10px 0 0;padding:11px 13px;
+ border:1px solid var(--warn-line,#e3b7b2);border-radius:12px;
+ background:var(--warn-bg,#fdeceb);color:var(--warn-ink,#8c1d18);
+ text-align:left;cursor:pointer;
+ font-family:inherit;font-size:13px;font-weight:700;line-height:1.35;
+ letter-spacing:0;text-transform:none;min-height:44px}
+#cobertura-aviso[hidden]{display:none}
+#cobertura-aviso::before{content:'↩ ';font-weight:800}
+#cobertura-aviso:hover{border-color:var(--warn-ink,#8c1d18)}
+#cobertura-aviso:focus-visible{outline:3px solid var(--focus,#096c83);outline-offset:2px}
+@media(prefers-color-scheme:dark){
+ :root:not([data-theme=light]) #cobertura-aviso{
+  border-color:#6d2a24;background:#3a1614;color:#ffb4ab}
+}
+@media(max-width:700px){#cobertura-aviso{font-size:12.5px;padding:10px 12px}}

@@ -178,6 +178,18 @@ Se muestra la fecha de los datos, cobertura de coincidencia, señales sobre el m
 
 Si el servidor público falla, Cargar datos de calles permite importar un JSON de Overpass (out tags geom) y realizar la misma comprobación local, mostrando siempre la fecha de sus datos. El JSON también permanece en el dispositivo.
 
+## Tramos sin pasar
+
+El avance de la navegación es un solo número que solo sube -`progress = max(progress, d)`-, así que **saltarse una calle no dejaba rastro**: la ronda figuraba igual de completa. En una recogida puerta a puerta ese es el error que más cuesta, porque significa volver.
+
+Ahora se apunta por dónde se ha circulado de verdad, como una lista de tramos sobre el eje de distancia del GPX. Que la ronda repita calles no estorba: cada pasada es un intervalo distinto de ese eje. Entre dos posiciones seguidas se da por recorrido lo de en medio mientras el salto sea razonable -150 m, que cubre perder el GPS unos segundos o ir rápido-; por encima de eso, lo saltado queda como hueco.
+
+**Un hueco solo cuenta si tiene recorrido a los dos lados.** Lo que queda por delante del punto más lejano no es un tramo saltado, es ronda sin terminar, y decir lo contrario sería mentir. Y por debajo de 80 m no se avisa: gritar por cuarenta metros de ruido de GPS es la forma de que el aviso deje de leerse.
+
+En la cabecera del recorrido, que se ve siempre, aparece «**1 tramo sin pasar · 426 m · ver en el mapa**», y los tramos se dibujan en rojo discontinuo sobre el mapa, que es donde se entiende de qué calle se trata. Al pulsarlo lleva al primero que falta. No dice qué hacer: si volver o no lo decide quien conduce. El registro se guarda junto a la huella de la ruta, como el avance, así que cambiar de GPX cambia de registro y no se mezclan dos rondas.
+
+Comprobado con el simulador: recorrido continuo hasta 300 m -sin huecos-, salto hasta 700 y continuación hasta el final; el aviso salió con el tramo 298-725 y el mapa lo dibujó.
+
 ## Menús sobre el mapa
 
 Mientras se conduce hay cuatro cosas apiladas sobre el mapa y ninguna puede taparse con otra: el cartel de maniobra, la tarjeta de la calle, el aviso de vía y la barra de vistas. Iban colocadas con distancias fijas, y la barra creció -2D, Satélite, 3D, Lugares, Street View, Calle- hasta ocupar todo el ancho en un móvil, justo donde vive la tarjeta.

@@ -81,5 +81,18 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em}
 en silencio: una suite que se salta lo que no puede probar no sirve de nada.</p>
 </main>
 
-<script src="assert-shim.js"></script>
-<script src="runner.js"></script>
+<script>
+// El runner ya sella los modulos y los .cjs que carga, pero a el lo servia el cache del
+// navegador: edite runner.js y la pagina siguio pasando la version de antes sin decir
+// nada. Se carga sellado tambien, y en orden -el assert antes que quien lo usa-.
+(function(){
+ var sello='?v='+Date.now();
+ function trae(src,luego){
+  var s=document.createElement('script');
+  s.src=src+sello;s.onload=luego;
+  s.onerror=function(){document.getElementById('titular').textContent='No se pudo cargar '+src;};
+  document.head.appendChild(s);
+ }
+ trae('assert-shim.js',function(){trae('runner.js');});
+})();
+</script>
