@@ -1,12 +1,45 @@
 (function(){
 'use strict';
 const $=id=>document.getElementById(id),C=window.RutasNav,H=window.RutasHudCore;
-new ResizeObserver(entries=>{const height=entries[0].target.getBoundingClientRect().height;if(height)$('nav-stage').style.setProperty('--drive-banner-height',height+'px');}).observe($('drive-banner'));
+// Las capas que flotan sobre el mapa se apilan con estas tres medidas: cartel de maniobra,
+// tarjeta de la calle y aviso de via. Cada una empuja a la siguiente, y la barra de vistas
+// va al final.
+//
+// Se miden con ResizeObserver, pero no SOLO con el: su entrega va atada al ciclo de
+// pintado, y en una pestaña que el navegador no esta dibujando no llega. Entonces las
+// variables se quedan sin poner, el CSS cae a los valores por defecto y la tarjeta se
+// planta encima de la barra -medido en el sitio publicado: 242x23 px de solape-. Que la
+// maquetacion de la pantalla de conduccion dependa de que un observador llegue a tiempo es
+// demasiado fragil para algo que se mira conduciendo, asi que se remide tambien en cada
+// actualizacion de posicion, que es cuando de verdad importa que este bien.
+function mideCapas(){
+ const stage=$('nav-stage');
+ if(!stage)return;
+ const pon=(nombre,el,margen)=>{
+  if(!el)return;
+  const h=el.hidden?0:el.getBoundingClientRect().height;
+  stage.style.setProperty(nombre,h?(h+margen)+'px':'0px');
+ };
+ // Lo que necesita lo de abajo no es cuanto mide el cartel, sino donde acaba: en
+ // simulacion el cartel arranca 24 px mas abajo para no quedar bajo la franja roja, y con
+ // la altura a secas la tarjeta de la calle se le metia debajo. Se mide el borde inferior
+ // respecto al escenario, que es el origen de las posiciones de estas capas.
+ const cartel=$('drive-banner');
+ if(cartel&&!cartel.hidden){
+  const c=cartel.getBoundingClientRect(),base=stage.getBoundingClientRect().top;
+  const abajo=c.bottom-base;
+  if(abajo>0)stage.style.setProperty('--drive-banner-height',abajo+'px');
+ }
+ pon('--drive-road-height',$('drive-road-info'),8);
+ pon('--drive-alert-height',$('nav-road-alert'),8);
+}
+for(const el of [$('drive-banner'),$('drive-road-info'),$('nav-road-alert')])
+ if(el)new ResizeObserver(mideCapas).observe(el);
 // La tarjeta de la calle empuja hacia abajo la barra de vistas: en un movil no caben en la
 // misma fila y la tarjeta tapaba 2D, Satelite y 3D. Cuando no hay tarjeta, cero.
-new ResizeObserver(entries=>{const h=entries[0].target.getBoundingClientRect().height;$('nav-stage').style.setProperty('--drive-road-height',h?(h+8)+'px':'0px');}).observe($('drive-road-info'));
+
 // Y el aviso de via empuja la barra un escalon mas: primero se lee la advertencia.
-new ResizeObserver(entries=>{const h=entries[0].target.getBoundingClientRect().height;$('nav-stage').style.setProperty('--drive-alert-height',h?(h+8)+'px':'0px');}).observe($('nav-road-alert'));
+
 let checkingStart=false,access=null;
 let resumeKey=null,lastSaved=0,resumePoint=null,lastSpeedVoice=0,lastSpeedLimit=null;
 let voiceStages=new Map(),liveSpeed=0,currentInstruction="Inicia la navegación para recibir indicaciones.",lastReceived=0,gpsTimer=null,guideState="preview";
@@ -75,7 +108,7 @@ $('nav-start').onclick=()=>{if(!route||watch!==null||window.Roadbook.getRoute().
 function guidanceText(g){if(!g.turn)return 'Continúa '+metres(g.gap)+' hasta el final del recorrido.';const action=H.lower(H.imperative(g.turn.label))+(g.turn.toRoad?' en '+g.turn.toRoad:'');const next=g.stage==='now'&&g.next&&g.next.d-g.turn.d<=100?' Después, en '+metres(g.next.d-g.turn.d)+', '+H.lower(H.imperative(g.next.label))+'.':'';return (g.stage==='now'?'Ahora: '+action+'.':'En '+H.distance(g.gap)+', '+action+'.')+next;}
 function guideWarning(text){if(guideState!=='paused'&&window.speechSynthesis)window.speechSynthesis.cancel();guideState='paused';paintBanner(H.banner({paused:true,arrow:'!'}));$('drive-next').textContent='';$('drive-eta-time').textContent='—';$('drive-eta-clock').textContent='—';currentInstruction=text;message(text,true);$('nav-turn-icon').textContent='!';$('nav-turn-text').textContent='Indicaciones pausadas';$('nav-turn-distance').textContent=text;$('nav-after').textContent='';$('nav-live-summary').textContent='Esperando una posición válida sobre el recorrido';}
 function announceGuidance(){const info=window.RutasChecks?.alertInfo?.(progress);if(info){const stage=info.distance>80?'ahead':'now',key=info.id+':'+stage;if(!roadVoiceStages.has(key)){roadVoiceStages.add(key);currentInstruction=info.voice;speak(info.voice);return;}}const limit=window.RutasChecks?.speedLimitAt?.(progress),kph=liveSpeed*3.6,now=Date.now();if(limit&&kph>=limit+8&&(limit!==lastSpeedLimit||now-lastSpeedVoice>45000)){lastSpeedLimit=limit;lastSpeedVoice=now;speak('Atención. Superas el límite de '+limit+' kilómetros por hora indicado en el mapa.');return;}const g=C.guidance(turns,progress,route.total,liveSpeed);currentInstruction=guidanceText(g);if(!g.turn){if(!voiceStages.has('final')){voiceStages.set('final',1);speak(currentInstruction);}return;}const rank={later:0,prepare:1,near:2,now:3}[g.stage],previous=voiceStages.get(g.index)||0;if(rank>previous){voiceStages.set(g.index,rank);speak(currentInstruction);} }
-function paint(d){if(!completed)return;window.dispatchEvent(new CustomEvent("rutas:progress",{detail:{distance:d}}));completed.setLatLngs(C.section(route,0,d).map(ll));remaining.setLatLngs(C.section(route,d,Math.min(route.total,d+200)).map(ll));const g=C.guidance(turns,d,route.total,watch!==null?liveSpeed:0),end=d>=route.total-5,road=g.turn?.toRoad||(g.turn?.roadContext?'maniobra vial':'según el GPX');currentInstruction=end?'Final del recorrido.':guidanceText(g);$('nav-turn-icon').textContent=end?(falta()?'!':'✓'):g.turn?g.turn.symbol:'↑';$('nav-turn-text').textContent=end?'Final del recorrido':g.turn?(g.stage==='now'?'Ahora · ':'')+g.turn.label:'Sigue hasta el final';$('nav-turn-distance').textContent=end?(falta()||'Recorrido completado'):(g.stage==='now'?'En este punto':g.turn?'En '+metres(g.gap):metres(g.gap)+' restantes')+' · '+road;$('nav-after').textContent=g.next?'Después: '+g.next.label.toLowerCase()+' · '+metres(g.next.d-g.turn.d):'';hud(d,g,end);$('nav-live-summary').textContent=(watch!==null?'Navegación en directo':'Vista previa')+' · '+g.completed+' de '+turns.length+' indicaciones completadas';Array.from($('nav-turns').children).forEach((li,i)=>{li.classList.toggle('done',i<g.completed);li.classList.toggle('current',i===g.index);if(i===g.index)li.setAttribute('aria-current','step');else li.removeAttribute('aria-current');});}
+function paint(d){if(!completed)return;mideCapas();window.dispatchEvent(new CustomEvent("rutas:progress",{detail:{distance:d}}));completed.setLatLngs(C.section(route,0,d).map(ll));remaining.setLatLngs(C.section(route,d,Math.min(route.total,d+200)).map(ll));const g=C.guidance(turns,d,route.total,watch!==null?liveSpeed:0),end=d>=route.total-5,road=g.turn?.toRoad||(g.turn?.roadContext?'maniobra vial':'según el GPX');currentInstruction=end?'Final del recorrido.':guidanceText(g);$('nav-turn-icon').textContent=end?(falta()?'!':'✓'):g.turn?g.turn.symbol:'↑';$('nav-turn-text').textContent=end?'Final del recorrido':g.turn?(g.stage==='now'?'Ahora · ':'')+g.turn.label:'Sigue hasta el final';$('nav-turn-distance').textContent=end?(falta()||'Recorrido completado'):(g.stage==='now'?'En este punto':g.turn?'En '+metres(g.gap):metres(g.gap)+' restantes')+' · '+road;$('nav-after').textContent=g.next?'Después: '+g.next.label.toLowerCase()+' · '+metres(g.next.d-g.turn.d):'';hud(d,g,end);$('nav-live-summary').textContent=(watch!==null?'Navegación en directo':'Vista previa')+' · '+g.completed+' de '+turns.length+' indicaciones completadas';Array.from($('nav-turns').children).forEach((li,i)=>{li.classList.toggle('done',i<g.completed);li.classList.toggle('current',i===g.index);if(i===g.index)li.setAttribute('aria-current','step');else li.removeAttribute('aria-current');});}
 $('drive-heading').onclick=function(){headingUp=!headingUp;const stage=$('nav-stage');
  stage.classList.toggle('heading-up',headingUp);
  this.setAttribute('aria-pressed',headingUp?'true':'false');

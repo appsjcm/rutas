@@ -222,6 +222,10 @@ En horizontal la maquetación es otra -las indicaciones van en una columna a la 
 
 Comprobado en 360×640, 375×667, 390×844, 412×915, 430×932 y en horizontal 667×375 y 844×390, con la instrucción más larga que genera la aplicación y con y sin aviso de vía: nada fuera de la pantalla, ningún solape, y cada botón de la barra recibiendo su propio clic.
 
+**Y no dependen de que un observador llegue a tiempo.** Las tres medidas se tomaban solo con `ResizeObserver`, cuya entrega va atada al ciclo de pintado: en una pestaña que el navegador no está dibujando no llega, las variables se quedan sin poner, el CSS cae a los valores por defecto y la tarjeta se planta encima de la barra. Medido así en el sitio publicado: 242×23 px de solape, encontrado por el propio auditor. Ahora se remiden también en cada actualización de posición, que es cuando de verdad importa que esté bien. Lo que se guarda no es cuánto mide el cartel sino **dónde acaba**: en simulación arranca 24 px más abajo para no quedar bajo la franja roja, y con la altura a secas la tarjeta se le metía debajo.
+
+La instrucción de maniobra llevaba `line-height:1.12`, demasiado justo para dos líneas: la caja daba 41 px y el texto pedía 44, así que «En la rotonda, toma la salida 1» se cortaba por abajo. Con 1,2 cabe entera.
+
 ## Vista de conducción
 
 Iniciar navegación abre el mapa a pantalla completa con una franja superior negra: flecha del giro, distancia en grande y nombre de la calle de destino cuando OpenStreetMap lo ha podido identificar. Abajo, una hoja con el tiempo que queda, la hora de llegada y la distancia, la barra de avance y la siguiente parada de la ronda. El velocímetro es el círculo de la esquina inferior izquierda.

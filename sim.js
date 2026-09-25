@@ -194,6 +194,7 @@ function arrancar(opts){
  distance=Number.isFinite(state.progress)&&state.progress>0?state.progress:0;
  for(const s of subs.values())if(s.realId!=null){real.clear(s.realId);s.realId=null;}
  banner.hidden=false;panel.dataset.running='yes';
+ document.body.classList.add('sim-corriendo');
  pintaBotones();
  timer=setInterval(paso,STEP);paso();
  plegar(false);
@@ -224,6 +225,7 @@ function parar(){
  running=false;if(timer)clearInterval(timer);timer=null;
  plegar(panel.dataset.open==='yes');      // al parar vuelve a valer lo que eligio el usuario
  banner.hidden=true;delete panel.dataset.running;
+ document.body.classList.remove('sim-corriendo');
  pintaBotones();
  // Simular arranca la navegacion, asi que parar tiene que pararla. Si no, el GPS real toma
  // el relevo desde donde este el vehiculo de verdad -normalmente lejos del recorrido- y la

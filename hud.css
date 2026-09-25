@@ -8,7 +8,9 @@
    instruccion entera. Se permiten dos lineas -el alto del cartel lo mide un
    ResizeObserver, asi que lo de debajo baja solo- y de ahi ya no pasa. */
 #nav-stage.driving #drive-turn-action{margin-top:2px;font-size:21px;font-weight:750;
- line-height:1.12;letter-spacing:-.02em;color:#fff;
+ /* 1,12 era demasiado justo para dos lineas: la caja daba 41 px y el texto pedia 44, asi
+    que la segunda linea se cortaba por abajo. Con 1,2 cabe entera, y se lee mejor. */
+ line-height:1.2;letter-spacing:-.02em;color:#fff;
  white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
  overflow:hidden}
 #nav-stage.driving #drive-turn-street{margin-top:1px;font-size:14.5px;font-weight:650;
