@@ -163,82 +163,179 @@ function coverage(samples,path,radius=45){
  for(const p of take){const kx=111320*Math.cos(p.lat*Math.PI/180),ky=110540;let best=Infinity;for(let i=0;i<path.length-1;i++){const a=path[i],b=path[i+1],x=(a.lon-p.lon)*kx,y=(a.lat-p.lat)*ky,dx=(b.lon-a.lon)*kx,dy=(b.lat-a.lat)*ky,l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,-(x*dx+y*dy)/l)):0;best=Math.min(best,Math.hypot(x+t*dx,y+t*dy));if(best<=radius)break;}if(best<=radius)hit++;}
  return Math.round(hit/take.length*100);
 }
-// Donde se aparta el trazado por calles del GPX. Cuando el trazado es fiable, la navegacion
-// lo sigue a el y no al GPX, asi que tiene que pasar por donde pasa la ronda. No bastaba con
-// que fuera continuo y midiera parecido: con una ronda de 111 km se acepto uno de 108 km del
-// que solo el 7 % del GPX quedaba a menos de 15 m, y el 38 % a mas de 200 m. La cobertura de
-// arriba no lo veia: mira 160 muestras, una cada 700 m en esa ronda, y un callejon sin salida
-// que el reconocimiento se salte cabe entre dos.
-// Aqui se miran todos los puntos del GPX, con un indice por celdas para que no cueste. Los
-// puntos y no las rectas entre ellos: un GPX planificado, con un punto en cada cruce, corta
-// las curvas por la recta, y eso no es apartarse.
+// ---- que partes del trazado por calles sirven para navegar ----
+// Cuando se usa, la navegacion sigue el trazado por calles y no el GPX: rodea las rotondas y
+// da las maniobras viales. Pero tiene que pasar por donde pasa la ronda. Con la ronda larga de
+// prueba se acepto uno del que el 38 % del GPX quedaba a mas de 200 m. La cobertura de arriba
+// no lo veia: mira 160 muestras, una cada 700 m, y entre dos cabe un callejon sin salida.
+// Primero se probo a descartar el trazado entero si se apartaba en algun sitio. Fue peor: un
+// solo tramo dudoso en 110 km dejaba toda la ronda navegando por el GPX, que cruza las rotondas
+// por el medio. Ahora se navega por calles donde coinciden con el GPX y por el GPX solo en los
+// tramos que las calles se saltan.
 const RADIO_APARTE=45;   // mas lejos que esto del trazado, ese punto del GPX no esta en el
-const MAX_APARTE=100;    // un tramo seguido fuera, mas largo que esto, es una calle que falta
-const MIN_CERCA=90;      // % de los metros del GPX que tienen que quedar cerca
-function apart(gpx,path,distance,opts){
+const MAX_APARTE=100;    // un tramo seguido fuera, mas largo que esto, es una calle que falta;
+                         // mas corto es ruido del GPS o una rotonda cortada por el medio
+const MIN_CERCA=90;      // % de los metros del GPX cerca para decir que coinciden del todo
+const MIN_UTIL=50;       // por debajo, el reconocimiento no ha entendido la ronda: solo GPX
+
+function acumula(path,distance){const cum=[0];for(let i=1;i<path.length;i++)cum.push(cum[i-1]+(distance(path[i-1],path[i])||0));return cum;}
+function puntoEn(path,cum,d){
+ const n=path.length-1;
+ if(!(d>0))return {lat:path[0].lat,lon:path[0].lon};
+ if(d>=cum[n])return {lat:path[n].lat,lon:path[n].lon};
+ let lo=0,hi=n;while(lo<hi){const m=(lo+hi)>>1;if(cum[m]<d)lo=m+1;else hi=m;}
+ const j=Math.max(1,lo),i=j-1,t=(d-cum[i])/((cum[j]-cum[i])||1);
+ return {lat:path[i].lat+(path[j].lat-path[i].lat)*t,lon:path[i].lon+(path[j].lon-path[i].lon)*t};
+}
+function tramoDe(path,cum,a,b){
+ const out=[puntoEn(path,cum,a)];
+ let lo=0,hi=path.length-1;while(lo<hi){const m=(lo+hi)>>1;if(cum[m]<=a)lo=m+1;else hi=m;}
+ for(let i=lo;i<path.length&&cum[i]<b;i++)if(cum[i]>a)out.push({lat:path[i].lat,lon:path[i].lon});
+ out.push(puntoEn(path,cum,b));
+ return out;
+}
+
+// Para cada punto del GPX, por donde pasa el trazado cerca de el, en orden. Una ronda pasa
+// varias veces por la misma calle, y el trazado tambien, asi que no vale la pasada mas
+// cercana: vale la siguiente a la ultima encontrada. NaN donde el trazado no pasa cerca.
+function follow(gpx,path,distance,opts){
  const o=opts||{},radio=Number.isFinite(o.radio)&&o.radio>0?o.radio:RADIO_APARTE;
- const vacio={pct:0,tramos:[],mayor:0,ok:false};
- if(!Array.isArray(gpx)||gpx.length<2||!Array.isArray(path)||path.length<2||typeof distance!=='function')return vacio;
- const ref=gpx.find(p=>p&&Number.isFinite(p.lat));if(!ref)return vacio;
- const kx=111320*Math.cos(ref.lat*Math.PI/180),ky=110540,celda=100,grid=new Map();
- const xy=p=>({x:p.lon*kx,y:p.lat*ky});
- const seg=[];
- for(let i=0;i<path.length-1;i++){
-  const a=xy(path[i]),b=xy(path[i+1]);
-  if(![a.x,a.y,b.x,b.y].every(Number.isFinite))continue;
-  const s={a,dx:b.x-a.x,dy:b.y-a.y};s.l=s.dx*s.dx+s.dy*s.dy;seg.push(s);
-  for(let cx=Math.floor(Math.min(a.x,b.x)/celda);cx<=Math.floor(Math.max(a.x,b.x)/celda);cx++)
-   for(let cy=Math.floor(Math.min(a.y,b.y)/celda);cy<=Math.floor(Math.max(a.y,b.y)/celda);cy++){
-    const k=cx+':'+cy;let l=grid.get(k);if(!l)grid.set(k,l=[]);l.push(s);
+ if(!Array.isArray(gpx)||gpx.length<2||!Array.isArray(path)||path.length<2||typeof distance!=='function')return null;
+ if(!path.every(p=>p&&Number.isFinite(p.lat)&&Number.isFinite(p.lon)))return null;
+ const ref=gpx.find(p=>p&&Number.isFinite(p.lat)&&Number.isFinite(p.lon));if(!ref)return null;
+ const kx=111320*Math.cos(ref.lat*Math.PI/180),ky=110540;
+ const X=path.map(p=>p.lon*kx),Y=path.map(p=>p.lat*ky),cum=acumula(path,distance),total=cum[cum.length-1];
+ if(!(total>0))return null;
+ // Indice por celdas, solo para reencontrar el trazado tras un tramo largo sin verlo.
+ const celda=100,grid=new Map();
+ for(let j=0;j<path.length-1;j++)
+  for(let cx=Math.floor(Math.min(X[j],X[j+1])/celda);cx<=Math.floor(Math.max(X[j],X[j+1])/celda);cx++)
+   for(let cy=Math.floor(Math.min(Y[j],Y[j+1])/celda);cy<=Math.floor(Math.max(Y[j],Y[j+1])/celda);cy++){
+    const k=cx+':'+cy;let l=grid.get(k);if(!l)grid.set(k,l=[]);l.push(j);
    }
+ function proyecta(qx,qy,j){
+  const dx=X[j+1]-X[j],dy=Y[j+1]-Y[j],l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,((qx-X[j])*dx+(qy-Y[j])*dy)/l)):0;
+  return {err:Math.hypot(qx-X[j]-t*dx,qy-Y[j]-t*dy),d:cum[j]+(cum[j+1]-cum[j])*t};
  }
- if(!seg.length)return vacio;
- function cerca(p){
-  const q=xy(p);
-  for(let cx=Math.floor((q.x-radio)/celda);cx<=Math.floor((q.x+radio)/celda);cx++)
-   for(let cy=Math.floor((q.y-radio)/celda);cy<=Math.floor((q.y+radio)/celda);cy++)
-    for(const s of grid.get(cx+':'+cy)||[]){
-     const t=s.l?Math.max(0,Math.min(1,((q.x-s.a.x)*s.dx+(q.y-s.a.y)*s.dy)/s.l)):0;
-     if(Math.hypot(q.x-s.a.x-t*s.dx,q.y-s.a.y-t*s.dy)<=radio)return true;
-    }
-  return false;
+ const pos=new Array(gpx.length).fill(NaN);
+ let cd=0,j0=0,sinVer=0,prev=null;
+ for(let i=0;i<gpx.length;i++){
+  const p=gpx[i];
+  // Un punto roto no corta nada: se queda donde iba.
+  if(!p||!Number.isFinite(p.lat)||!Number.isFinite(p.lon)){pos[i]=cd;continue;}
+  if(prev)sinVer+=distance(prev,p)||0;
+  prev=p;
+  const qx=p.lon*kx,qy=p.lat*ky,esperado=cd+sinVer,hasta=cd+Math.min(5000,300+3*sinVer);
+  while(j0<path.length-2&&cum[j0+1]<cd-50)j0++;
+  let best=null;
+  for(let j=j0;j<path.length-1&&cum[j]<=hasta;j++){
+   const r=proyecta(qx,qy,j);
+   if(r.err>radio||r.d<cd-50)continue;
+   // Entre dos pasadas cerca, la que toca por orden: 100 m mas adelante pesan como 5 m de error.
+   const score=r.err+0.05*Math.abs(r.d-esperado);
+   if(!best||score<best.score)best={d:r.d,score};
+  }
+  if(!best&&sinVer>1000){
+   for(let cx=Math.floor((qx-radio)/celda);cx<=Math.floor((qx+radio)/celda);cx++)
+    for(let cy=Math.floor((qy-radio)/celda);cy<=Math.floor((qy+radio)/celda);cy++)
+     for(const j of grid.get(cx+':'+cy)||[]){
+      if(cum[j+1]<cd-50)continue;
+      const r=proyecta(qx,qy,j);
+      if(r.err<=radio&&r.d>=cd-50&&(!best||r.d<best.d))best={d:r.d};
+     }
+  }
+  if(best){pos[i]=best.d;if(best.d>cd)cd=best.d;sinVer=0;}
  }
- // Cada punto pesa la mitad de lo que lo separa de sus vecinos: asi cuenta lo recorrido, no
- // cuantos puntos grabo el movil mientras el camion estaba parado.
+ return {pos,cum,total};
+}
+
+// Cuanto del GPX queda cerca del trazado, y que tramos no. Cada punto pesa la mitad de lo que
+// lo separa de sus vecinos: asi cuenta lo recorrido, no cuantos puntos grabo el movil con el
+// camion parado. Se miran los puntos y no las rectas entre ellos: un GPX planificado, con un
+// punto en cada cruce, corta las curvas por la recta, y eso no es apartarse.
+function apart(gpx,path,distance,opts){
+ const vacio={pct:0,tramos:[],largos:[],mayor:0,ok:false};
+ const f=follow(gpx,path,distance,opts);
+ if(!f)return vacio;
  let total=0,dentro=0,acum=0,abierto=null;const tramos=[];
  for(let i=0;i<gpx.length;i++){
   const p=gpx[i];
   const antes=i?distance(gpx[i-1],p)||0:0,despues=i<gpx.length-1?distance(p,gpx[i+1])||0:0,peso=(antes+despues)/2;
   acum+=antes;total+=peso;
-  if(!p||!Number.isFinite(p.lat)||!Number.isFinite(p.lon)||cerca(p)){
-   dentro+=peso;
-   if(abierto){tramos.push(abierto);abierto=null;}
-   continue;
-  }
-  if(!abierto)abierto={desde:acum,hasta:acum};else abierto.hasta=acum;
+  if(Number.isFinite(f.pos[i])){dentro+=peso;if(abierto){tramos.push(abierto);abierto=null;}continue;}
+  if(!abierto)abierto={i0:i,i1:i,desde:acum,hasta:acum};else{abierto.i1=i;abierto.hasta=acum;}
  }
  if(abierto)tramos.push(abierto);
  for(const t of tramos)t.metros=t.hasta-t.desde;
+ const largos=tramos.filter(t=>t.metros>MAX_APARTE);
  const mayor=tramos.reduce((m,t)=>Math.max(m,t.metros),0);
  // Hacia abajo: un 89,6 % no es un 90 %.
  const pct=total>0?Math.floor(dentro/total*100):0;
- return {pct,tramos,mayor,ok:pct>=MIN_CERCA&&mayor<=MAX_APARTE};
+ return {pct,tramos,largos,mayor,ok:pct>=MIN_CERCA&&!largos.length,pos:f.pos,cum:f.cum};
 }
-function metrosTexto(m){return m>=1000?(m/1000).toFixed(1).replace('.',',')+' km':Math.round(m)+' m';}
-// Lo que se le dice a quien conduce: donde, y cuanto. Sin tecnicismos.
-function apartText(r){
- if(!r||r.ok)return '';
- const partes=[],largos=(r.tramos||[]).filter(t=>t.metros>MAX_APARTE);
- if(largos.length){
-  const m=largos.reduce((a,b)=>b.metros>a.metros?b:a);
-  partes.push(largos.length===1
-   ?'Este trazado se salta un tramo de tu GPX de '+metrosTexto(m.metros)+', en el km '+(m.desde/1000).toFixed(1).replace('.',',')+'.'
-   :'Este trazado se salta '+largos.length+' tramos de tu GPX; el mayor, de '+metrosTexto(m.metros)+', en el km '+(m.desde/1000).toFixed(1).replace('.',',')+'.');
+
+// El trazado por calles con el GPX metido en los tramos largos que se salta. Cada union es la
+// perpendicular desde el ultimo punto del GPX que aun estaba cerca, asi que mide como mucho
+// RADIO_APARTE. Devuelve los puntos y de donde sale cada seccion, para recolocar las maniobras.
+function splice(gpx,path,distance,r){
+ if(!Array.isArray(gpx)||!Array.isArray(path)||!r||!Array.isArray(r.pos)||!Array.isArray(r.cum)||!Array.isArray(r.largos)||typeof distance!=='function')return null;
+ const cum=r.cum,total=cum[cum.length-1],n=gpx.length,out=[],secciones=[];let o=0;
+ function mete(p){
+  const q={lat:p.lat,lon:p.lon},u=out[out.length-1];
+  if(u){const d=distance(u,q)||0;if(d<.01)return;o+=d;}
+  out.push(q);
  }
- if(r.pct<MIN_CERCA)partes.push('Solo el '+r.pct+' % de tu GPX queda a menos de '+RADIO_APARTE+' m de él.');
- return partes.join(' ');
+ function calles(a,b){
+  if(!(b>=a))return;
+  const pts=tramoDe(path,cum,a,b);mete(pts[0]);const desde=o;
+  for(let k=1;k<pts.length;k++)mete(pts[k]);
+  secciones.push({tipo:'calles',a,b,desde,hasta:o});
+ }
+ function delGpx(i0,i1,t){
+  const pts=[];for(let i=i0;i<=i1;i++){const p=gpx[i];if(p&&Number.isFinite(p.lat)&&Number.isFinite(p.lon))pts.push(p);}
+  if(!pts.length)return;
+  mete(pts[0]);const desde=o;
+  for(let k=1;k<pts.length;k++)mete(pts[k]);
+  secciones.push({tipo:'gpx',desde,hasta:o,km:t.desde,metros:t.metros});
+ }
+ let ultimo=0,acabado=false;
+ for(const t of r.largos){
+  const ia=t.i0-1,ib=t.i1+1;
+  if(ia>=0){const pa=Math.max(ultimo,r.pos[ia]);calles(ultimo,pa);ultimo=pa;}
+  delGpx(Math.max(0,ia),Math.min(n-1,ib),t);
+  if(ib<n)ultimo=Math.max(ultimo,r.pos[ib]);else acabado=true;
+ }
+ if(!acabado)calles(ultimo,total);
+ return out.length>1?{pts:out,secciones}:null;
+}
+// Las maniobras de Valhalla van en metros del trazado por calles: las de las secciones que se
+// quedan se recolocan y las de lo que se ha quitado, fuera.
+function spliceTurns(turns,secciones){
+ const out=[];
+ for(const t of Array.isArray(turns)?turns:[]){
+  if(!t||!Number.isFinite(t.d))continue;
+  const s=(secciones||[]).find(s=>s.tipo==='calles'&&t.d>=s.a&&t.d<=s.b);
+  if(s)out.push({...t,d:s.desde+(t.d-s.a)});
+ }
+ return out;
+}
+
+function metrosTexto(m){return m>=1000?(m/1000).toFixed(1).replace('.',',')+' km':Math.round(m)+' m';}
+function kmTexto(m){return (m/1000).toFixed(1).replace('.',',');}
+// Lo que se le dice a quien conduce: donde y cuanto, sin tecnicismos.
+function spliceText(r){
+ const l=(r&&r.largos)||[];
+ if(!l.length)return '';
+ const m=l.reduce((a,b)=>b.metros>a.metros?b:a);
+ return l.length===1
+  ?'En un tramo de '+metrosTexto(m.metros)+', en el km '+kmTexto(m.desde)+', se sigue tu GPX: las calles reconocidas no pasan por ahí.'
+  :'En '+l.length+' tramos se sigue tu GPX porque las calles reconocidas no pasan por ahí; el mayor, de '+metrosTexto(m.metros)+', en el km '+kmTexto(m.desde)+'.';
+}
+function apartText(r){
+ if(!r||r.pct>=MIN_UTIL)return '';
+ return 'Las calles reconocidas solo coinciden con el '+r.pct+' % de tu GPX: no se usan para navegar.';
 }
 
 const api={decode,extract,legs,guidedLegs,roadManeuver,placeManeuvers,upgradeManeuvers,osrmLegs,osrmRoute,input,chunks,merge,joins,assemble,batches,split,coverage,length,usable,MIN_LENGTH_RATIO,
-           apart,apartText,RADIO_APARTE,MAX_APARTE,MIN_CERCA};if(typeof module!=='undefined')module.exports=api;else root.RutasStreetCore=api;
+           follow,apart,splice,spliceTurns,spliceText,apartText,RADIO_APARTE,MAX_APARTE,MIN_CERCA,MIN_UTIL};if(typeof module!=='undefined')module.exports=api;else root.RutasStreetCore=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -16,18 +16,28 @@ function packPath(value){const R=window.RutasRouteStore;if(!R)return value;const
 function unpackPath(value){const R=window.RutasRouteStore;if(!value||!value.pista||!R)return value;const {pista,...resto}=value;return {...resto,path:R.unpackTrack(pista).pts.map(p=>({lat:p.lat,lon:p.lon}))};}
 function loadCache(data){try{const fingerprint=C.fingerprint(C.prepare(data.pts));for(const [prefix,legacy] of [[CACHE_PREFIX,false],[LEGACY_CACHE_PREFIX,true]]){const raw=JSON.parse(localStorage.getItem(prefix+fingerprint)),value=unpackPath(raw);if(value&&Array.isArray(value.path)&&value.path.length>1&&value.path.every(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180)){if(!legacy&&Array.isArray(raw.path)&&window.RutasRouteStore)try{localStorage.setItem(prefix+fingerprint,JSON.stringify(packPath(raw)));}catch{}return {...value,turns:S.upgradeManeuvers(value.turns),legacy};}}return null;}catch{return null;}}
 function saveCache(data,value){try{localStorage.setItem(cacheKey(data),JSON.stringify(packPath({...value,saved:Date.now()})));localStorage.removeItem(LEGACY_CACHE_PREFIX+C.fingerprint(C.prepare(data.pts)));const rows=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k?.startsWith(CACHE_PREFIX)){let saved=0;try{saved=JSON.parse(localStorage.getItem(k)).saved||0;}catch{}rows.push({k,saved});}}rows.sort((a,b)=>b.saved-a.saved);rows.slice(3).forEach(r=>localStorage.removeItem(r.k));}catch{}}
-// Si unas calles guardadas, que hasta ahora se usaban para navegar, dejan de usarse porque se
-// apartan del GPX, el avance guardado antes de esta version se midio sobre ellas y no lleva
-// con que linea: se traslada una vez al GPX, que es lo que se va a seguir ahora. La clave es
-// la misma que usa navigation.js.
-function migraAvance(data,calles){
+// La linea que se navega: las calles, con el GPX metido en los tramos largos que se saltan
+// (street-match-core.js, splice). Las maniobras de Valhalla se recolocan sobre ella, y en los
+// tramos del GPX se sacan del propio GPX, como cuando no hay calles.
+function navegable(data,calles,guias,lejos){
+ if(!lejos.largos.length)return {pts:calles,turns:guias};
+ const u=S.splice(data.pts,calles,C.distance,lejos);
+ if(!u)return null;
+ const propias=S.spliceTurns(guias,u.secciones),ruta=C.prepare(u.pts);
+ const delGpx=C.turns(ruta,{minSpeed:0}).filter(t=>u.secciones.some(s=>s.tipo==='gpx'&&t.d>=s.desde&&t.d<=s.hasta));
+ return {pts:u.pts,turns:[...propias,...delGpx].sort((a,b)=>a.d-b.d)};
+}
+// El avance guardado antes de v149 no dice sobre que linea se midio: con calles guardadas, era
+// sobre ellas, que es lo que se navegaba. Si ahora se navega otra linea -el GPX, o las calles
+// con tramos del GPX-, se traslada una vez a ella. La clave es la misma que usa navigation.js.
+function migraAvance(data,calles,hacia){
  try{
   const G=C.prepare(data.pts),k='rutas-progress-v1:'+C.fingerprint(G),o=JSON.parse(localStorage.getItem(k));
   if(!o||!Number.isFinite(o.d)||Number.isFinite(o.total))return;
-  const P=C.prepare(calles),p=C.at(P,o.d),d=C.carryProgress(G,{d:o.d,total:P.total,lat:p.lat,lon:p.lon});
+  const P=C.prepare(calles),H=C.prepare(hacia),p=C.at(P,o.d),d=C.carryProgress(H,{d:o.d,total:P.total,lat:p.lat,lon:p.lon});
   if(!Number.isFinite(d))return;
-  const q=C.at(G,d);
-  localStorage.setItem(k,JSON.stringify({...o,d,total:G.total,lat:+q.lat.toFixed(6),lon:+q.lon.toFixed(6)}));
+  const q=C.at(H,d);
+  localStorage.setItem(k,JSON.stringify({...o,d,total:H.total,lat:+q.lat.toFixed(6),lon:+q.lon.toFixed(6)}));
   if(window.RutasMap&&window.RutasMap.restoreProgress)window.RutasMap.restoreProgress();
  }catch{}
 }
@@ -99,7 +109,7 @@ async function match(force=false){
  if(!state.route||data.sample||state.mode==='access'){clear();bar.hidden=true;routeRef=state.route?.pts||null;return;}
  if(!force&&routeRef===data.pts)return;clear();routeRef=data.pts;const own=++run,input=S.input(data.pts,null);
  if(input.length<2){status('error','No hay puntos suficientes para reconocer las calles.');return;}
-  if(!force){const saved=loadCache(data);if(saved){const medida=S.usable(S.length(saved.path,C.distance),S.length(data.pts,C.distance));if(medida.ok){const lejos=S.apart(data.pts,saved.path,C.distance);path=saved.path;coverage=saved.coverage;lengthPct=medida.pct;layer=L.featureGroup().addTo(state.map);L.polyline(path.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(layer);layer.bringToBack();const guides=Array.isArray(saved.turns)?saved.turns:[];navigable=lejos.ok?RutasMap.useStreetPath(path,guides):false;mapKey(true);if(!lejos.ok)migraAvance(data,saved.path);if(!lejos.ok)status('warn','Calles recuperadas del dispositivo, pero no se usan para navegar. '+S.apartText(lejos)+' La navegación sigue el GPX original.');else status(saved.legacy?'warn':'ready',saved.legacy?'Calles anteriores recuperadas sin repetir la consulta. La navegación sigue disponible; pulsa Reconocer ahora una vez para añadir salidas de rotonda y maniobras viales.':'Calles recuperadas del dispositivo · '+(saved.coverage||'—')+' % de coincidencia · '+guides.length+' maniobras viales. No se ha repetido el reconocimiento.',saved.legacy);window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:saved.coverage,navigation:navigable,bridges:saved.bridges||0,gaps:0,pieces:1,maneuvers:guides.length,lengthPct:medida.pct,source:'dispositivo',cached:true,legacy:saved.legacy}}));return;}}
+  if(!force){const saved=loadCache(data);if(saved){const medida=S.usable(S.length(saved.path,C.distance),S.length(data.pts,C.distance));if(medida.ok){const lejos=S.apart(data.pts,saved.path,C.distance),usar=lejos.pct>=S.MIN_UTIL;path=saved.path;coverage=saved.coverage;lengthPct=medida.pct;layer=L.featureGroup().addTo(state.map);L.polyline(path.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(layer);layer.bringToBack();const guides=Array.isArray(saved.turns)?saved.turns:[],navegar=usar?navegable(data,path,guides,lejos):null;if(navegar&&navegar.pts!==path)migraAvance(data,path,navegar.pts);else if(!navegar)migraAvance(data,path,data.pts);navigable=navegar?RutasMap.useStreetPath(navegar.pts,navegar.turns):false;mapKey(true);if(!navegar)status('warn','Calles recuperadas del dispositivo. '+S.apartText(lejos)+' La navegación sigue el GPX original.');else status(saved.legacy?'warn':'ready',(saved.legacy?'Calles anteriores recuperadas sin repetir la consulta. La navegación sigue disponible; pulsa Reconocer ahora una vez para añadir salidas de rotonda y maniobras viales.':'Calles recuperadas del dispositivo · '+(saved.coverage||'—')+' % de coincidencia · '+navegar.turns.length+' maniobras viales. No se ha repetido el reconocimiento.')+(lejos.largos.length?' '+S.spliceText(lejos):''),saved.legacy);window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:saved.coverage,navigation:navigable,bridges:saved.bridges||0,gaps:0,pieces:1,maneuvers:navegar?navegar.turns.length:0,lengthPct:medida.pct,gpxTramos:navegar?lejos.largos.length:0,source:'dispositivo',cached:true,legacy:saved.legacy}}));return;}}
   if(data.source==='saved'){status('warn','Este recorrido guardado aún no tiene calles reconocidas. Carga el GPX una vez o pulsa Reconocer ahora.',true);return;}}
  const chunks=S.chunks(input,60);status('loading','Buscando las calles y carreteras que pasan por los puntos del GPX…');controller=new AbortController();
  try{
@@ -123,13 +133,13 @@ async function match(force=false){
   if(matched.length<2)throw Error('No se obtuvo un trazado continuo por calles.');
   const pct=S.coverage(input,matched);if(pct<25)throw Error('No se pudo asociar esta traza con suficientes calles cercanas.');
   const medida=S.usable(S.length(matched,C.distance),S.length(data.pts,C.distance));coverage=pct;lengthPct=medida.pct;
-  path=matched;const roadTurns=S.placeManeuvers(maniobrasVia,matched,C.distance),continuo=breaks.length===0,enlazados=detectados-breaks.length,lejos=S.apart(data.pts,matched,C.distance),fiable=continuo&&medida.ok&&lejos.ok;
+  path=matched;const roadTurns=S.placeManeuvers(maniobrasVia,matched,C.distance),continuo=breaks.length===0,enlazados=detectados-breaks.length,lejos=S.apart(data.pts,matched,C.distance),fiable=continuo&&medida.ok&&lejos.pct>=S.MIN_UTIL;
   // Un corte sin enlazar jamás se cruza con una recta: el camino se dibuja a trozos.
   const piezas=continuo?[matched]:S.split(matched,breaks);
   layer=L.featureGroup().addTo(state.map);
   for(const pieza of piezas)L.polyline(pieza.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(layer);
   layer.bringToBack();
-  const used=fiable?RutasMap.useStreetPath(path,roadTurns):false;navigable=used;mapKey(true);
+  const navegar=fiable?navegable(data,path,roadTurns,lejos):null,used=navegar?RutasMap.useStreetPath(navegar.pts,navegar.turns):false;navigable=used;mapKey(true);
   const reserva=puentesDe.has(BRIDGES[1].name);
   status(fiable?'ready':'warn',
    (continuo?'Trazado vial continuo · ':'Trazado vial con interrupciones · ')+pct+' % de los puntos quedan cerca de una calle reconocida.'
@@ -137,12 +147,12 @@ async function match(force=false){
    +(enlazados>0?' '+enlazados+(enlazados===1?' corte enlazado':' cortes enlazados')+' por carretera.':'')
    +(continuo?'':' Quedan '+breaks.length+(breaks.length===1?' corte sin enlazar, dibujado como interrupción en vez de como recta.':' cortes sin enlazar, dibujados como interrupciones en vez de como rectas.'))
    +(medida.ok?'':' Solo cubre el '+medida.pct+' % de los kilómetros del GPX: al reconocer las calles se han perdido pasadas repetidas.')
-   +(lejos.ok?'':' '+S.apartText(lejos))
-   +(fiable?' '+roadTurns.length+' maniobras viales preparadas para simulación y navegación.':' La navegación sigue el GPX original.'),
+   +(lejos.pct<S.MIN_UTIL?' '+S.apartText(lejos):'')
+   +(navegar?' '+navegar.turns.length+' maniobras viales preparadas para simulación y navegación.'+(lejos.largos.length?' '+S.spliceText(lejos):''):' La navegación sigue el GPX original.'),
    !fiable);
   cortesVisibles=breaks.length;
   if(fiable)saveCache(data,{path,turns:roadTurns,coverage:pct,bridges:enlazados,gaps:0,lengthPct:medida.pct,navigable:true});
-  window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:pct,navigation:used,bridges:enlazados,gaps:breaks.length,pieces:piezas.length,maneuvers:roadTurns.length,lengthPct:medida.pct,source:MATCHER.name,bridgedBy:[...puentesDe]}}));
+  window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:pct,navigation:used,bridges:enlazados,gaps:breaks.length,pieces:piezas.length,maneuvers:navegar?navegar.turns.length:roadTurns.length,lengthPct:medida.pct,gpxTramos:navegar?lejos.largos.length:0,source:MATCHER.name,bridgedBy:[...puentesDe]}}));
  }catch(error){if(error.name!=='AbortError'&&own===run)status('error','No se pudo dibujar el trazado por calles. '+error.message+' El GPX original sigue disponible.',true);}
  finally{if(own===run)controller=null;}
 }

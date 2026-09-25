@@ -82,22 +82,27 @@ test('un callejon sin salida que el trazado se salta se detecta',()=>{
  // Fuera quedan los puntos a mas de 45 m: de 50 a 200 y vuelta, unos 300 m de GPX.
  assert.ok(r.mayor>250&&r.mayor<320,'tramo de '+r.mayor);
  assert.ok(r.pct>=80,'el resto si esta cerca: '+r.pct);
- assert.match(S.apartText(r),/se salta un tramo de tu GPX de (29\d|30\d) m, en el km 1,[01]\./);
+ assert.equal(r.largos.length,1);
+ assert.equal(S.apartText(r),'','el resto coincide: las calles se siguen usando');
+ assert.match(S.spliceText(r),/^En un tramo de (29\d|30\d) m, en el km 1,[01], se sigue tu GPX: las calles reconocidas no pasan por ahí\.$/);
 });
 
 test('un trazado que va por otro sitio dice cuanto se aparta',()=>{
  const r=S.apart(recto(0,3000),recto(0,3000,300),NC.distance);
  assert.equal(r.ok,false);assert.equal(r.pct,0);
- assert.match(S.apartText(r),/se salta un tramo de tu GPX de 3,0 km, en el km 0,0\. Solo el 0 % de tu GPX queda a menos de 45 m de él\./);
+ assert.equal(S.apartText(r),'Las calles reconocidas solo coinciden con el 0 % de tu GPX: no se usan para navegar.');
 });
 
-test('muchos desvios cortos tambien cuentan, por el porcentaje',()=>{
+test('muchos desvios cortos bajan el porcentaje, pero no se sustituyen por el GPX',()=>{
  // Cada 200 m, 60 m del GPX a 60 m del trazado: ninguno pasa de 100 m, pero suman el 30 %.
  const gpx=[];for(let x=0;x<=4000;x+=10)gpx.push(en(x,(x%200)<60?60:0));
  const r=S.apart(gpx,recto(0,4000),NC.distance);
  assert.ok(r.mayor<=S.MAX_APARTE,'ningun tramo largo: '+r.mayor);
  assert.equal(r.ok,false);assert.ok(r.pct<S.MIN_CERCA);
- assert.match(S.apartText(r),/^Solo el \d+ % de tu GPX/);
+ // Cortos: ruido del GPS o rotondas cortadas por el medio. Las calles se siguen usando enteras.
+ assert.deepEqual(r.largos,[]);
+ assert.ok(r.pct>=S.MIN_UTIL,'pct '+r.pct);
+ assert.equal(S.apartText(r),'');assert.equal(S.spliceText(r),'');
 });
 
 test('un GPX con pocos puntos que corta las curvas no se da por apartado',()=>{
@@ -117,11 +122,79 @@ test('lo que cuenta son los metros recorridos, no los puntos grabados parado',()
 });
 
 test('apart no se rompe con entradas raras',()=>{
- const vacio={pct:0,tramos:[],mayor:0,ok:false};
+ const vacio={pct:0,tramos:[],largos:[],mayor:0,ok:false};
  assert.deepEqual(S.apart(null,recto(0,100),NC.distance),vacio);
  assert.deepEqual(S.apart(recto(0,100),[en(0,0)],NC.distance),vacio);
  assert.deepEqual(S.apart(recto(0,100),recto(0,100),null),vacio);
  assert.deepEqual(S.apart(recto(0,100),[{lat:NaN,lon:1},{lat:NaN,lon:2}],NC.distance),vacio);
  assert.equal(S.apart([...recto(0,100),{lat:NaN,lon:NaN},...recto(110,200)],recto(0,200),NC.distance).ok,true);
- assert.equal(S.apartText(null),'');
+ assert.equal(S.apartText(null),'');assert.equal(S.spliceText(null),'');
+ assert.equal(S.splice(recto(0,100),recto(0,100),NC.distance,null),null);
+});
+
+// ---- splice: calles donde coinciden, GPX donde las calles se saltan la ronda ----
+const union=(gpx,calles)=>{const r=S.apart(gpx,calles,NC.distance);return {r,u:S.splice(gpx,calles,NC.distance,r)};};
+const cerca=(pts,q,m=5)=>pts.some(p=>NC.distance(p,q)<=m);
+const largo=pts=>S.length(pts,NC.distance);
+// El GPX de la rotonda de la captura: pocos puntos, y la recta cruza la isleta por el medio.
+function rotonda(){
+ const R=35,gpx=[...recto(0,1000,0,20)],calles=[...recto(0,1000,0,15)];
+ gpx.push(en(1000+R,0),en(1000+2*R,0));                               // por el centro
+ for(let a=Math.PI;a>=0;a-=Math.PI/12)calles.push(en(1000+R+R*Math.cos(a),-R*Math.sin(a)));  // por el anillo
+ return {gpx:[...gpx,...recto(1000+2*R+20,2000,0,20)],calles:[...calles,...recto(1000+2*R+15,2000,0,15)]};
+}
+
+test('una rotonda cortada por el medio no hace dejar las calles',()=>{
+ const {gpx,calles}=rotonda(),{r,u}=union(gpx,calles);
+ assert.deepEqual(r.largos,[]);
+ assert.equal(u.pts.length,calles.length,'la linea que se navega es la de las calles, entera');
+ assert.ok(cerca(u.pts,en(1035,-35),1),'pasa por el anillo');
+});
+
+test('un callejon que las calles se saltan se navega por el GPX, y el resto por calles',()=>{
+ const gpx=[...recto(0,1000),...Array.from({length:20},(_,i)=>en(1000,(i+1)*10)),...Array.from({length:20},(_,i)=>en(1000,190-i*10)),...recto(1010,2000)];
+ const calles=recto(0,2000,3,25);
+ const {u}=union(gpx,calles);
+ assert.ok(cerca(u.pts,en(1000,200)),'entra en el callejon');
+ assert.ok(Math.abs(largo(u.pts)-largo(gpx))<30,'mide lo que el GPX: '+Math.round(largo(u.pts))+' / '+Math.round(largo(gpx)));
+ assert.deepEqual(u.secciones.map(s=>s.tipo),['calles','gpx','calles']);
+ // Las uniones son cortas: nunca una recta larga inventada.
+ for(let i=1;i<u.pts.length;i++)assert.ok(NC.distance(u.pts[i-1],u.pts[i])<=S.RADIO_APARTE+1,'salto de '+NC.distance(u.pts[i-1],u.pts[i]));
+});
+
+test('las maniobras de las calles se recolocan y las de lo que se quita desaparecen',()=>{
+ // El GPX sigue recto 600 m; las calles se desvian 150 m por otra calle y vuelven.
+ const gpx=recto(0,2000);
+ const calles=[...recto(0,700,0,25),en(700,150),en(1300,150),...recto(1300,2000,0,25)];
+ const {r,u}=union(gpx,calles);
+ assert.equal(r.largos.length,1);
+ const turns=[{d:300,label:'antes'},{d:largo(calles.slice(0,29))+75,label:'en el desvio'},{d:largo(calles)-200,label:'despues'}];
+ const t=S.spliceTurns(turns,u.secciones);
+ assert.deepEqual(t.map(x=>x.label),['antes','despues']);
+ assert.ok(Math.abs(t[0].d-300)<1);
+ const destino=largo(u.pts)-200;
+ assert.ok(Math.abs(t[1].d-destino)<3,'despues: '+t[1].d+' / '+destino);
+});
+
+test('un tramo al principio o al final se navega por el GPX desde el borde',()=>{
+ // Sale de una nave -300 m fuera de las calles- y acaba en otra.
+ const nave=Array.from({length:30},(_,i)=>en(0,-300+i*10)),llegada=Array.from({length:30},(_,i)=>en(2000,10+i*10));
+ const gpx=[...nave,...recto(0,2000),...llegada],calles=recto(0,2000,0,25);
+ const {r,u}=union(gpx,calles);
+ assert.equal(r.largos.length,2);
+ assert.ok(NC.distance(u.pts[0],gpx[0])<1,'empieza donde el GPX');
+ assert.ok(NC.distance(u.pts.at(-1),gpx.at(-1))<1,'acaba donde el GPX');
+ assert.deepEqual(u.secciones.map(s=>s.tipo),['gpx','calles','gpx']);
+});
+
+test('dos vueltas a la misma manzana: cada pasada va con la suya',()=>{
+ const lado=[];for(let x=0;x<400;x+=10)lado.push(en(x,0));for(let y=0;y<400;y+=10)lado.push(en(400,y));
+ for(let x=400;x>0;x-=10)lado.push(en(x,400));for(let y=400;y>0;y-=10)lado.push(en(0,y));
+ const dos=[...lado,...lado,en(0,0)];
+ const f=S.follow(dos,dos,NC.distance),cum=[0];for(let i=1;i<dos.length;i++)cum.push(cum[i-1]+NC.distance(dos[i-1],dos[i]));
+ f.pos.forEach((d,i)=>assert.ok(Math.abs(d-cum[i])<1,'punto '+i+': '+d+' / '+cum[i]));
+ // Y si las calles solo dan una vuelta, la segunda sale del GPX: no se da por hecha.
+ const {r,u}=union(dos,[...lado,en(0,0)]);
+ assert.equal(r.largos.length,1);
+ assert.ok(Math.abs(largo(u.pts)-largo(dos))<50,'dos vueltas: '+Math.round(largo(u.pts)));
 });
