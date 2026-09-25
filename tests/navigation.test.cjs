@@ -100,3 +100,46 @@ test('el avance se conserva al cambiar de trazado a mitad de ronda',()=>{
  for(const mal of [[1,0,100],[1,100,0],[NaN,100,100]])assert.equal(N.remapProgress(...mal),0);
 });
 
+
+// ---- el avance guardado, sobre la linea de ahora ----
+{
+ const KX=111320*Math.cos(41.9*Math.PI/180),KY=110540;
+ const en=(x,y)=>({lat:41.9+y/KY,lon:1.87+x/KX});
+ // El GPX va en zigzag (mide mas); el trazado por calles, recto por la misma calle.
+ const gpx=[],calles=[];
+ for(let x=0;x<=5000;x+=10){gpx.push(en(x,(x/10)%2?6:-6));calles.push(en(x,0));}
+ const G=N.prepare(gpx),P=N.prepare(calles);
+ const guardado=(r,d)=>{const p=N.at(r,d);return {d,total:r.total,lat:+p.lat.toFixed(6),lon:+p.lon.toFixed(6)};};
+
+ test('el avance guardado sobre la misma linea vale tal cual',()=>{
+  assert.equal(N.carryProgress(P,guardado(P,3200)),3200);
+  assert.equal(N.carryProgress(P,{d:3200}),3200,'lo guardado antes, sin total, tambien');
+ });
+
+ test('el avance guardado sobre las calles cae en el mismo sitio del GPX',()=>{
+  assert.ok(G.total>P.total*1.05,'el GPX mide mas: '+Math.round(G.total)+' / '+Math.round(P.total));
+  const d=N.carryProgress(G,guardado(P,3200));
+  const donde=N.at(G,d),alli=en(3200,0);
+  assert.ok(N.distance(donde,alli)<15,'a '+Math.round(N.distance(donde,alli))+' m del punto guardado');
+  // Y al reves.
+  const v=N.carryProgress(P,guardado(G,d));
+  assert.ok(Math.abs(v-3200)<15,'vuelta: '+v);
+ });
+
+ test('en una calle por la que se pasa dos veces, se queda con la pasada que toca',()=>{
+  // Ida y vuelta por la misma calle: el punto de los 1000 m se pisa a 1000 m y a 9000 m.
+  const ida=[];for(let x=0;x<=5000;x+=10)ida.push(en(x,0));
+  const vuelta=[];for(let x=5000;x>=0;x-=10)vuelta.push(en(x,3));
+  const R=N.prepare([...ida,...vuelta]);
+  const larga=N.prepare([...ida.map((p,i)=>i%2?{...p,lat:p.lat+8/KY}:p),...vuelta]);
+  const d=N.carryProgress(larga,guardado(R,9000));
+  assert.ok(d>larga.total/2,'en la vuelta, no en la ida: '+Math.round(d)+' de '+Math.round(larga.total));
+ });
+
+ test('sin el punto guardado se traslada en proporcion, y lo roto no da un numero',()=>{
+  const d=N.carryProgress(G,{d:P.total/2,total:P.total});
+  assert.ok(Math.abs(d-G.total/2)<1);
+  assert.ok(Number.isNaN(N.carryProgress(G,null)));
+  assert.ok(Number.isNaN(N.carryProgress(G,{d:'x'})));
+ });
+}

@@ -60,3 +60,68 @@ test('lee las patas del servicio de reserva',()=>{const a=[{lat:41,lon:2},{lat:4
 test('lee un enlace del servicio de reserva',()=>{const linea=[{lat:41,lon:2},{lat:41.002,lon:2.001}];
  assert.equal(S.osrmRoute({code:'Ok',routes:[{geometry:encode(linea)}]}).length,2);
  for(const mal of [null,{code:'Ok',routes:[]},{code:'Ok',routes:[{}]},{code:'NoRoute'}])assert.throws(()=>S.osrmRoute(mal));});
+
+// ---- apart: donde se aparta el trazado por calles del GPX ----
+const NC=require('../nav-core');
+const KXa=111320*Math.cos(41.9*Math.PI/180),KYa=110540;
+const en=(x,y)=>({lat:41.9+y/KYa,lon:1.87+x/KXa});
+// GPX recto hacia el este, un punto cada 10 m.
+const recto=(desde,hasta,y=0,paso=10)=>{const l=[];for(let x=desde;x<=hasta;x+=paso)l.push(en(x,y));return l;};
+
+test('un trazado que sigue el GPX no se aparta',()=>{
+ const gpx=recto(0,2000),r=S.apart(gpx,recto(0,2000,8,25),NC.distance);
+ assert.equal(r.ok,true);assert.equal(r.pct,100);assert.deepEqual(r.tramos,[]);assert.equal(S.apartText(r),'');
+});
+
+test('un callejon sin salida que el trazado se salta se detecta',()=>{
+ // El GPX entra 200 m en un callejon a los 1000 m y vuelve; el trazado sigue recto.
+ const gpx=[...recto(0,1000),...Array.from({length:20},(_,i)=>en(1000,(i+1)*10)),...Array.from({length:20},(_,i)=>en(1000,190-i*10)),...recto(1010,2000)];
+ const r=S.apart(gpx,recto(0,2000),NC.distance);
+ assert.equal(r.ok,false);
+ assert.equal(r.tramos.length,1);
+ // Fuera quedan los puntos a mas de 45 m: de 50 a 200 y vuelta, unos 300 m de GPX.
+ assert.ok(r.mayor>250&&r.mayor<320,'tramo de '+r.mayor);
+ assert.ok(r.pct>=80,'el resto si esta cerca: '+r.pct);
+ assert.match(S.apartText(r),/se salta un tramo de tu GPX de (29\d|30\d) m, en el km 1,[01]\./);
+});
+
+test('un trazado que va por otro sitio dice cuanto se aparta',()=>{
+ const r=S.apart(recto(0,3000),recto(0,3000,300),NC.distance);
+ assert.equal(r.ok,false);assert.equal(r.pct,0);
+ assert.match(S.apartText(r),/se salta un tramo de tu GPX de 3,0 km, en el km 0,0\. Solo el 0 % de tu GPX queda a menos de 45 m de él\./);
+});
+
+test('muchos desvios cortos tambien cuentan, por el porcentaje',()=>{
+ // Cada 200 m, 60 m del GPX a 60 m del trazado: ninguno pasa de 100 m, pero suman el 30 %.
+ const gpx=[];for(let x=0;x<=4000;x+=10)gpx.push(en(x,(x%200)<60?60:0));
+ const r=S.apart(gpx,recto(0,4000),NC.distance);
+ assert.ok(r.mayor<=S.MAX_APARTE,'ningun tramo largo: '+r.mayor);
+ assert.equal(r.ok,false);assert.ok(r.pct<S.MIN_CERCA);
+ assert.match(S.apartText(r),/^Solo el \d+ % de tu GPX/);
+});
+
+test('un GPX con pocos puntos que corta las curvas no se da por apartado',()=>{
+ // Un punto cada 500 m sobre una curva cerrada: las rectas entre ellos se separan de la
+ // carretera mas de 45 m, pero los puntos estan en ella.
+ const curva=[];for(let a=0;a<=Math.PI;a+=Math.PI/200)curva.push(en(Math.cos(a)*1000,Math.sin(a)*1000));
+ const escaso=curva.filter((_,i)=>i%25===0);
+ assert.ok(NC.distance(escaso[0],escaso[1])>300);
+ assert.equal(S.apart(escaso,curva,NC.distance).ok,true);
+});
+
+test('lo que cuenta son los metros recorridos, no los puntos grabados parado',()=>{
+ // 300 puntos en el mismo sitio, lejos del trazado (el camion parado en un patio), y 2 km bien.
+ const gpx=[...recto(0,1000),...Array.from({length:300},()=>en(1000,80)),...recto(1000,2000)];
+ const r=S.apart(gpx,recto(0,2000),NC.distance);
+ assert.ok(r.pct>=95,'pct '+r.pct);
+});
+
+test('apart no se rompe con entradas raras',()=>{
+ const vacio={pct:0,tramos:[],mayor:0,ok:false};
+ assert.deepEqual(S.apart(null,recto(0,100),NC.distance),vacio);
+ assert.deepEqual(S.apart(recto(0,100),[en(0,0)],NC.distance),vacio);
+ assert.deepEqual(S.apart(recto(0,100),recto(0,100),null),vacio);
+ assert.deepEqual(S.apart(recto(0,100),[{lat:NaN,lon:1},{lat:NaN,lon:2}],NC.distance),vacio);
+ assert.equal(S.apart([...recto(0,100),{lat:NaN,lon:NaN},...recto(110,200)],recto(0,200),NC.distance).ok,true);
+ assert.equal(S.apartText(null),'');
+});

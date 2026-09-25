@@ -1,7 +1,8 @@
 (function(root){
 'use strict';
-// Guardar la ultima ruta en el propio movil, en poco sitio. Y, al final, los datos de calles
-// del comprobador de sentidos, con la misma codificacion.
+// Guardar la ultima ruta en el propio movil, en poco sitio. Con la misma codificacion se
+// guardan el trazado ajustado a las calles (street-match.js, con packTrack) y, al final de
+// este fichero, los datos de calles del comprobador de sentidos.
 //
 // Se guardaba como JSON punto a punto -{"lat":…,"lon":…,"ele":null,"time":"2026-…Z"}-, unos
 // 155 caracteres por punto. Una ronda de 110 km y 18 500 puntos son 2,9 millones de
@@ -177,13 +178,31 @@ function unpack(text){
 // que trae OpenStreetMap, asi que vuelve exactamente igual. Lo que no usa nadie -el recuadro
 // "bounds" de cada via- no se guarda. Que vias se guardan lo decide nearRoute(), en
 // restrictions-core.js.
+// Una linea de puntos {lat,lon}, sin nada mas: la geometria de una via o el trazado ajustado
+// a las calles. Exacta hasta 7 decimales; OpenStreetMap trae 7 y el trazado de calles, 6.
+function packLine(pts){
+ let pa=0,po=0,g='';
+ for(const q of pts){const a=fijo(q.lat),o=fijo(q.lon);g+=enc(a-pa)+enc(o-po);pa=a;po=o;}
+ return g;
+}
+function unpackLine(g,n){
+ if(typeof g!=='string'||!Number.isInteger(n)||n<0)throw Error('Linea guardada no valida.');
+ const c={i:0},out=[];let a=0,b=0;
+ for(let i=0;i<n;i++){
+  a+=dec(g,c);b+=dec(g,c);
+  const lat=a/F,lon=b/F;
+  if(Math.abs(lat)>90||Math.abs(lon)>180)throw Error('Linea guardada con coordenadas imposibles.');
+  out.push({lat,lon});
+ }
+ if(c.i!==g.length)throw Error('Linea guardada con datos de mas.');
+ return out;
+}
+
 function packRoads(data){
  const ways=[];
  for(const w of Array.isArray(data&&data.elements)?data.elements:[]){
   if(!w||w.type!=='way'||!Number.isSafeInteger(w.id)||!Array.isArray(w.geometry))continue;
-  let pa=0,po=0,g='';
-  for(const q of w.geometry){const a=fijo(q.lat),o=fijo(q.lon);g+=enc(a-pa)+enc(o-po);pa=a;po=o;}
-  ways.push([w.id,w.tags||{},w.geometry.length,g]);
+  ways.push([w.id,w.tags||{},w.geometry.length,packLine(w.geometry)]);
  }
  const out={v:2,ways};
  if(data&&data.osm3s)out.osm3s=data.osm3s;
@@ -194,21 +213,13 @@ function unpackRoads(o){
  const elements=o.ways.map(r=>{
   if(!Array.isArray(r)||r.length!==4||!Number.isSafeInteger(r[0])||!Number.isInteger(r[2])||r[2]<0||typeof r[3]!=='string')
    throw Error('Datos de calles guardados no validos.');
-  const c={i:0},geometry=[];let a=0,b=0;
-  for(let i=0;i<r[2];i++){
-   a+=dec(r[3],c);b+=dec(r[3],c);
-   const lat=a/F,lon=b/F;
-   if(Math.abs(lat)>90||Math.abs(lon)>180)throw Error('Datos de calles con coordenadas imposibles.');
-   geometry.push({lat,lon});
-  }
-  if(c.i!==r[3].length)throw Error('Datos de calles con datos de mas.');
-  return {type:'way',id:r[0],tags:r[1]&&typeof r[1]==='object'?r[1]:{},geometry};
+  return {type:'way',id:r[0],tags:r[1]&&typeof r[1]==='object'?r[1]:{},geometry:unpackLine(r[3],r[2])};
  });
  const data={elements};
  if(o.osm3s)data.osm3s=o.osm3s;
  return data;
 }
 
-const api={pack,unpack,packTrack,unpackTrack,packRoads,unpackRoads,enc,dec,fijo,F,FE};
+const api={pack,unpack,packTrack,unpackTrack,packRoads,unpackRoads,packLine,unpackLine,enc,dec,fijo,F,FE};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasRouteStore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

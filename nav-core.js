@@ -88,6 +88,24 @@ function remapProgress(done,fromTotal,toTotal){
  const f=Math.max(0,Math.min(1,done/fromTotal));
  return f*toTotal;
 }
+// El avance guardado es una distancia sobre la linea que se seguia al guardarlo: el GPX o el
+// trazado por calles, que miden distinto -111 y 108 km en la ronda larga-. Leido sobre la
+// otra, "Continuar desde 100 km" caia casi 3 km antes. Con cuanto media aquella linea y donde
+// estaba el punto, se traslada a la de ahora: primero en proporcion y luego al paso por ese
+// sitio que caiga mas cerca, que una ronda pasa varias veces por la misma calle. Lo guardado
+// sin esos datos vale tal cual, como antes.
+function carryProgress(r,saved){
+ if(!r||!saved||!Number.isFinite(saved.d))return NaN;
+ const total=Number(saved.total);
+ if(!(total>0)||Math.abs(total-r.total)<=1)return saved.d;
+ let d=remapProgress(saved.d,total,r.total);
+ const lat=Number(saved.lat),lon=Number(saved.lon);
+ if(Number.isFinite(lat)&&Number.isFinite(lon)){
+  const m=match(r,{lat,lon},Math.max(0,d-1500),3000,d);
+  if(m&&m.error<70)d=m.d;
+ }
+ return d;
+}
 function gpsFatal(code){return code===1;}
 function gpsPause(code){
  return code===3?'El GPS tarda en responder. Indicaciones pausadas hasta recuperar la posición.'
@@ -113,5 +131,5 @@ function rejoin(r,p,progress,{minAhead=100,maxAhead=1500,course=null}={}){
  }
  return best;
 }
-const api={distance,prepare,at,heading,match,section,turns,guidance,fingerprint,nearbyPasses,rejoin,speedAt,stops,stopProgress,remainingSeconds,gpsFatal,gpsPause,transferTimes,remapProgress,simplify,packRoute,unpackRoute,TURN_MIN_SPEED,TURN_MIN_GAP,STOP_RADIUS,STOP_SECONDS};if(typeof module!=='undefined')module.exports=api;else root.RutasNav=api;
+const api={distance,prepare,at,heading,match,section,turns,guidance,fingerprint,nearbyPasses,rejoin,speedAt,stops,stopProgress,remainingSeconds,gpsFatal,gpsPause,transferTimes,remapProgress,carryProgress,simplify,packRoute,unpackRoute,TURN_MIN_SPEED,TURN_MIN_GAP,STOP_RADIUS,STOP_SECONDS};if(typeof module!=='undefined')module.exports=api;else root.RutasNav=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -163,5 +163,82 @@ function coverage(samples,path,radius=45){
  for(const p of take){const kx=111320*Math.cos(p.lat*Math.PI/180),ky=110540;let best=Infinity;for(let i=0;i<path.length-1;i++){const a=path[i],b=path[i+1],x=(a.lon-p.lon)*kx,y=(a.lat-p.lat)*ky,dx=(b.lon-a.lon)*kx,dy=(b.lat-a.lat)*ky,l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,-(x*dx+y*dy)/l)):0;best=Math.min(best,Math.hypot(x+t*dx,y+t*dy));if(best<=radius)break;}if(best<=radius)hit++;}
  return Math.round(hit/take.length*100);
 }
-const api={decode,extract,legs,guidedLegs,roadManeuver,placeManeuvers,upgradeManeuvers,osrmLegs,osrmRoute,input,chunks,merge,joins,assemble,batches,split,coverage,length,usable,MIN_LENGTH_RATIO};if(typeof module!=='undefined')module.exports=api;else root.RutasStreetCore=api;
+// Donde se aparta el trazado por calles del GPX. Cuando el trazado es fiable, la navegacion
+// lo sigue a el y no al GPX, asi que tiene que pasar por donde pasa la ronda. No bastaba con
+// que fuera continuo y midiera parecido: con una ronda de 111 km se acepto uno de 108 km del
+// que solo el 7 % del GPX quedaba a menos de 15 m, y el 38 % a mas de 200 m. La cobertura de
+// arriba no lo veia: mira 160 muestras, una cada 700 m en esa ronda, y un callejon sin salida
+// que el reconocimiento se salte cabe entre dos.
+// Aqui se miran todos los puntos del GPX, con un indice por celdas para que no cueste. Los
+// puntos y no las rectas entre ellos: un GPX planificado, con un punto en cada cruce, corta
+// las curvas por la recta, y eso no es apartarse.
+const RADIO_APARTE=45;   // mas lejos que esto del trazado, ese punto del GPX no esta en el
+const MAX_APARTE=100;    // un tramo seguido fuera, mas largo que esto, es una calle que falta
+const MIN_CERCA=90;      // % de los metros del GPX que tienen que quedar cerca
+function apart(gpx,path,distance,opts){
+ const o=opts||{},radio=Number.isFinite(o.radio)&&o.radio>0?o.radio:RADIO_APARTE;
+ const vacio={pct:0,tramos:[],mayor:0,ok:false};
+ if(!Array.isArray(gpx)||gpx.length<2||!Array.isArray(path)||path.length<2||typeof distance!=='function')return vacio;
+ const ref=gpx.find(p=>p&&Number.isFinite(p.lat));if(!ref)return vacio;
+ const kx=111320*Math.cos(ref.lat*Math.PI/180),ky=110540,celda=100,grid=new Map();
+ const xy=p=>({x:p.lon*kx,y:p.lat*ky});
+ const seg=[];
+ for(let i=0;i<path.length-1;i++){
+  const a=xy(path[i]),b=xy(path[i+1]);
+  if(![a.x,a.y,b.x,b.y].every(Number.isFinite))continue;
+  const s={a,dx:b.x-a.x,dy:b.y-a.y};s.l=s.dx*s.dx+s.dy*s.dy;seg.push(s);
+  for(let cx=Math.floor(Math.min(a.x,b.x)/celda);cx<=Math.floor(Math.max(a.x,b.x)/celda);cx++)
+   for(let cy=Math.floor(Math.min(a.y,b.y)/celda);cy<=Math.floor(Math.max(a.y,b.y)/celda);cy++){
+    const k=cx+':'+cy;let l=grid.get(k);if(!l)grid.set(k,l=[]);l.push(s);
+   }
+ }
+ if(!seg.length)return vacio;
+ function cerca(p){
+  const q=xy(p);
+  for(let cx=Math.floor((q.x-radio)/celda);cx<=Math.floor((q.x+radio)/celda);cx++)
+   for(let cy=Math.floor((q.y-radio)/celda);cy<=Math.floor((q.y+radio)/celda);cy++)
+    for(const s of grid.get(cx+':'+cy)||[]){
+     const t=s.l?Math.max(0,Math.min(1,((q.x-s.a.x)*s.dx+(q.y-s.a.y)*s.dy)/s.l)):0;
+     if(Math.hypot(q.x-s.a.x-t*s.dx,q.y-s.a.y-t*s.dy)<=radio)return true;
+    }
+  return false;
+ }
+ // Cada punto pesa la mitad de lo que lo separa de sus vecinos: asi cuenta lo recorrido, no
+ // cuantos puntos grabo el movil mientras el camion estaba parado.
+ let total=0,dentro=0,acum=0,abierto=null;const tramos=[];
+ for(let i=0;i<gpx.length;i++){
+  const p=gpx[i];
+  const antes=i?distance(gpx[i-1],p)||0:0,despues=i<gpx.length-1?distance(p,gpx[i+1])||0:0,peso=(antes+despues)/2;
+  acum+=antes;total+=peso;
+  if(!p||!Number.isFinite(p.lat)||!Number.isFinite(p.lon)||cerca(p)){
+   dentro+=peso;
+   if(abierto){tramos.push(abierto);abierto=null;}
+   continue;
+  }
+  if(!abierto)abierto={desde:acum,hasta:acum};else abierto.hasta=acum;
+ }
+ if(abierto)tramos.push(abierto);
+ for(const t of tramos)t.metros=t.hasta-t.desde;
+ const mayor=tramos.reduce((m,t)=>Math.max(m,t.metros),0);
+ // Hacia abajo: un 89,6 % no es un 90 %.
+ const pct=total>0?Math.floor(dentro/total*100):0;
+ return {pct,tramos,mayor,ok:pct>=MIN_CERCA&&mayor<=MAX_APARTE};
+}
+function metrosTexto(m){return m>=1000?(m/1000).toFixed(1).replace('.',',')+' km':Math.round(m)+' m';}
+// Lo que se le dice a quien conduce: donde, y cuanto. Sin tecnicismos.
+function apartText(r){
+ if(!r||r.ok)return '';
+ const partes=[],largos=(r.tramos||[]).filter(t=>t.metros>MAX_APARTE);
+ if(largos.length){
+  const m=largos.reduce((a,b)=>b.metros>a.metros?b:a);
+  partes.push(largos.length===1
+   ?'Este trazado se salta un tramo de tu GPX de '+metrosTexto(m.metros)+', en el km '+(m.desde/1000).toFixed(1).replace('.',',')+'.'
+   :'Este trazado se salta '+largos.length+' tramos de tu GPX; el mayor, de '+metrosTexto(m.metros)+', en el km '+(m.desde/1000).toFixed(1).replace('.',',')+'.');
+ }
+ if(r.pct<MIN_CERCA)partes.push('Solo el '+r.pct+' % de tu GPX queda a menos de '+RADIO_APARTE+' m de él.');
+ return partes.join(' ');
+}
+
+const api={decode,extract,legs,guidedLegs,roadManeuver,placeManeuvers,upgradeManeuvers,osrmLegs,osrmRoute,input,chunks,merge,joins,assemble,batches,split,coverage,length,usable,MIN_LENGTH_RATIO,
+           apart,apartText,RADIO_APARTE,MAX_APARTE,MIN_CERCA};if(typeof module!=='undefined')module.exports=api;else root.RutasStreetCore=api;
 })(typeof window!=='undefined'?window:globalThis);

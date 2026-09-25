@@ -162,3 +162,28 @@ test('una ruta que viene de un guardado antiguo tambien se compacta',()=>{
  assert.equal(o.antiguo,undefined,'no debe caer en la reserva');
  assert.ok(JSON.stringify(o).length<JSON.stringify(copia).length/10,'y ocupa mucho menos');
 });
+
+// El trazado ajustado a las calles (street-match.js) se guarda con packTrack: solo lat y lon.
+test('el trazado de calles vuelve igual, sin campos de mas y con la misma huella',()=>{
+ const trazado=[];
+ // Como los da el reconocimiento de calles: 6 decimales.
+ for(let i=0;i<500;i++)trazado.push({lat:Math.round((41.97+i*0.00013)*1e6)/1e6,lon:Math.round((1.87+Math.sin(i/9)*0.002)*1e6)/1e6});
+ // Y puntos intermedios calculados, con todos los decimales, uno justo al oeste de Greenwich.
+ trazado.push({lat:41.9701234567891,lon:1.8712345678912},{lat:41.97,lon:-0.00000001},{lat:41.97,lon:0.0000003});
+ const vuelta=S.unpackTrack(JSON.parse(JSON.stringify(S.packTrack({pts:trazado})))).pts.map(p=>({lat:p.lat,lon:p.lon}));
+ assert.equal(vuelta.length,trazado.length);
+ assert.deepEqual(vuelta.slice(0,500),trazado.slice(0,500),'los de 6 decimales, exactos');
+ assert.equal(N.fingerprint(N.prepare(vuelta)),N.fingerprint(N.prepare(trazado)),'misma huella');
+ assert.deepEqual(Object.keys(vuelta[0]),['lat','lon']);
+});
+
+test('una linea de puntos va y vuelve, y si esta rota se rechaza',()=>{
+ const l=[{lat:41.9744390,lon:1.8706510},{lat:-33.8688197,lon:151.2092955},{lat:0,lon:-179.9999999}];
+ const g=S.packLine(l);
+ assert.deepEqual(S.unpackLine(g,3),l);
+ assert.deepEqual(S.unpackLine('',0),[]);
+ assert.throws(()=>S.unpackLine(g,2),/de mas/);
+ assert.throws(()=>S.unpackLine(g,4),/incompleta/);
+ assert.throws(()=>S.unpackLine(g,-1));
+ assert.throws(()=>S.unpackLine(null,0));
+});

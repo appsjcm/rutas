@@ -7,8 +7,30 @@ const text=document.getElementById('street-match-text'),retry=document.getElemen
 let controller=null,routeRef=null,layer=null,path=[],run=0,cortesVisibles=0,matchState='idle',navigable=false,coverage=null,lengthPct=null;
 const CACHE_PREFIX='rutas-street-path-v2:',LEGACY_CACHE_PREFIX='rutas-street-path-v1:';
 function cacheKey(data){return CACHE_PREFIX+C.fingerprint(C.prepare(data.pts));}
-function loadCache(data){try{const fingerprint=C.fingerprint(C.prepare(data.pts));for(const [prefix,legacy] of [[CACHE_PREFIX,false],[LEGACY_CACHE_PREFIX,true]]){const value=JSON.parse(localStorage.getItem(prefix+fingerprint));if(value&&Array.isArray(value.path)&&value.path.length>1&&value.path.every(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180))return {...value,turns:S.upgradeManeuvers(value.turns),legacy};}return null;}catch{return null;}}
-function saveCache(data,value){try{localStorage.setItem(cacheKey(data),JSON.stringify({...value,saved:Date.now()}));localStorage.removeItem(LEGACY_CACHE_PREFIX+C.fingerprint(C.prepare(data.pts)));const rows=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k?.startsWith(CACHE_PREFIX)){let saved=0;try{saved=JSON.parse(localStorage.getItem(k)).saved||0;}catch{}rows.push({k,saved});}}rows.sort((a,b)=>b.saved-a.saved);rows.slice(3).forEach(r=>localStorage.removeItem(r.k));}catch{}}
+// El trazado se guarda con la codificacion compacta de la ruta (route-store-core.js): la ronda
+// de 108 km pasa de 233 000 caracteres a unos 50 000, y se guardan hasta tres. La huella del
+// trazado sale igual al recuperarlo, que de ella cuelga el registro de tramos. Lo guardado
+// antes, con la lista de puntos tal cual, se sigue leyendo y se reescribe compacto al leerlo,
+// con su fecha de entonces.
+function packPath(value){const R=window.RutasRouteStore;if(!R)return value;const {path,...resto}=value;return {...resto,pista:R.packTrack({pts:path})};}
+function unpackPath(value){const R=window.RutasRouteStore;if(!value||!value.pista||!R)return value;const {pista,...resto}=value;return {...resto,path:R.unpackTrack(pista).pts.map(p=>({lat:p.lat,lon:p.lon}))};}
+function loadCache(data){try{const fingerprint=C.fingerprint(C.prepare(data.pts));for(const [prefix,legacy] of [[CACHE_PREFIX,false],[LEGACY_CACHE_PREFIX,true]]){const raw=JSON.parse(localStorage.getItem(prefix+fingerprint)),value=unpackPath(raw);if(value&&Array.isArray(value.path)&&value.path.length>1&&value.path.every(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180)){if(!legacy&&Array.isArray(raw.path)&&window.RutasRouteStore)try{localStorage.setItem(prefix+fingerprint,JSON.stringify(packPath(raw)));}catch{}return {...value,turns:S.upgradeManeuvers(value.turns),legacy};}}return null;}catch{return null;}}
+function saveCache(data,value){try{localStorage.setItem(cacheKey(data),JSON.stringify(packPath({...value,saved:Date.now()})));localStorage.removeItem(LEGACY_CACHE_PREFIX+C.fingerprint(C.prepare(data.pts)));const rows=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k?.startsWith(CACHE_PREFIX)){let saved=0;try{saved=JSON.parse(localStorage.getItem(k)).saved||0;}catch{}rows.push({k,saved});}}rows.sort((a,b)=>b.saved-a.saved);rows.slice(3).forEach(r=>localStorage.removeItem(r.k));}catch{}}
+// Si unas calles guardadas, que hasta ahora se usaban para navegar, dejan de usarse porque se
+// apartan del GPX, el avance guardado antes de esta version se midio sobre ellas y no lleva
+// con que linea: se traslada una vez al GPX, que es lo que se va a seguir ahora. La clave es
+// la misma que usa navigation.js.
+function migraAvance(data,calles){
+ try{
+  const G=C.prepare(data.pts),k='rutas-progress-v1:'+C.fingerprint(G),o=JSON.parse(localStorage.getItem(k));
+  if(!o||!Number.isFinite(o.d)||Number.isFinite(o.total))return;
+  const P=C.prepare(calles),p=C.at(P,o.d),d=C.carryProgress(G,{d:o.d,total:P.total,lat:p.lat,lon:p.lon});
+  if(!Number.isFinite(d))return;
+  const q=C.at(G,d);
+  localStorage.setItem(k,JSON.stringify({...o,d,total:G.total,lat:+q.lat.toFixed(6),lon:+q.lon.toFixed(6)}));
+  if(window.RutasMap&&window.RutasMap.restoreProgress)window.RutasMap.restoreProgress();
+ }catch{}
+}
 function mapKey(matched=false){document.querySelector('.nav-map-key').textContent=matched?'Dorado: calles · gris: GPX · verde: hecho · azul: siguiente':'Gris: recorrido · verde: completado · azul: siguiente tramo';}
 function waiting(value){const current=RutasMap.get(),sample=Roadbook.getRoute().sample;for(const id of ['nav-play']){const button=document.getElementById(id);if(!button)continue;button.disabled=value||current.active;button.toggleAttribute('aria-busy',value);}const start=document.getElementById('nav-start');if(start){start.disabled=sample||current.active;start.toggleAttribute('aria-busy',value);}const button=document.getElementById('map-3d');if(button){button.disabled=value;button.toggleAttribute('aria-busy',value);button.title=value?'Preparando el recorrido por calles…':'Calles y edificios en perspectiva · necesita conexión';}}
 function clear(){if(controller)controller.abort();controller=null;run++;const state=RutasMap.get();if(layer&&state.map)state.map.removeLayer(layer);layer=null;path=[];cortesVisibles=0;navigable=false;coverage=null;lengthPct=null;matchState='idle';waiting(false);mapKey();window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:[]}}));window.dispatchEvent(new CustomEvent('rutas:street-state',{detail:{state:matchState,navigable}}));}
@@ -77,7 +99,7 @@ async function match(force=false){
  if(!state.route||data.sample||state.mode==='access'){clear();bar.hidden=true;routeRef=state.route?.pts||null;return;}
  if(!force&&routeRef===data.pts)return;clear();routeRef=data.pts;const own=++run,input=S.input(data.pts,null);
  if(input.length<2){status('error','No hay puntos suficientes para reconocer las calles.');return;}
-  if(!force){const saved=loadCache(data);if(saved){const medida=S.usable(S.length(saved.path,C.distance),S.length(data.pts,C.distance));if(medida.ok){path=saved.path;coverage=saved.coverage;lengthPct=medida.pct;layer=L.featureGroup().addTo(state.map);L.polyline(path.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(layer);layer.bringToBack();const guides=Array.isArray(saved.turns)?saved.turns:[];navigable=RutasMap.useStreetPath(path,guides);mapKey(true);status(saved.legacy?'warn':'ready',saved.legacy?'Calles anteriores recuperadas sin repetir la consulta. La navegación sigue disponible; pulsa Reconocer ahora una vez para añadir salidas de rotonda y maniobras viales.':'Calles recuperadas del dispositivo · '+(saved.coverage||'—')+' % de coincidencia · '+guides.length+' maniobras viales. No se ha repetido el reconocimiento.',saved.legacy);window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:saved.coverage,navigation:navigable,bridges:saved.bridges||0,gaps:0,pieces:1,maneuvers:guides.length,lengthPct:medida.pct,source:'dispositivo',cached:true,legacy:saved.legacy}}));return;}}
+  if(!force){const saved=loadCache(data);if(saved){const medida=S.usable(S.length(saved.path,C.distance),S.length(data.pts,C.distance));if(medida.ok){const lejos=S.apart(data.pts,saved.path,C.distance);path=saved.path;coverage=saved.coverage;lengthPct=medida.pct;layer=L.featureGroup().addTo(state.map);L.polyline(path.map(p=>[p.lat,p.lon]),{color:'#d88922',weight:14,opacity:.72,lineCap:'round',lineJoin:'round',interactive:false,className:'street-matched-line'}).addTo(layer);layer.bringToBack();const guides=Array.isArray(saved.turns)?saved.turns:[];navigable=lejos.ok?RutasMap.useStreetPath(path,guides):false;mapKey(true);if(!lejos.ok)migraAvance(data,saved.path);if(!lejos.ok)status('warn','Calles recuperadas del dispositivo, pero no se usan para navegar. '+S.apartText(lejos)+' La navegación sigue el GPX original.');else status(saved.legacy?'warn':'ready',saved.legacy?'Calles anteriores recuperadas sin repetir la consulta. La navegación sigue disponible; pulsa Reconocer ahora una vez para añadir salidas de rotonda y maniobras viales.':'Calles recuperadas del dispositivo · '+(saved.coverage||'—')+' % de coincidencia · '+guides.length+' maniobras viales. No se ha repetido el reconocimiento.',saved.legacy);window.dispatchEvent(new CustomEvent('rutas:street-path',{detail:{pts:path,coverage:saved.coverage,navigation:navigable,bridges:saved.bridges||0,gaps:0,pieces:1,maneuvers:guides.length,lengthPct:medida.pct,source:'dispositivo',cached:true,legacy:saved.legacy}}));return;}}
   if(data.source==='saved'){status('warn','Este recorrido guardado aún no tiene calles reconocidas. Carga el GPX una vez o pulsa Reconocer ahora.',true);return;}}
  const chunks=S.chunks(input,60);status('loading','Buscando las calles y carreteras que pasan por los puntos del GPX…');controller=new AbortController();
  try{
@@ -101,7 +123,7 @@ async function match(force=false){
   if(matched.length<2)throw Error('No se obtuvo un trazado continuo por calles.');
   const pct=S.coverage(input,matched);if(pct<25)throw Error('No se pudo asociar esta traza con suficientes calles cercanas.');
   const medida=S.usable(S.length(matched,C.distance),S.length(data.pts,C.distance));coverage=pct;lengthPct=medida.pct;
-  path=matched;const roadTurns=S.placeManeuvers(maniobrasVia,matched,C.distance),continuo=breaks.length===0,enlazados=detectados-breaks.length,fiable=continuo&&medida.ok;
+  path=matched;const roadTurns=S.placeManeuvers(maniobrasVia,matched,C.distance),continuo=breaks.length===0,enlazados=detectados-breaks.length,lejos=S.apart(data.pts,matched,C.distance),fiable=continuo&&medida.ok&&lejos.ok;
   // Un corte sin enlazar jamás se cruza con una recta: el camino se dibuja a trozos.
   const piezas=continuo?[matched]:S.split(matched,breaks);
   layer=L.featureGroup().addTo(state.map);
@@ -115,6 +137,7 @@ async function match(force=false){
    +(enlazados>0?' '+enlazados+(enlazados===1?' corte enlazado':' cortes enlazados')+' por carretera.':'')
    +(continuo?'':' Quedan '+breaks.length+(breaks.length===1?' corte sin enlazar, dibujado como interrupción en vez de como recta.':' cortes sin enlazar, dibujados como interrupciones en vez de como rectas.'))
    +(medida.ok?'':' Solo cubre el '+medida.pct+' % de los kilómetros del GPX: al reconocer las calles se han perdido pasadas repetidas.')
+   +(lejos.ok?'':' '+S.apartText(lejos))
    +(fiable?' '+roadTurns.length+' maniobras viales preparadas para simulación y navegación.':' La navegación sigue el GPX original.'),
    !fiable);
   cortesVisibles=breaks.length;
