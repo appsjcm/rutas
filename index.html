@@ -1819,7 +1819,7 @@ window.RutasQR=function(){
     if(navigator.onLine===false){nota.textContent='Sin conexión: inténtalo más tarde.';return;}
     nota.textContent='Buscando…';
     buscar(true).then(function(hay){
-     if(hay){nota.textContent='Hay una versión nueva. Se aplicará al salir de la navegación.';ready();}
+     if(hay){nota.textContent=navegando()?'Hay una versión nueva. Se aplicará al salir de la navegación.':'Hay una versión nueva. Se está descargando; la aplicación se recargará sola al terminar.';ready();}
      else nota.textContent='Ya tienes la última versión.';
     });
    };
