@@ -204,6 +204,10 @@ Conduciendo no se mira la cabecera, se mira la carretera, así que **también se
 
 Comprobado con el simulador: recorrido continuo hasta 300 m -sin huecos-, salto hasta 700 y continuación hasta el final; el aviso salió con el tramo 298-725 y el mapa lo dibujó.
 
+**El final dice la verdad.** Al llegar con un tramo saltado, el cartel ponía «Recorrido completado» con un ✓ verde justo encima del aviso de que faltaba un tramo: dos cosas contrarias en la misma pantalla, y la que se lee de un vistazo era la falsa. Ahora, si falta algo, el cartel de conducción dice **FIN · 1 tramo sin pasar · 447 m · Marcados en rojo en el mapa** en el color de aviso, la línea de guía pone «!» en vez de ✓, el mensaje sale destacado y la voz lo añade: «Has llegado al final del recorrido. Atención. Te has dejado un tramo sin pasar, de 447 m.» Con la ronda completa sigue siendo el ✓ de siempre. Tampoco manda volver: dice dónde mirar.
+
+**El chequeo de salida no salta al simular.** «Revisa esto antes de salir» se abre al pulsar «Iniciar navegación», y Simular pulsa ese mismo botón por dentro. En una simulación decía «GPS ✕ Permiso denegado», que es falso -la simulación no necesita el GPS-, y como un fallo no se cierra solo, se quedaba abierto hasta el final de la ronda. Ahora solo aparece al salir de verdad.
+
 ## Menús sobre el mapa
 
 Mientras se conduce hay cuatro cosas apiladas sobre el mapa y ninguna puede taparse con otra: el cartel de maniobra, la tarjeta de la calle, el aviso de vía y la barra de vistas. Iban colocadas con distancias fijas, y la barra creció -2D, Satélite, 3D, Lugares, Street View, Calle- hasta ocupar todo el ancho en un móvil, justo donde vive la tarjeta.

@@ -51,6 +51,11 @@ function banner(state){
  if(s.paused)return {tone:'paused',arrow:s.arrow||'!',exit:null,eyebrow:'ESPERANDO GPS',
   lead:'GPS',action:s.paused===true?'Indicaciones pausadas':String(s.paused),street:'',after:''};
 
+// Al final, «Recorrido completado» solo si es verdad. Con tramos saltados el cartel decia
+ // completado justo encima del aviso de que faltaban: dos cosas contrarias en la misma
+ // pantalla, y la que se lee de un vistazo era la falsa. No manda volver; dice donde mirar.
+ if(s.end&&s.missing)return {tone:'warning',arrow:'!',exit:null,eyebrow:'FINAL DEL RECORRIDO',
+  lead:'FIN',action:String(s.missing),street:'Marcados en rojo en el mapa',after:''};
  if(s.end)return {tone:'done',arrow:'✓',exit:null,eyebrow:'',
   lead:'FIN',action:'Recorrido completado',street:'Final del recorrido',after:''};
 

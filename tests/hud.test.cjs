@@ -101,6 +101,32 @@ test('el final es un estado propio',()=>{
  assert.equal(b.tone,'done');
 });
 
+test('al final no se dice completado si faltan tramos',()=>{
+ // Decia «Recorrido completado» encima del aviso de que faltaba un tramo.
+ const b=H.banner({end:true,missing:'1 tramo sin pasar · 426 m'});
+ assert.equal(b.lead,'FIN');
+ assert.equal(b.tone,'warning','no es el verde de terminado');
+ assert.equal(b.arrow,'!');
+ assert.equal(b.action,'1 tramo sin pasar · 426 m');
+ assert.ok(!/completado/i.test(b.action+b.street+b.eyebrow),'ni rastro de completado');
+ // Dice donde mirar, no que hacer.
+ assert.ok(!/vuelve|regresa|da la vuelta/i.test(b.action+b.street));
+});
+
+test('sin tramos pendientes el final sigue siendo el de siempre',()=>{
+ for(const nada of ['',null,undefined]){
+  const b=H.banner({end:true,missing:nada});
+  assert.equal(b.tone,'done');
+  assert.equal(b.action,'Recorrido completado');
+ }
+});
+
+test('lo que falta no se cuela antes de llegar al final',()=>{
+ const b=H.banner({end:false,missing:'1 tramo sin pasar · 426 m',stage:'far',gap:300,turn:null});
+ assert.notEqual(b.tone,'warning');
+ assert.ok(!/tramo sin pasar/.test(b.action));
+});
+
 test('pantalla y voz comparten el mismo redondeo',()=>{
  // navigation.js construye la frase hablada, pero la distancia sale de aqui:
  // si la pantalla dice 175 m, la voz no puede decir 185 m.

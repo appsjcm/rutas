@@ -165,6 +165,7 @@ window.RutasCoverage={
  covered:()=>tramos.slice(),
  metres:()=>C.metres(tramos),
  summary:()=>C.summary(C.gaps(tramos)),
+ voice:()=>C.voice(C.gaps(tramos)),
  reset:rondaNueva,
  spoken:()=>avisados
 };

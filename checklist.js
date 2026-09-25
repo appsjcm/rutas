@@ -115,6 +115,11 @@ document.addEventListener('click',e=>{
  if(!t||typeof t.closest!=='function'||!t.closest('#nav-start'))return;
  const mapa=window.RutasMap&&window.RutasMap.get();
  if(mapa&&mapa.active)return;                       // ya se esta navegando: el boton no hace nada
+ // Simular pulsa este mismo boton por dentro, y el chequeo es de conducir de verdad: en
+ // una simulacion decia «GPS ✕ Permiso denegado», que es falso -la simulacion no lo
+ // necesita- y, como un fallo no se cierra solo, se quedaba abierto hasta el final.
+ const sim=window.RutasSim&&window.RutasSim.get&&window.RutasSim.get();
+ if(sim&&sim.running)return;
  chequear();
 },true);
 
