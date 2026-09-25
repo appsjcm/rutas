@@ -186,7 +186,11 @@ Ahora se apunta por dónde se ha circulado de verdad, como una lista de tramos s
 
 **Un hueco solo cuenta si tiene recorrido a los dos lados.** Lo que queda por delante del punto más lejano no es un tramo saltado, es ronda sin terminar, y decir lo contrario sería mentir. Y por debajo de 80 m no se avisa: gritar por cuarenta metros de ruido de GPS es la forma de que el aviso deje de leerse.
 
-En la cabecera del recorrido, que se ve siempre, aparece «**1 tramo sin pasar · 426 m · ver en el mapa**», y los tramos se dibujan en rojo discontinuo sobre el mapa, que es donde se entiende de qué calle se trata. Al pulsarlo lleva al primero que falta. No dice qué hacer: si volver o no lo decide quien conduce. El registro se guarda junto a la huella de la ruta, como el avance, así que cambiar de GPX cambia de registro y no se mezclan dos rondas.
+En la cabecera del recorrido, que se ve siempre, aparece «**1 tramo sin pasar · 426 m · ver en el mapa**», y los tramos se dibujan en rojo discontinuo sobre el mapa, que es donde se entiende de qué calle se trata. Al pulsarlo lleva al primero que falta.
+
+Conduciendo no se mira la cabecera, se mira la carretera, así que **también se avisa por voz** en cuanto aparece un hueco nuevo, una vez y con los avisos por voz puestos. Se dice el total y no cuál: los bordes de un hueco cambian si luego se rellena en parte, así que llevar la cuenta de cuántos hay es lo único estable. Y no manda dar la vuelta: si volver o no lo decide quien conduce.
+
+**El registro es de una ronda, no de siempre.** Sin eso, después de la primera vuelta completa todo quedaría cubierto y saltarse una calle mañana no se notaría: la función dejaría de servir justo cuando empieza a hacer falta. Una ronda es de un día -con la fecha local, que una salida a las seis de la mañana es de hoy-, y además empezar desde el principio, por debajo de 50 m, es empezar de nuevo aunque sea el mismo día. Un guardado de otro día, o uno viejo sin fecha, se descarta en vez de darlo por bueno: dar por recorrido lo que no se sabe sería tapar huecos. El registro va junto a la huella de la ruta, como el avance, así que cambiar de GPX cambia de registro.
 
 Comprobado con el simulador: recorrido continuo hasta 300 m -sin huecos-, salto hasta 700 y continuación hasta el final; el aviso salió con el tramo 298-725 y el mapa lo dibujó.
 

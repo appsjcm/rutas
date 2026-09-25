@@ -110,8 +110,14 @@ function voice(gapsList){
 
 // Se guarda junto a la huella de la ruta, como el avance. Se redondea a metros: con
 // centimetros la lista ocupa el triple y no aporta nada.
+// Tras un salto, el unico rastro de "estoy aqui" es un tramo de un milimetro. Redondeado
+// se quedaba en longitud cero y limpia() lo tiraba al recargar: se perdia el punto y el
+// hueco salia distinto. Se le deja un metro, que no cambia nada y sobrevive.
 function pack(list){
- return limpia(list).map(([a,b])=>[Math.round(a),Math.round(b)]);
+ return limpia(list).map(([a,b])=>{
+  const ra=Math.round(a);
+  return [ra,Math.max(Math.round(b),ra+1)];
+ });
 }
 function unpack(raw){
  if(typeof raw==='string'){
@@ -120,7 +126,40 @@ function unpack(raw){
  return limpia(raw);
 }
 
+// El registro es de una ronda, no de siempre. Sin esto, despues de la primera vuelta
+// completa todo quedaria cubierto y saltarse una calle al dia siguiente no se notaria: la
+// funcion dejaria de servir justo cuando empieza a hacer falta.
+// Una ronda es de un dia, y ademas empezar desde el principio es empezar de nuevo.
+const INICIO=50;     // arrancar por debajo de esto es empezar la ronda otra vez
+
+// Fecha local, no UTC: una ronda que sale a las seis de la mañana es de hoy.
+function today(date){
+ const d=date instanceof Date?date:new Date();
+ if(isNaN(d.getTime()))return '';
+ const dos=n=>(n<10?'0':'')+n;
+ return d.getFullYear()+'-'+dos(d.getMonth()+1)+'-'+dos(d.getDate());
+}
+function packDay(list,day){return {d:String(day||''),t:pack(list)};}
+// Lo guardado solo vale si es del mismo dia. Un guardado antiguo -una lista suelta, sin
+// dia- se descarta: no se puede saber de cuando es, y darlo por bueno seria tapar huecos.
+function unpackDay(raw,day){
+ if(typeof raw==='string'){
+  try{raw=JSON.parse(raw);}catch(e){return [];}
+ }
+ if(!raw||Array.isArray(raw)||typeof raw!=='object')return [];
+ if(!raw.d||String(raw.d)!==String(day||''))return [];
+ return unpack(raw.t);
+}
+function newRound(startD,opts){
+ const o=opts||{};
+ const umbral=Number.isFinite(num(o.inicio))?num(o.inicio):INICIO;
+ const d=num(startD);
+ if(!Number.isFinite(d))return false;
+ return d<umbral;
+}
+
 const api={add,step,gaps,metres,longest,summary,voice,texto,pack,unpack,limpia,
-           MAX_SALTO,MIN_HUECO};
+           today,packDay,unpackDay,newRound,
+           MAX_SALTO,MIN_HUECO,INICIO};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasCoverageCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

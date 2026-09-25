@@ -9,6 +9,7 @@ const $=id=>document.getElementById(id);
 
 const CLAVE='rutas-cobertura-v1:';
 let tramos=[],ultimo=null,huella=null,pintado=null,capa=null;
+let avisados=0;                  // cuantos huecos se habian dicho ya por voz
 
 // ---- lo que se ve ----
 const aviso=document.createElement('button');
@@ -46,6 +47,22 @@ function dibuja(huecos){
  }
 }
 
+// Conduciendo no se mira la cabecera, se mira la carretera. Se avisa por voz cuando
+// aparece un hueco nuevo, y se dice el total, no cual: los bordes de un hueco cambian si
+// luego se rellena en parte, asi que llevar la cuenta de cuantos hay es lo unico estable.
+// No se repite, y no manda dar la vuelta: eso lo decide quien conduce.
+function habla(huecos){
+ const s=mapa();
+ if(!s||!s.active){avisados=huecos.length;return;}
+ if(huecos.length<=avisados){avisados=huecos.length;return;}
+ avisados=huecos.length;
+ const voz=$('nav-voice');
+ if(!voz||!voz.checked||!window.speechSynthesis)return;
+ const frase=C.voice(huecos);
+ if(!frase)return;
+ try{const u=new SpeechSynthesisUtterance(frase);u.lang='es-ES';window.speechSynthesis.speak(u);}catch(e){}
+}
+
 function pinta(){
  const huecos=C.gaps(tramos);
  const texto=C.summary(huecos);
@@ -54,6 +71,7 @@ function pinta(){
  aviso.textContent=texto+' · ver en el mapa';
  aviso.hidden=false;
  dibuja(huecos);
+ habla(huecos);
 }
 
 // Al pulsar, al primero de los que faltan: es el que se pilla mas a mano volviendo.
@@ -77,13 +95,21 @@ function clave(){return huella?CLAVE+huella:null;}
 function guarda(){
  const k=clave();
  if(!k)return;
- try{localStorage.setItem(k,JSON.stringify(C.pack(tramos)));}catch(e){}
+ try{localStorage.setItem(k,JSON.stringify(C.packDay(tramos,C.today())));}catch(e){}
 }
+// Lo guardado solo vale si es de hoy. Si no, despues de la primera vuelta completa todo
+// quedaria cubierto para siempre y saltarse una calle mañana no se notaria: la funcion
+// dejaria de servir justo cuando empieza a hacer falta.
 function recupera(){
  const k=clave();
- tramos=[];ultimo=null;
+ tramos=[];ultimo=null;avisados=0;
  if(!k)return;
- try{tramos=C.unpack(localStorage.getItem(k));}catch(e){tramos=[];}
+ try{tramos=C.unpackDay(localStorage.getItem(k),C.today());}catch(e){tramos=[];}
+}
+// Y empezar desde el principio es empezar la ronda de nuevo, aunque sea el mismo dia.
+function rondaNueva(){
+ tramos=[];ultimo=null;avisados=0;pintado=null;
+ guarda();pinta();
 }
 
 // La huella de la ruta es la misma que usa la navegacion para el avance, asi que cambiar
@@ -121,8 +147,15 @@ window.addEventListener('rutas:check-route',()=>{try{nuevaRuta();}catch(e){}});
 window.addEventListener('rutas:route',()=>{try{nuevaRuta();}catch(e){}});
 window.addEventListener('rutas:visible',()=>{try{coloca();pinta();}catch(e){}});
 window.addEventListener('pagehide',()=>{ultimo=null;guarda();});
-new MutationObserver(()=>{if($('nav-stop')&&$('nav-stop').disabled){ultimo=null;guarda();}})
- .observe($('nav-stop'),{attributes:true,attributeFilter:['disabled']});
+new MutationObserver(()=>{
+ const parado=$('nav-stop')&&$('nav-stop').disabled;
+ if(parado){ultimo=null;guarda();return;}
+ // Acaba de empezar la navegacion: si arranca desde el principio, es otra ronda.
+ try{
+  const s=mapa();
+  if(s&&C.newRound(s.progress))rondaNueva();
+ }catch(e){}
+}).observe($('nav-stop'),{attributes:true,attributeFilter:['disabled']});
 
 addEventListener('load',()=>{try{nuevaRuta();}catch(e){}});
 if(document.readyState==='complete')try{nuevaRuta();}catch(e){}
@@ -132,6 +165,7 @@ window.RutasCoverage={
  covered:()=>tramos.slice(),
  metres:()=>C.metres(tramos),
  summary:()=>C.summary(C.gaps(tramos)),
- reset:()=>{tramos=[];ultimo=null;guarda();pinta();}
+ reset:rondaNueva,
+ spoken:()=>avisados
 };
 })();
