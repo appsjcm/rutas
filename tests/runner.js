@@ -8,13 +8,13 @@
 // registra cada uno se descubre mirando que clave nueva aparece: asi no hay una tabla que
 // mantener a mano y que se quede vieja al primer modulo nuevo.
 const MODULOS=['nav-core','gpx-core','restrictions-core','street-match-core','streetview-core',
- 'coverage-core',
+ 'coverage-core','start-core',
  'vehicle-core','checklist-core','power-core','hud-core','marks-core','pace-core',
  'overlay-core','recovery-core','access-core','library-core','sim-core',
  'layout-audit-core','street-imagery-core'];
 const FICHEROS=['access','checklist','coverage','fuentes','gpx','hud','layout-audit','library','marks',
  'navigation','overlay','pace','power','recovery','restrictions','shim','sim','street-imagery',
- 'street-match','streetview','vehicle'];
+ 'start','street-match','streetview','vehicle'];
 
 const exportado=new Map();
 const fallosDeCarga=new Map();

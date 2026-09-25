@@ -178,6 +178,16 @@ Se muestra la fecha de los datos, cobertura de coincidencia, señales sobre el m
 
 Si el servidor público falla, Cargar datos de calles permite importar un JSON de Overpass (out tags geom) y realizar la misma comprobación local, mostrando siempre la fecha de sus datos. El JSON también permanece en el dispositivo.
 
+## Empezar donde quieras
+
+La maquinaria para empezar a media ronda ya existía -el deslizador «Explorar el recorrido», «Buscar mi pasada», «Desde el inicio»- pero `premium.js` la mete dentro de **Ruta y ajustes**, y desde la pantalla principal no se veía ninguna. Estar y no poder llegar es, para quien la usa, lo mismo que no estar.
+
+Debajo de los botones de la ruta hay ahora **Empezar en: El inicio · Donde estoy · Tocar el mapa**. Lo único que hace es mover el cursor; arrancar lo sigue haciendo «Iniciar navegación», que es donde la gente espera que se arranque. Y dice lo que va a pasar: «Empezarás en 527 m de 878 m. Lo anterior a ese punto quedará sin recorrer.»
+
+**Y pregunta por qué pasada vas.** Una ronda de recogida sube y baja la misma calle, así que un toque en el mapa puede caer cerca de varias pasadas; quedarse con la más cercana en línea recta acierta la mitad de las veces. Medido con una ronda de dos calles: un toque a media ruta caía dentro de 60 m de **cuatro** pasadas, y la que se elegía a ciegas no era la que se había señalado. Ahora sale «Ahí el recorrido pasa 4 veces. Elige por cuál vas» con las cuatro -«Pasada 3 · 527 m»- y decide el conductor. Las candidatas las da `nav-core.nearbyPasses`, que ya existía para «Buscar mi pasada».
+
+Con el GPS en marcha no se puede cambiar el punto: lo dice en vez de no hacer nada. Y si la precisión no llega para distinguir una calle de otra, o el punto está lejos del trazado, se dice el motivo -«Estás a 400 m del recorrido»- en lugar de un «no se pudo» que deja sin saber si esperar o probar otra cosa.
+
 ## Tramos sin pasar
 
 El avance de la navegación es un solo número que solo sube -`progress = max(progress, d)`-, así que **saltarse una calle no dejaba rastro**: la ronda figuraba igual de completa. En una recogida puerta a puerta ese es el error que más cuesta, porque significa volver.
