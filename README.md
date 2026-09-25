@@ -215,6 +215,12 @@ Comprobado con el simulador: recorrido continuo hasta 300 m -sin huecos-, salto 
 
 **El chequeo de salida no salta al simular.** «Revisa esto antes de salir» se abre al pulsar «Iniciar navegación», y Simular pulsa ese mismo botón por dentro. En una simulación decía «GPS ✕ Permiso denegado», que es falso -la simulación no necesita el GPS-, y como un fallo no se cierra solo, se quedaba abierto hasta el final de la ronda. Ahora solo aparece al salir de verdad.
 
+## Rondas largas
+
+Casi todo se había probado con rondas de uno o dos kilómetros, y la de verdad pasa de los cien: «Parada 1 de 14 a 18,34 km · quedan 90,87 km». Se probó con una ronda rural de **111 km, 18 500 puntos y 14 paradas** -1,5 MB de GPX, un punto cada seis metros como graba un móvil-. Carga en 0,8 s y el ajuste a calles la deja en 7000 puntos.
+
+Lo que no aguantaba bien era la **línea verde de lo recorrido**: crece desde el km 0 y se rehacía entera en cada posición, volviendo a proyectar todos sus puntos cada segundo. Pintar una posición costaba 2,8 ms en el km 1 y **16 ms en el km 100**, con 6300 puntos en esa línea; en un móvil, cuatro o cinco veces más, cada segundo y durante horas de ronda. Ahora se parte en trozos de 800 m: los recorridos se quedan quietos y en cada posición solo se rehace el último. Medido después: **3,5 ms en el km 1 y 3,5 ms en el km 100**, la línea más larga en 145 puntos, y lo verde sumando exactamente los 100 000 m recorridos, sin huecos ni solapes en las uniones. La línea azul de lo siguiente sigue pintándose por encima.
+
 ## Menús sobre el mapa
 
 Mientras se conduce hay cuatro cosas apiladas sobre el mapa y ninguna puede taparse con otra: el cartel de maniobra, la tarjeta de la calle, el aviso de vía y la barra de vistas. Iban colocadas con distancias fijas, y la barra creció -2D, Satélite, 3D, Lugares, Street View, Calle- hasta ocupar todo el ancho en un móvil, justo donde vive la tarjeta.

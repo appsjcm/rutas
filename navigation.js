@@ -108,7 +108,37 @@ $('nav-start').onclick=()=>{if(!route||watch!==null||window.Roadbook.getRoute().
 function guidanceText(g){if(!g.turn)return 'Continúa '+metres(g.gap)+' hasta el final del recorrido.';const action=H.lower(H.imperative(g.turn.label))+(g.turn.toRoad?' en '+g.turn.toRoad:'');const next=g.stage==='now'&&g.next&&g.next.d-g.turn.d<=100?' Después, en '+metres(g.next.d-g.turn.d)+', '+H.lower(H.imperative(g.next.label))+'.':'';return (g.stage==='now'?'Ahora: '+action+'.':'En '+H.distance(g.gap)+', '+action+'.')+next;}
 function guideWarning(text){if(guideState!=='paused'&&window.speechSynthesis)window.speechSynthesis.cancel();guideState='paused';paintBanner(H.banner({paused:true,arrow:'!'}));$('drive-next').textContent='';$('drive-eta-time').textContent='—';$('drive-eta-clock').textContent='—';currentInstruction=text;message(text,true);$('nav-turn-icon').textContent='!';$('nav-turn-text').textContent='Indicaciones pausadas';$('nav-turn-distance').textContent=text;$('nav-after').textContent='';$('nav-live-summary').textContent='Esperando una posición válida sobre el recorrido';}
 function announceGuidance(){const info=window.RutasChecks?.alertInfo?.(progress);if(info){const stage=info.distance>80?'ahead':'now',key=info.id+':'+stage;if(!roadVoiceStages.has(key)){roadVoiceStages.add(key);currentInstruction=info.voice;speak(info.voice);return;}}const limit=window.RutasChecks?.speedLimitAt?.(progress),kph=liveSpeed*3.6,now=Date.now();if(limit&&kph>=limit+8&&(limit!==lastSpeedLimit||now-lastSpeedVoice>45000)){lastSpeedLimit=limit;lastSpeedVoice=now;speak('Atención. Superas el límite de '+limit+' kilómetros por hora indicado en el mapa.');return;}const g=C.guidance(turns,progress,route.total,liveSpeed);currentInstruction=guidanceText(g);if(!g.turn){if(!voiceStages.has('final')){voiceStages.set('final',1);speak(currentInstruction);}return;}const rank={later:0,prepare:1,near:2,now:3}[g.stage],previous=voiceStages.get(g.index)||0;if(rank>previous){voiceStages.set(g.index,rank);speak(currentInstruction);} }
-function paint(d){if(!completed)return;mideCapas();window.dispatchEvent(new CustomEvent("rutas:progress",{detail:{distance:d}}));completed.setLatLngs(C.section(route,0,d).map(ll));remaining.setLatLngs(C.section(route,d,Math.min(route.total,d+200)).map(ll));const g=C.guidance(turns,d,route.total,watch!==null?liveSpeed:0),end=d>=route.total-5,road=g.turn?.toRoad||(g.turn?.roadContext?'maniobra vial':'según el GPX');currentInstruction=end?'Final del recorrido.':guidanceText(g);$('nav-turn-icon').textContent=end?(falta()?'!':'✓'):g.turn?g.turn.symbol:'↑';$('nav-turn-text').textContent=end?'Final del recorrido':g.turn?(g.stage==='now'?'Ahora · ':'')+g.turn.label:'Sigue hasta el final';$('nav-turn-distance').textContent=end?(falta()||'Recorrido completado'):(g.stage==='now'?'En este punto':g.turn?'En '+metres(g.gap):metres(g.gap)+' restantes')+' · '+road;$('nav-after').textContent=g.next?'Después: '+g.next.label.toLowerCase()+' · '+metres(g.next.d-g.turn.d):'';hud(d,g,end);$('nav-live-summary').textContent=(watch!==null?'Navegación en directo':'Vista previa')+' · '+g.completed+' de '+turns.length+' indicaciones completadas';Array.from($('nav-turns').children).forEach((li,i)=>{li.classList.toggle('done',i<g.completed);li.classList.toggle('current',i===g.index);if(i===g.index)li.setAttribute('aria-current','step');else li.removeAttribute('aria-current');});}
+// La linea verde de lo recorrido crece desde el km 0, y rehacerla entera en cada posicion
+// es volver a proyectar miles de puntos cada segundo. Medido con una ronda de 111 km y
+// 18 500 puntos: al final son 6300 puntos en la linea y pintar una posicion pasa de 2,8 ms
+// en el km 1 a 16 ms en el km 100 -en un movil, cuatro o cinco veces mas, cada segundo
+// durante horas-. Se parte en trozos de 800 m: los ya recorridos se quedan quietos y en
+// cada posicion solo se rehace el ultimo, asi que el coste deja de crecer con la ronda.
+// `completed` sigue siendo la linea viva -el trozo en curso-; los cerrados van aparte.
+const TROZO=800;
+let trozos=[],trozoDesde=0,pintadoHasta=null,duenyo=null;
+function limpiaTrozos(){for(const t of trozos)if(layer&&layer.hasLayer(t))layer.removeLayer(t);trozos=[];}
+function pintaHecho(d){
+ // Si la ruta se ha vuelto a montar, la linea es otra y los trozos viejos ya no son suyos.
+ if(duenyo!==completed){trozos=[];pintadoHasta=null;duenyo=completed;}
+ let nuevo=false;
+ if(pintadoHasta===null||d<pintadoHasta||d-pintadoHasta>TROZO){
+  // Primera vez, marcha atras o un salto largo: se rehace desde el principio en trozos.
+  limpiaTrozos();
+  let a=0;
+  while(d-a>TROZO){trozos.push(L.polyline(C.section(route,a,a+TROZO).map(ll),completed.options).addTo(layer));a+=TROZO;nuevo=true;}
+  trozoDesde=a;
+ }else if(d-trozoDesde>TROZO){
+  // Se ha completado un trozo: se congela y se empieza el siguiente.
+  trozos.push(L.polyline(C.section(route,trozoDesde,trozoDesde+TROZO).map(ll),completed.options).addTo(layer));
+  trozoDesde+=TROZO;nuevo=true;
+ }
+ completed.setLatLngs(C.section(route,trozoDesde,d).map(ll));
+ pintadoHasta=d;
+ // Los trozos nuevos se pintan encima de todo; lo que queda por delante debe seguir arriba.
+ if(nuevo&&remaining&&remaining.bringToFront)remaining.bringToFront();
+}
+function paint(d){if(!completed)return;mideCapas();window.dispatchEvent(new CustomEvent("rutas:progress",{detail:{distance:d}}));pintaHecho(d);remaining.setLatLngs(C.section(route,d,Math.min(route.total,d+200)).map(ll));const g=C.guidance(turns,d,route.total,watch!==null?liveSpeed:0),end=d>=route.total-5,road=g.turn?.toRoad||(g.turn?.roadContext?'maniobra vial':'según el GPX');currentInstruction=end?'Final del recorrido.':guidanceText(g);$('nav-turn-icon').textContent=end?(falta()?'!':'✓'):g.turn?g.turn.symbol:'↑';$('nav-turn-text').textContent=end?'Final del recorrido':g.turn?(g.stage==='now'?'Ahora · ':'')+g.turn.label:'Sigue hasta el final';$('nav-turn-distance').textContent=end?(falta()||'Recorrido completado'):(g.stage==='now'?'En este punto':g.turn?'En '+metres(g.gap):metres(g.gap)+' restantes')+' · '+road;$('nav-after').textContent=g.next?'Después: '+g.next.label.toLowerCase()+' · '+metres(g.next.d-g.turn.d):'';hud(d,g,end);$('nav-live-summary').textContent=(watch!==null?'Navegación en directo':'Vista previa')+' · '+g.completed+' de '+turns.length+' indicaciones completadas';Array.from($('nav-turns').children).forEach((li,i)=>{li.classList.toggle('done',i<g.completed);li.classList.toggle('current',i===g.index);if(i===g.index)li.setAttribute('aria-current','step');else li.removeAttribute('aria-current');});}
 $('drive-heading').onclick=function(){headingUp=!headingUp;const stage=$('nav-stage');
  stage.classList.toggle('heading-up',headingUp);
  this.setAttribute('aria-pressed',headingUp?'true':'false');
