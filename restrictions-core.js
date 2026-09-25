@@ -149,6 +149,50 @@ function corridorQuery(boxes,timeout){
   l.map(b=>'way["highway"]('+b.join(',')+');').join('')+');out tags geom;';
 }
 
+// ---- que se guarda en el movil ----
+// El comprobador solo mira vias a menos de 16 m de la ruta -14 m al nombrar los giros-, pero
+// se guardaba todo lo que devolvia Overpass: con la ronda de 108 km, 1497 vias y 1,86
+// millones de caracteres, 3,6 MB en el almacen de un iPhone, que ronda los 5. Se guardan
+// solo las que pasan a menos de CERCA_RUTA metros: medido con la misma ronda, 757 vias, y los
+// avisos, los nombres de calle y los giros salen exactamente iguales. El margen es de sobra a
+// proposito: las muestras van cada 5 m, asi que cualquier punto de la ruta queda a 2,5 m de
+// una, y 16 + 2,5 esta muy lejos de 40.
+const CERCA_RUTA=40;
+function nearRoute(pts,elements,margen){
+ const m=Number.isFinite(margen)&&margen>0?margen:CERCA_RUTA;
+ if(!Array.isArray(pts)||pts.length<2||!Array.isArray(elements))return [];
+ const route=C.prepare(pts);
+ if(!(route.total>0))return [];
+ // La misma proyeccion que indexWays(), para medir igual que el comprobador.
+ const kx=111320*Math.cos(pts[0].lat*Math.PI/180),ky=110540,celda=100,grid=new Map();
+ const xy=p=>({x:p.lon*kx,y:p.lat*ky});
+ for(let d=0;;d+=5){
+  const q=xy(C.at(route,Math.min(d,route.total))),k=Math.floor(q.x/celda)+':'+Math.floor(q.y/celda);
+  let a=grid.get(k);if(!a)grid.set(k,a=[]);a.push(q);
+  if(d>=route.total)break;
+ }
+ function cerca(p1,p2){
+  const a=xy(p1),b=xy(p2),dx=b.x-a.x,dy=b.y-a.y,len=dx*dx+dy*dy;
+  for(let x=Math.floor((Math.min(a.x,b.x)-m)/celda);x<=Math.floor((Math.max(a.x,b.x)+m)/celda);x++)
+   for(let y=Math.floor((Math.min(a.y,b.y)-m)/celda);y<=Math.floor((Math.max(a.y,b.y)+m)/celda);y++)
+    for(const q of grid.get(x+':'+y)||[]){
+     const t=len?Math.max(0,Math.min(1,((q.x-a.x)*dx+(q.y-a.y)*dy)/len)):0;
+     if(Math.hypot(q.x-a.x-t*dx,q.y-a.y-t*dy)<=m)return true;
+    }
+  return false;
+ }
+ return elements.filter(w=>{
+  // Lo mismo que descarta indexWays(): sin calle ni geometria no se usa para nada.
+  if(!w||w.type!=='way'||!Array.isArray(w.geometry)||!w.tags||!w.tags.highway)return false;
+  for(let i=1;i<w.geometry.length;i++){
+   const p1=w.geometry[i-1],p2=w.geometry[i];
+   if(p1&&p2&&Number.isFinite(p1.lat)&&Number.isFinite(p1.lon)&&Number.isFinite(p2.lat)&&Number.isFinite(p2.lon)&&cerca(p1,p2))return true;
+  }
+  return false;
+ });
+}
+
 const api={rule,analyze,roadContext,enrichTurns,vehicle,metresOf,tonnesOf,speedLimit,indexWays,
-           corridor,corridorArea,corridorQuery,envelope,zone,TRAMO,MARGEN,RECTANGULO_MAX};if(typeof module!=='undefined')module.exports=api;else root.RutasRestrictions=api;
+           corridor,corridorArea,corridorQuery,envelope,zone,nearRoute,
+           TRAMO,MARGEN,RECTANGULO_MAX,CERCA_RUTA};if(typeof module!=='undefined')module.exports=api;else root.RutasRestrictions=api;
 })(typeof window!=='undefined'?window:globalThis);

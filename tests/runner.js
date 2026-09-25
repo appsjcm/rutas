@@ -14,7 +14,7 @@ const MODULOS=['nav-core','gpx-core','restrictions-core','street-match-core','st
  'layout-audit-core','street-imagery-core'];
 const FICHEROS=['access','checklist','corridor','coverage','fuentes','gpx','hud','layout-audit','library','marks',
  'navigation','overlay','pace','power','recovery','restrictions','shim','sim','street-imagery',
- 'start','street-match','streetview','route-store','vehicle'];
+ 'start','street-match','streetview','road-cache','route-store','vehicle'];
 
 const exportado=new Map();
 const fallosDeCarga=new Map();

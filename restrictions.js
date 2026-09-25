@@ -9,19 +9,53 @@ function saveProfile(){try{Object.keys(profile).length?localStorage.setItem('rut
 profile=loadProfile();
 function bounds(pts){let s=90,w=180,n=-90,e=-180;for(const p of pts){s=Math.min(s,p.lat);n=Math.max(n,p.lat);w=Math.min(w,p.lon);e=Math.max(e,p.lon);}return [s-.002,w-.002,n+.002,e+.002];}
 function key(pts){return 'rutas-osm-check-v1:'+bounds(pts).join(',');}
-// Cada consulta guardada pesa mas de un megabyte. Sin purga se acumulan para siempre y en
-// Safari de iPhone, con unos 5 MB de tope, acaban impidiendo guardar el avance de la ronda.
+// Sin purga, las consultas guardadas se acumulan para siempre, y en Safari de iPhone, con unos
+// 5 MB de tope, acababan impidiendo guardar el avance de la ronda.
 function sweepCache(){try{const mine=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('rutas-osm-check-v1:'))mine.push(k);}
  const rows=mine.map(k=>{let saved=0;try{saved=JSON.parse(localStorage.getItem(k)).saved||0;}catch{}return {k,saved};});
  const stale=Date.now()-86400000;
  rows.sort((a,b)=>b.saved-a.saved);
  rows.forEach((row,i)=>{if(row.saved<stale||i>=2)localStorage.removeItem(row.k);});}catch{}}
+// Se guardan solo las vias cerca de la ruta y en formato compacto: la ronda de 108 km pasa
+// de 1,86 millones de caracteres a unos 180 000. Ver nearRoute() en restrictions-core.js y
+// packRoads() en route-store-core.js. Como solo sirven para esta ruta, van con su huella.
+// "saved" es el de la consulta, no el de ahora: reescribir un guardado antiguo en el formato
+// nuevo no le alarga la vida.
+function saveCache(route,data,saved=Date.now()){
+ const S=window.RutasRouteStore,k=key(route.pts);let texto;
+ try{
+  if(S&&A.nearRoute){
+   const cerca=A.nearRoute(route.pts,data.elements);
+   if(!cerca.length)return;
+   texto=JSON.stringify({saved,huella:C.fingerprint(route),...S.packRoads({elements:cerca,osm3s:data.osm3s})});
+  }else texto=JSON.stringify({saved,data});
+ }catch{return;}
+ sweepCache();
+ try{localStorage.setItem(k,texto);}
+ catch{
+  // Lleno: antes que quedarse sin esta, fuera las demas consultas guardadas, que se pueden
+  // repetir. El avance de la ronda y la ruta son lo que no se puede perder.
+  try{for(let i=localStorage.length-1;i>=0;i--){const o=localStorage.key(i);if(o&&o!==k&&o.startsWith('rutas-osm-check-v1:'))localStorage.removeItem(o);}
+   localStorage.setItem(k,texto);}catch{}
+ }
+}
+// {data, antiguo} o null. Lo guardado antes de este formato -la respuesta entera- se sigue
+// usando, y quien lo lee lo reescribe compacto.
+function loadCache(route){
+ const o=JSON.parse(localStorage.getItem(key(route.pts)));
+ if(!o||!(Date.now()-o.saved<86400000))return null;
+ if(o.v===2){
+  if(o.huella!==C.fingerprint(route)||!window.RutasRouteStore)return null;
+  return {data:window.RutasRouteStore.unpackRoads(o),saved:o.saved,antiguo:false};
+ }
+ return o.data?{data:o.data,saved:o.saved,antiguo:true}:null;
+}
 const ACK_TOLERANCE=60;
 function loadAcks(route){const print=C.fingerprint(route);ackKey='rutas-oneway-ack-v3:'+print;acks=[];try{localStorage.removeItem('rutas-oneway-ack-v1:'+print);const raw=JSON.parse(localStorage.getItem(ackKey));if(Array.isArray(raw))acks=raw.filter(a=>Array.isArray(a)&&Number.isSafeInteger(a[0])&&Number.isFinite(a[1])&&typeof a[2]==='string');}catch{}}
 function saveAcks(){if(!ackKey)return;try{acks.length?localStorage.setItem(ackKey,JSON.stringify(acks)):localStorage.removeItem(ackKey);}catch{}}
 function muted(issue){return acks.some(a=>a[0]===issue.way&&a[2]===issue.kind&&Math.abs(a[1]-issue.start)<=ACK_TOLERANCE);}
 function setAck(issue,on){if(on){if(!muted(issue))acks.push([issue.way,Math.round(issue.start),issue.kind]);}else acks=acks.filter(a=>!(a[0]===issue.way&&a[2]===issue.kind&&Math.abs(a[1]-issue.start)<=ACK_TOLERANCE));}
-function reset(){const state=RutasMap.get();if(!state.route||state.route.pts===routeRef)return;routeRef=state.route.pts;loadAcks(state.route);token++;if(controller)controller.abort();report=null;roads=[];lastData=null;lastCached=false;window.dispatchEvent(new CustomEvent('rutas:road-state',{detail:{state:'idle'}}));if(layer){state.map.removeLayer(layer);layer=null;}$('road-issues').replaceChildren();$('road-export').disabled=true;$('drive-road-info').hidden=true;$('drive-speed-limit').hidden=true;$('drive-speedo').classList.remove('over-limit');if(state.mode==='access'){$('road-check').disabled=true;$('nav-road-alert').hidden=true;window.dispatchEvent(new CustomEvent('rutas:road-issues',{detail:{issues:null,profile}}));$('road-status').textContent='Acceso calculado para coche. Las medidas del vehículo no se tienen en cuenta en este trayecto.';return;}$('road-check').disabled=Roadbook.getRoute().sample;$('road-status').textContent=Roadbook.getRoute().sample?'Carga tu GPX real para comprobarlo.':'Preparando nombres de calles, sentidos y restricciones…';$('nav-road-alert').hidden=true;try{const cache=JSON.parse(localStorage.getItem(key(routeRef)));if(cache&&Date.now()-cache.saved<86400000)render(cache.data,state.route,true);}catch{}}
+function reset(){const state=RutasMap.get();if(!state.route||state.route.pts===routeRef)return;routeRef=state.route.pts;loadAcks(state.route);token++;if(controller)controller.abort();report=null;roads=[];lastData=null;lastCached=false;window.dispatchEvent(new CustomEvent('rutas:road-state',{detail:{state:'idle'}}));if(layer){state.map.removeLayer(layer);layer=null;}$('road-issues').replaceChildren();$('road-export').disabled=true;$('drive-road-info').hidden=true;$('drive-speed-limit').hidden=true;$('drive-speedo').classList.remove('over-limit');if(state.mode==='access'){$('road-check').disabled=true;$('nav-road-alert').hidden=true;window.dispatchEvent(new CustomEvent('rutas:road-issues',{detail:{issues:null,profile}}));$('road-status').textContent='Acceso calculado para coche. Las medidas del vehículo no se tienen en cuenta en este trayecto.';return;}$('road-check').disabled=Roadbook.getRoute().sample;$('road-status').textContent=Roadbook.getRoute().sample?'Carga tu GPX real para comprobarlo.':'Preparando nombres de calles, sentidos y restricciones…';$('nav-road-alert').hidden=true;try{const cache=loadCache(state.route);if(cache){render(cache.data,state.route,true);if(cache.antiguo)saveCache(state.route,cache.data,cache.saved);}}catch{}}
 const KINDS={opposed:'Posible contramano (sentido contrario)',conditional:'Sentido variable: revisar condiciones',ambiguous:'Coincidencia dudosa entre vías cercanas',height:'El vehículo no pasa por altura',weight:'El vehículo supera el peso permitido',width:'El vehículo no pasa por anchura',access:'Vía cerrada a este vehículo','limit-variable':'Límite dimensional variable: revisar condiciones'};
 const HARD=new Set(['opposed','height','weight','width','access']);
 function description(issue){return (KINDS[issue.kind]||'Restricción por revisar')+(issue.detail?' · '+issue.detail:'');}
@@ -92,7 +126,7 @@ async function check(){const state=RutasMap.get();if(!state.route||Roadbook.getR
   const data=await ask(query,requestController,(i,n,name)=>{$('road-status').textContent='Consultando sentidos de circulación en '+name+(i?' (servidor '+(i+1)+' de '+n+')':'')+'…';});
   if(own!==token)return;
   render(data,route);
-  sweepCache();try{localStorage.setItem(key(route.pts),JSON.stringify({saved:Date.now(),data}));}catch{}
+  saveCache(route,data);
  }catch(err){
   if(own===token){$('road-status').textContent=err.name==='AbortError'?'Comprobación cancelada.':'No respondió ninguno de los '+MIRRORS.length+' servidores de OpenStreetMap. '+err.message+' Puedes reintentarlo o usar Cargar datos de calles.';window.dispatchEvent(new CustomEvent('rutas:road-state',{detail:{state:'error',message:$('road-status').textContent}}));}
  }finally{if(own===token){$('road-check').disabled=false;controller=null;}}}
@@ -105,7 +139,7 @@ function paintRoad(d){const road=roadAt(d),box=$('drive-road-info');box.hidden=!
 function alertInfo(d){const issue=upcoming(d);if(!issue)return null;const distance=Math.max(0,Math.round(issue.start-d)),hard=HARD.has(issue.kind);return {id:issue.way+':'+issue.kind+':'+Math.round(issue.start),title:description(issue),road:issue.name,distance,hard,kind:issue.kind,voice:'Atención. '+description(issue)+'. '+issue.name+(distance?' en '+distance+' metros':'')+'. Revisa la señalización antes de continuar.'};}
 function alertAt(d){paintRoad(d);const info=alertInfo(d),box=$('nav-road-alert');box.hidden=!info;if(!info)return;box.dataset.level=info.hard?'danger':'caution';box.replaceChildren();const icon=document.createElement('b'),body=document.createElement('span'),title=document.createElement('strong'),detail=document.createElement('small');icon.className='road-alert-icon';icon.textContent=info.hard?'⛔':'⚠';title.textContent=info.title;detail.textContent=info.road+(info.distance?' · en '+info.distance+' m':' · estás en el tramo')+' · comprueba la señalización';body.append(title,detail);box.append(icon,body);}
 window.RutasChecks={getIssues:()=>report?report.issues.map(i=>({p:i.p,name:i.name,description:description(i),muted:muted(i),hard:HARD.has(i.kind)})):[],getSummary:()=>{if(!report)return null;const live=report.issues.filter(i=>!muted(i));return {total:report.issues.length,live:live.length,opposed:live.filter(i=>i.kind==='opposed').length,vehicle:live.filter(i=>HARD.has(i.kind)&&i.kind!=='opposed').length,doubtful:live.filter(i=>!HARD.has(i.kind)).length,coverage:report.sampled?Math.round(report.matched/report.sampled*100):0,date:report.osmDate};},roadAt,speedLimitAt:d=>A.speedLimit(roadAt(d)?.maxspeed),titleAt:d=>alertInfo(d)?.title||null,alertInfo,gpsAlert:d=>alertInfo(d)?.voice||null};
-$('road-data').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;const state=RutasMap.get();if(!state.route||Roadbook.getRoute().sample){$('road-status').textContent='Carga primero tu GPX.';return;}if(file.size>15000000){$('road-status').textContent='El archivo de calles es demasiado grande (máximo 15 MB).';return;}const own=++token;if(controller)controller.abort();try{const data=JSON.parse(await file.text());if(own!==token)return;if(!Array.isArray(data.elements)||!data.elements.every(w=>w.type==='way'&&Number.isSafeInteger(w.id)&&Array.isArray(w.geometry)&&w.geometry.every(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180)))throw Error('No es un archivo de calles compatible.');render(data,state.route);try{localStorage.setItem(key(state.route.pts),JSON.stringify({saved:Date.now(),data}));}catch{}}catch(err){if(own===token)$('road-status').textContent='No se pudo leer el archivo: '+err.message;}finally{if(own===token)$('road-check').disabled=false;}};
+$('road-data').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;const state=RutasMap.get();if(!state.route||Roadbook.getRoute().sample){$('road-status').textContent='Carga primero tu GPX.';return;}if(file.size>15000000){$('road-status').textContent='El archivo de calles es demasiado grande (máximo 15 MB).';return;}const own=++token;if(controller)controller.abort();try{const data=JSON.parse(await file.text());if(own!==token)return;if(!Array.isArray(data.elements)||!data.elements.every(w=>w.type==='way'&&Number.isSafeInteger(w.id)&&Array.isArray(w.geometry)&&w.geometry.every(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180)))throw Error('No es un archivo de calles compatible.');render(data,state.route);saveCache(state.route,data);}catch(err){if(own===token)$('road-status').textContent='No se pudo leer el archivo: '+err.message;}finally{if(own===token)$('road-check').disabled=false;}};
 for(const k of VEH){const input=$('veh-'+k);if(!input)continue;if(profile[k]!=null)input.value=profile[k];
  input.onchange=()=>{const v=parseFloat(String(input.value).replace(',','.'));if((Number.isFinite(v)&&v>0?v:undefined)===profile[k])return;if(Number.isFinite(v)&&v>0)profile[k]=v;else{delete profile[k];input.value='';}saveProfile();
   const state=RutasMap.get();if(lastData&&state.route)try{render(lastData,state.route,lastCached);}catch(err){$('road-status').textContent=err.message;}};}
