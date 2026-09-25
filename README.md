@@ -72,7 +72,14 @@ Y por eso **Parar también detiene la navegación**: si no, el GPS real tomaba e
 
 **Simular** está además al lado de **Iniciar navegación**, que es donde se busca; el mismo botón para y arranca, y dice cuál de las dos cosas hace. Sigue existiendo solo con `?sim`: no puede aparecer en el móvil de quien conduce de verdad. Sin GPX cargado, el panel se abre solo para que se lea el motivo, que antes quedaba escrito dentro de un panel plegado.
 
-Al arrancar, el panel se pliega para dejar ver el mapa, pero **plegado en marcha no es esconderlo todo**: se quedan velocidad, avance y Parar, y se va el resto. Antes arrancar escondía justo los mandos que se tocan mientras se mira la ruta. Medido con el panel plegado y la simulación en marcha: 233 px de alto, con la fila de velocidad y la de avance dentro; abierto son 632. Al parar, plegado vuelve a ser plegado del todo -62 px-.
+Al arrancar, el panel se pliega para dejar ver el mapa, pero **plegado en marcha no es esconderlo todo**: se quedan velocidad, avance y Parar, y se va el resto. Antes arrancar escondía justo los mandos que se tocan mientras se mira la ruta.
+
+Aun así ocupaba un cuarto de la pantalla, justo encima del camión. Ahora, en marcha, hay **dos tamaños y los elige quien conduce**, tocando la cabecera:
+
+- **Reducido** -como arranca-: dos filas, velocidad arriba y las marchas junto a Parar abajo. 144 px, el 22 % de una pantalla de 667. Los seis mandos a 44 px, que al volante 29 no se aciertan.
+- **Mínimo**: solo la cabecera, 36 px, el 5 %. La velocidad no se pierde de vista porque va ahí: «EN MARCHA · 10 KM/H».
+
+Para apretarlo se quitan las etiquetas «VELOCIDAD» y «AVANCE» -menos y más, y la tortuga y la liebre, se entienden solos-, el botón Simular, que en marcha está deshabilitado y solo estorba, y el título del panel, porque la franja roja de arriba ya dice que esto es una simulación. Al parar vuelve a ser abierto o cerrado, como siempre.
 
 Permite elegir velocidad -30, 50 u 80 km/h-, calidad de señal, desvío lateral de 50 o 100 metros y simular la falta de Internet. La señal irregular introduce ruido y pierde una posición de cada ocho; la mala llega a 65 metros de imprecisión, por encima del umbral con el que la navegación deja de fiarse, y pierde una de cada tres. El desvío aparta la posición en perpendicular a la marcha, sin inventar calles.
 

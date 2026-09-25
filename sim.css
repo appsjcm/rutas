@@ -21,9 +21,29 @@
 #sim-panel[data-open=no]{gap:0}
 /* Plegado y en marcha: se queda lo que se usa conduciendo -velocidad, avance y Parar- y
    se va el resto. Arrancar plegaba el panel entero y escondia justo esos mandos. */
-#sim-panel[data-running][data-open=no]{gap:8px}
+#sim-panel[data-running][data-open=no]{gap:6px;padding:9px 11px}
 #sim-panel[data-running][data-open=no] #sim-body>*:not(.sim-mandos):not(.sim-actions){display:none}
 #sim-panel[data-running][data-open=no] .sim-mandos{box-shadow:none;padding-bottom:0}
+/* En marcha, el panel ocupaba un cuarto de la pantalla justo encima del camion. Se aprieta
+   a dos filas: velocidad arriba, y abajo las marchas junto a Parar. display:contents saca
+   las dos filas de dentro de .sim-mandos para que la rejilla las coloque. */
+#sim-panel[data-running][data-open=no] #sim-body{display:grid;grid-template-columns:1fr auto;gap:6px}
+#sim-panel[data-running][data-open=no] .sim-mandos{display:contents}
+#sim-panel[data-running][data-open=no] .sim-speed-row{grid-column:1/-1}
+#sim-panel[data-running][data-open=no] .sim-pace-row{grid-column:1;min-width:0}
+#sim-panel[data-running][data-open=no] .sim-actions{grid-column:2;align-self:stretch}
+#sim-panel[data-running][data-open=no] #sim-go{display:none}   /* deshabilitado: solo estorba */
+#sim-panel[data-running][data-open=no] .sim-actions .btn{min-width:84px;min-height:44px}
+/* Al volante, 29 px de alto no se aciertan. Estos son los unicos botones que se tocan en
+   marcha, asi que van a 44 aunque el panel crezca un poco. */
+#sim-panel[data-running][data-open=no] #sim-pace button{min-height:44px}
+#sim-panel[data-running][data-open=no] #sim-slower,
+#sim-panel[data-running][data-open=no] #sim-faster{min-height:44px}
+/* «VELOCIDAD» y «AVANCE» sobran aqui: menos y mas, y la tortuga y la liebre, se entienden
+   solos. Se apaga el texto suelto de la etiqueta sin tocar lo que lleva dentro. */
+#sim-panel[data-running][data-open=no] #sim-body label{font-size:0;gap:4px}
+/* Y la cabecera: la franja roja de arriba ya dice que esto es una simulacion. */
+#sim-panel[data-running][data-open=no]>#sim-toggle b{display:none}
 #sim-panel>#sim-toggle b{font-size:13px}
 #sim-state{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#607389)}
 #sim-panel[data-running] #sim-state{color:#a8201a}
@@ -136,3 +156,9 @@ body.con-simulador.map-focus .wrap{padding-bottom:0}
    Solo pasa simulando, que es justo cuando se esta mirando la pantalla para comprobarla. */
 body.sim-corriendo #nav-stage.driving #drive-banner{top:26px}
 @media(max-width:700px){body.sim-corriendo #nav-stage.driving #drive-banner{top:24px}}
+
+/* Tamaño minimo en marcha: solo la cabecera, que ya lleva la velocidad. Se vuelve al
+   reducido con el mismo toque. */
+#sim-panel[data-min=yes]{padding:8px 11px;gap:0}
+#sim-panel[data-min=yes]>#sim-toggle b{display:none}
+#sim-panel[data-min=yes] #sim-state{font-size:12px;color:#a8201a}

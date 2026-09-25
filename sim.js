@@ -56,15 +56,22 @@ const $=id=>document.getElementById(id);
 // El panel flota sobre la pagina y tapaba los mandos que tiene debajo -la pestaña Guia,
 // el conmutador 2D/Satelite/3D, Ampliar mapa-. Se pliega, y la eleccion se recuerda.
 const ABIERTO='rutas-sim-abierto';
+// En marcha hay dos tamaños: reducido -velocidad, avance y Parar, dos filas- y minimo -solo
+// la cabecera, con la velocidad a la vista-. El panel flota sobre el mapa y en marcha tapaba
+// un cuarto de la pantalla justo donde va el camion, asi que quien conduce decide cuanto
+// sitio le deja. Parado sigue siendo abierto o cerrado, como siempre.
+let minimo=false;
 function plegar(abierto){
  panel.dataset.open=abierto?'yes':'no';
  $('sim-toggle').setAttribute('aria-expanded',String(abierto));
- // En marcha, plegar no es esconderlo todo: velocidad, avance y Parar se quedan. Si no,
- // arrancar escondia justo los mandos que se tocan mientras se mira la ruta.
- $('sim-body').hidden=!abierto&&!running;
+ panel.dataset.min=(running&&minimo&&!abierto)?'yes':'no';
+ $('sim-body').hidden=!abierto&&(!running||minimo);
  try{localStorage.setItem(ABIERTO,abierto?'1':'0');}catch{}
 }
-$('sim-toggle').onclick=()=>plegar(panel.dataset.open!=='yes');
+$('sim-toggle').onclick=()=>{
+ if(running){minimo=!minimo;plegar(false);return;}
+ plegar(panel.dataset.open!=='yes');
+};
 (function(){let v='1';try{v=localStorage.getItem(ABIERTO)??'1';}catch{}plegar(v!=='0');})();
 let speed=50,cal=S.quality('bueno'),drift=0;
 
@@ -75,8 +82,11 @@ function pick(group,attr,set){
   set(b.dataset[attr]);
  });
 }
+// Con el panel reducido al minimo la velocidad se sigue leyendo aqui.
+function estadoTexto(){return running?('en marcha · '+speed+' km/h'):'parado';}
 function pintaVelocidad(){
  $('sim-speed-value').textContent=speed;
+ const e=$('sim-state');if(e)e.textContent=estadoTexto();
  $('sim-slower').disabled=S.atFloor(speed);
  $('sim-faster').disabled=S.atCeiling(speed);
  const marcha=S.paceOf(speed);
@@ -179,7 +189,7 @@ const botonNav=(()=>{
 function pintaBotones(){
  $('sim-go').disabled=running;
  $('sim-stop').disabled=!running;
- $('sim-state').textContent=running?'en marcha':'parado';
+ $('sim-state').textContent=estadoTexto();
  if(botonNav){
   botonNav.textContent=running?'Parar simulación':'Simular';
   botonNav.setAttribute('aria-pressed',String(running));
@@ -190,7 +200,7 @@ function arrancar(opts){
  if(opts&&Number.isFinite(Number(opts.speed))){speed=Number(opts.speed);pintaVelocidad();}
  const state=RutasMap.get();
  if(!state||!state.route||state.route.total<1){info('Carga un GPX antes de simular.');plegar(true);return;}
- running=true;tick=0;
+ running=true;minimo=false;tick=0;
  distance=Number.isFinite(state.progress)&&state.progress>0?state.progress:0;
  for(const s of subs.values())if(s.realId!=null){real.clear(s.realId);s.realId=null;}
  banner.hidden=false;panel.dataset.running='yes';
