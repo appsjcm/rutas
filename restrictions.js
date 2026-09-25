@@ -62,7 +62,15 @@ async function ask(query,outer,onTry){
   outer.signal.addEventListener('abort',relay,{once:true});
   const timer=setTimeout(()=>attempt.abort(),ATTEMPT_MS);
   try{
-   const res=await fetch(MIRRORS[i]+'?data='+encodeURIComponent(query),{signal:attempt.signal});
+   // Una ronda corta cabe en la direccion y va por GET, exactamente como siempre. Una larga
+   // son decenas de cajas y no cabe comoda en una URL: esa va por POST, que es la forma que
+   // usa el propio ejemplo de la wiki de Overpass. No se pudo comprobar que el servidor de
+   // reserva acepte POST -estaba caido para cualquier consulta el dia que se probo-, asi que
+   // lo corto no se toca para no arriesgar lo que ya funcionaba.
+   const datos='data='+encodeURIComponent(query);
+   const res=datos.length<=1800
+    ?await fetch(MIRRORS[i]+'?'+datos,{signal:attempt.signal})
+    :await fetch(MIRRORS[i],{method:'POST',body:datos,signal:attempt.signal});
    if(!res.ok)throw Error(host(MIRRORS[i])+' respondió '+res.status+'.');
    const data=await res.json();
    if(data.remark)throw Error(host(MIRRORS[i])+' no pudo completar la consulta.');
@@ -75,10 +83,12 @@ async function ask(query,outer,onTry){
  }
  throw last||Error('Ningún servidor respondió.');
 }
-async function check(){const state=RutasMap.get();if(!state.route||Roadbook.getRoute().sample)return;const own=++token,route=state.route,box=bounds(route.pts),width=C.distance({lat:box[0],lon:box[1]},{lat:box[0],lon:box[3]}),height=C.distance({lat:box[0],lon:box[1]},{lat:box[2],lon:box[1]});if(width*height>250000000){$('road-status').textContent='La zona es demasiado extensa para esta consulta. Selecciona un segmento más corto.';return;}
+async function check(){const state=RutasMap.get();if(!state.route||Roadbook.getRoute().sample)return;const own=++token,route=state.route,zona=A.zone(route),boxes=zona.boxes;if(!boxes.length){$('road-status').textContent='No se pudo calcular la zona del recorrido.';return;}if(A.corridorArea(boxes)>250000000){$('road-status').textContent='La zona es demasiado extensa para esta consulta. Selecciona un segmento más corto.';return;}
  $('road-check').disabled=true;window.dispatchEvent(new CustomEvent('rutas:road-state',{detail:{state:'loading'}}));const requestController=new AbortController();controller=requestController;
  try{
-  const query='[out:json][timeout:30];way["highway"]('+box.join(',')+');out tags geom;';
+  // Cajas pequeñas a lo largo del recorrido, no un rectangulo que lo envuelva todo: ver
+  // corridor() en restrictions-core.js.
+  const query=A.corridorQuery(boxes,60);
   const data=await ask(query,requestController,(i,n,name)=>{$('road-status').textContent='Consultando sentidos de circulación en '+name+(i?' (servidor '+(i+1)+' de '+n+')':'')+'…';});
   if(own!==token)return;
   render(data,route);

@@ -69,5 +69,86 @@ function enrichTurns(route,turns,elements){
   return sorted.length&&(!sorted[1]||sorted[1].score-sorted[0].score>4)?sorted[0].way:null;}
  return turns.map(t=>{const before=roadAt(Math.max(0,t.d-30)),after=roadAt(Math.min(route.total,t.d+30));if(!before||!after)return {...t};const from=before.tags.name||before.tags.ref,to=after.tags.name||after.tags.ref;if(!from||!to)return {...t};const same=from===to,label=same&&Math.abs(t.angle)<120?(t.angle>0?'Curva a la derecha':'Curva a la izquierda'):t.label;return {...t,label,fromRoad:from,toRoad:to,roadContext:true};});
 }
-const api={rule,analyze,roadContext,enrichTurns,vehicle,metresOf,tonnesOf,speedLimit,indexWays};if(typeof module!=='undefined')module.exports=api;else root.RutasRestrictions=api;
+// ---- que zona se pide a Overpass ----
+// Antes se pedian todas las vias de un unico rectangulo que envolvia la ruta. Para una ronda
+// larga eso es enorme: con una de 108 km el rectangulo media 218 km2 y traia 6024 vias y
+// 7 MB -mas de lo que cabe en el almacen de un iPhone, unos 5 MB-, de las que el comprobador
+// solo usaba 652, las que pasan a menos de 16 m. Y por encima de 250 km2 no se comprobaba
+// nada. Ahora se piden cajas pequeñas a lo largo del recorrido: medido con la misma ronda,
+// 55 cajas, 63 km2, 1463 vias y 2,3 MB, sin que falte ninguna de las 652.
+// Se descarto pedir un pasillo con around: una linea de 1254 puntos seguia ejecutandose en
+// el servidor a los tres minutos.
+const TRAMO=2000, MARGEN=120;
+function corridor(route,opts){
+ const o=opts||{};
+ const L=Number.isFinite(o.tramo)&&o.tramo>0?o.tramo:TRAMO;
+ const m=Number.isFinite(o.margen)&&o.margen>=0?o.margen:MARGEN;
+ if(!route||!Array.isArray(route.pts)||route.pts.length<2||!Array.isArray(route.cum))return [];
+ const out=[];let s=90,w=180,n=-90,e=-180,desde=route.cum[0]||0;
+ const cierra=()=>{
+  if(s>n||w>e)return;
+  const dLa=m/110540,dLo=m/(111320*Math.cos(((s+n)/2)*Math.PI/180));
+  out.push([s-dLa,w-dLo,n+dLa,e+dLo].map(v=>+v.toFixed(6)));
+  s=90;w=180;n=-90;e=-180;
+ };
+ for(let i=0;i<route.pts.length;i++){
+  const p=route.pts[i];
+  if(!p||!Number.isFinite(p.lat)||!Number.isFinite(p.lon))continue;
+  s=Math.min(s,p.lat);n=Math.max(n,p.lat);w=Math.min(w,p.lon);e=Math.max(e,p.lon);
+  if(route.cum[i]-desde>=L&&i<route.pts.length-1){
+   cierra();desde=route.cum[i];
+   // El punto de corte abre tambien la caja siguiente: si no, el trozo entre los dos
+   // ultimos puntos de una caja y el primero de la otra quedaria fuera de ambas.
+   s=n=p.lat;w=e=p.lon;
+  }
+ }
+ cierra();
+ return out;
+}
+// Superficie total, en m2, para el mismo limite de antes: una consulta desmesurada se
+// niega en vez de colgar el servidor publico.
+function corridorArea(boxes){
+ let t=0;
+ for(const b of Array.isArray(boxes)?boxes:[]){
+  if(!Array.isArray(b)||b.length!==4)continue;
+  const alto=(b[2]-b[0])*110540,ancho=(b[3]-b[1])*111320*Math.cos(((b[0]+b[2])/2)*Math.PI/180);
+  if(alto>0&&ancho>0)t+=alto*ancho;
+ }
+ return t;
+}
+// Que zona se pide, segun el tamaño de la ronda. Un unico rectangulo es lo mas discreto:
+// dice donde esta la zona, no por donde pasa la ronda. Por eso se sigue usando siempre que
+// sea razonable -hasta 25 km2, una ronda urbana holgada- y el pasillo de cajas solo cuando
+// el rectangulo seria desmesurado, que es justo cuando fallaba o no cabia en el movil. La
+// cadena de cajas tampoco lleva puntos ni horas del GPX, pero si deja ver el trazado a
+// grandes rasgos: se paga solo donde compra algo.
+const RECTANGULO_MAX=25e6;
+function envelope(route,margen){
+ const m=Number.isFinite(margen)&&margen>=0?margen:MARGEN;
+ if(!route||!Array.isArray(route.pts)||route.pts.length<2)return null;
+ let s=90,w=180,n=-90,e=-180;
+ for(const p of route.pts){
+  if(!p||!Number.isFinite(p.lat)||!Number.isFinite(p.lon))continue;
+  s=Math.min(s,p.lat);n=Math.max(n,p.lat);w=Math.min(w,p.lon);e=Math.max(e,p.lon);
+ }
+ if(s>n||w>e)return null;
+ const dLa=m/110540,dLo=m/(111320*Math.cos(((s+n)/2)*Math.PI/180));
+ return [s-dLa,w-dLo,n+dLa,e+dLo].map(v=>+v.toFixed(6));
+}
+function zone(route,opts){
+ const unico=envelope(route,opts&&opts.margen);
+ if(!unico)return {tipo:'ninguna',boxes:[]};
+ if(corridorArea([unico])<=RECTANGULO_MAX)return {tipo:'rectangulo',boxes:[unico]};
+ return {tipo:'pasillo',boxes:corridor(route,opts)};
+}
+
+function corridorQuery(boxes,timeout){
+ const l=(Array.isArray(boxes)?boxes:[]).filter(b=>Array.isArray(b)&&b.length===4);
+ if(!l.length)return '';
+ return '[out:json][timeout:'+(Number.isFinite(timeout)?timeout:60)+'];('+
+  l.map(b=>'way["highway"]('+b.join(',')+');').join('')+');out tags geom;';
+}
+
+const api={rule,analyze,roadContext,enrichTurns,vehicle,metresOf,tonnesOf,speedLimit,indexWays,
+           corridor,corridorArea,corridorQuery,envelope,zone,TRAMO,MARGEN,RECTANGULO_MAX};if(typeof module!=='undefined')module.exports=api;else root.RutasRestrictions=api;
 })(typeof window!=='undefined'?window:globalThis);
