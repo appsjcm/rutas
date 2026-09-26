@@ -1762,6 +1762,18 @@ window.RutasQR=function(){
  var badge=document.getElementById('net-offline');
  function net(){if(badge)badge.hidden=navigator.onLine;}
  addEventListener('online',net);addEventListener('offline',net);net();
+ // Que el sistema no borre los datos -biblioteca de rutas, avance, avisos, calles- para hacer
+ // sitio cuando anda justo de espacio. Instalada en la pantalla de inicio, el navegador lo
+ // concede sin preguntar; en una pestaña normal no se pide, porque alguno lo pregunta con un
+ // cuadro. window.rutasPersistente dice como ha ido.
+ addEventListener('load',function(){
+  try{
+   var instalada=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+   if(!instalada||!navigator.storage||!navigator.storage.persist)return;
+   navigator.storage.persisted().then(function(ya){return ya||navigator.storage.persist();})
+    .then(function(ok){window.rutasPersistente=!!ok;}).catch(function(){});
+  }catch(e){}
+ });
  if('serviceWorker' in navigator)addEventListener('load',function(){
   var pending=null,reloading=false,ultima=0,version='';
   var update=document.createElement('button');update.id='app-update';update.className='btn';update.type='button';update.hidden=true;update.textContent='Nueva versión · actualizar';document.body.appendChild(update);

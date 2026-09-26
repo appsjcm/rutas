@@ -327,6 +327,14 @@ Si el móvil se bloquea a mitad de ronda, el GPS del navegador deja de actualiza
 
 Con el modo simulación siempre activo, su barra tapaba el botón «Entendido» del chequeo al arrancar una navegación de verdad -el auditor de pantalla lo daba como grave-: mientras el chequeo está a la vista, la barra se oculta.
 
+## Los datos, a salvo
+
+El sistema puede borrar los datos de una web para hacer sitio cuando anda justo de espacio, y ahí están la biblioteca de rutas, el avance, los avisos y las calles comprobadas. Ahora, instalada en la pantalla de inicio, la aplicación pide almacenamiento persistente al arrancar: el navegador lo concede sin preguntar y esos datos ya no se borran solos. En una pestaña normal no se pide, porque algún navegador lo pregunta con un cuadro.
+
+## La ronda, de un vistazo
+
+Bajo el nombre del recorrido, en la pantalla principal, ya no pone solo la distancia y «lista para navegar»: pone también cuántas paradas tiene y cuánto dura según las horas del GPX -«110,2 km · 14 paradas · 7 h 06 min»-, que es lo que se quiere saber antes de salir. Sin horas en el GPX no hay ni lo uno ni lo otro y se queda como estaba.
+
 ## Google Street View
 
 El control **Street View** activa la selección sobre el mapa: después de pulsarlo se puede tocar **cualquier punto del mapa**, sin iniciar la navegación y aunque no haya ruta cargada. Antes solo servía la línea GPX: cualquier toque se llevaba al punto de la ruta más cercano, aunque estuviera a un kilómetro, y no había forma de mirar una calle de al lado. Ahora se abre donde se toca, sin rumbo -Google elige hacia dónde mirar-. Si el toque cae encima de la línea -a menos de 28 píxeles de pantalla, lo que cubre un dedo, así que vale a cualquier zoom-, se ajusta a ella y la cámara mira en el sentido del recorrido, que es lo útil para preparar la ronda. El modal dice cuál de los dos es: «Punto de la ruta» o «Punto del mapa». Para elegir, el mapa se pone en 2D y con el norte arriba: en 3D o girado según la marcha, el toque no cae donde se ve. El modal se puede cerrar para volver exactamente al mismo punto del mapa y conserva un enlace para abrir Google Maps aparte si el visor incrustado no carga. Al cerrarlo el iframe se suelta -se le pone `about:blank`-: si no, la página de Google seguía cargada de fondo gastando red y batería. El evento `close` del `<dialog>` no llega a dispararse aquí -medido-, así que la limpieza se hace también a mano desde el botón de cerrar y desde `cancel`, que sí llega con Escape.
