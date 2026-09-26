@@ -7,7 +7,7 @@ const boton=document.getElementById('nav-start');
 if(!K||!boton)return;
 const $=id=>document.getElementById(id);
 
-const TILES='rutas-tiles-v1';
+const TILES='rutas-tiles-v2';   // el mismo nombre que en sw.js: lo comprueba tests/fuentes.test.cjs
 // Solo se cuentan las teselas del mapa 2D: el satélite de Esri numera los ejes al revés
 // y las vectoriales del 3D son otro dibujo. Contarlas juntas daría una cobertura falsa.
 const MAPA_2D=/(^|\.)tile\.openstreetmap\.org$/;

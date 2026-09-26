@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="es">
 <meta charset="utf-8">
+<script>
+// Los ultimos errores, para el diagnostico de la Guia: si algo falla en el movil se puede ver
+// sin conectar nada. Solo el mensaje y donde, nada de la ruta. Va lo primero para apuntar
+// tambien los del arranque.
+(function(){var l=window.__rutasErrores=[];function apunta(m,f,n){try{l.push({t:new Date().toTimeString().slice(0,8),m:String(m||"error").slice(0,160),f:String(f||"").split("/").pop().split("?")[0],l:n||0});if(l.length>8)l.shift();}catch(e){}}
+addEventListener("error",function(e){if(e&&e.message)apunta(e.message,e.filename,e.lineno);});
+addEventListener("unhandledrejection",function(e){var r=e&&e.reason;apunta(r&&r.message?r.message:r,"promesa",0);});})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Rutas · Navegador GPX</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -14,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="vendor/leaflet.css">
 <link rel="stylesheet" href="navigation.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
 :root{
   --ground:#E7EAE4; --surface:#FBFBF8; --surface-2:#F1F3EC;
@@ -1937,6 +1945,8 @@ window.RutasQR=function(){
 <script src="coverage.js"></script>
 <script src="checklist.js"></script>
 <script src="voz.js"></script>
+<script src="diagnostico-core.js"></script>
+<script src="diagnostico.js"></script>
 <!-- La ultima: manda sobre las hojas de cada funcion. -->
 <link rel="stylesheet" href="acabado.css">
 </body>

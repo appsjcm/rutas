@@ -96,3 +96,23 @@ test('el service worker sabe decir que version sirve',()=>{
  assert.match(sw,/rutasVersion/,'sin esto no se puede comprobar que version lleva el movil');
  assert.match(sw,/const VERSION='rutas-[^']+'/,'la version debe tener nombre propio');
 });
+
+// La caché de teselas se llama igual en el service worker y en el chequeo de salida: si no,
+// el chequeo miraria una caché que ya no existe y diria siempre que no hay mapa sin conexión.
+test('el chequeo mira la misma caché de teselas que llena el service worker',()=>{
+ const f=fuentes();
+ const sw=(f['sw.js'].match(/TILES='([^']+)'/)||[])[1],ck=(f['checklist.js'].match(/const TILES='([^']+)'/)||[])[1];
+ assert.ok(sw,'sw.js define TILES');
+ assert.equal(ck,sw);
+});
+
+// Las teselas se piden con CORS. Sin CORS llegan opacas y el navegador apunta cada una como si
+// pesara unos 7 MB: 54 teselas contaban 367 MB, y eso puede hacer que borre todo lo de la
+// aplicación para hacer sitio.
+test('todas las capas de teselas se piden con CORS',()=>{
+ const nav=fuentes()['navigation.js'];
+ const capas=[...nav.matchAll(/L\.tileLayer\([^)]*\)/g)].map(m=>m[0]);
+ assert.ok(capas.length>=4,'capas: '+capas.length);
+ for(const c of capas)assert.match(c,/crossOrigin:true/,c.slice(0,80));
+ assert.match(fuentes()['sw.js'],/res\.type!=='opaque'/,'y el service worker no guarda opacas');
+});

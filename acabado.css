@@ -395,6 +395,21 @@ body:has(#check-panel:not([hidden])) #sim-panel{display:none!important}
  background:var(--surface-2);color:var(--ink);font-family:inherit!important;font-size:14px;
 }
 
+/* ---- diagnostico, en la Guia ---- */
+.diagnostico{margin-top:14px;border:1px solid var(--rule);border-radius:14px;background:var(--surface-2);padding:0 14px}
+.diagnostico>summary{cursor:pointer;padding:12px 0;font-weight:700;font-size:14px;color:var(--ink);list-style:none;display:flex;align-items:center}
+.diagnostico>summary::-webkit-details-marker{display:none}
+.diagnostico>summary::after{content:'';margin-left:auto;width:18px;height:18px;background:var(--muted);-webkit-mask:var(--i-chevron) center/contain no-repeat;mask:var(--i-chevron) center/contain no-repeat;transition:transform .2s ease}
+.diagnostico[open]>summary::after{transform:rotate(180deg)}
+.diag-nota{margin:0 0 10px;font-size:12.5px;color:var(--muted)}
+.diag-datos{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0 0 10px;font-size:13px}
+.diag-datos dt{color:var(--muted);font-weight:600}
+.diag-datos dd{margin:0;color:var(--ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.diag-errores{margin:0 0 10px;padding-left:18px;font-size:12px;color:#a3303a;overflow-wrap:anywhere}
+:root[data-theme=dark] .diag-errores{color:#ff9b8f}
+.diag-copiado{margin-left:10px;font-size:12.5px;color:var(--pine)}
+#diag-copiar{margin-bottom:14px}
+
 /* ---- ahorro de bateria: sin desenfoque, que es lo que mas gasta de todo esto ---- */
 body.low-power #nav-stage .leaflet-control-zoom.leaflet-bar,
 body.low-power #nav-stage .map-dimension,
