@@ -39,11 +39,20 @@ function oculto(e){
 // un fallo de colocacion siempre que sea el propio escenario quien lo tape: la barra de
 // pestañas es fija y estaba dando cuatro falsos problemas cada vez, que es la mejor forma
 // de que un auditor deje de leerse. Si lo tapa otra cosa -un panel flotante-, eso si.
-function porLaPantallaCompleta(e,encima){
- if(!document.body.classList.contains('map-focus')||!encima)return false;
+// Pero mirando la pila entera y no solo lo de arriba: con el simulador encima de la barra de
+// pestañas, lo de arriba era el simulador y las cuatro pestañas volvian a salir "tapadas por
+// el simulador", cuando ya estaban debajo del mapa y no se veian.
+function porLaPantallaCompleta(e,encima,c){
+ if(!document.body.classList.contains('map-focus'))return false;
  const escenario=document.getElementById('nav-stage');
  if(!escenario||escenario.contains(e))return false;
- return escenario.contains(encima)||escenario===encima;
+ if(encima&&(escenario.contains(encima)||escenario===encima))return true;
+ if(!c||!document.elementsFromPoint)return false;
+ for(const x of document.elementsFromPoint(c.x,c.y)){
+  if(x===e||e.contains(x))return false;
+  if(x===escenario||escenario.contains(x))return true;
+ }
+ return false;
 }
 function recoger(){
  const items=[];
@@ -57,7 +66,7 @@ function recoger(){
   if(A.big(rect)&&A.inside(rect,innerWidth,innerHeight)){
    const c=A.centre(rect);
    const encima=document.elementFromPoint(c.x,c.y);
-   if(porLaPantallaCompleta(e,encima))saltar=true;
+   if(porLaPantallaCompleta(e,encima,c))saltar=true;
    // Que el clic caiga en un hijo -el <b> de un botón- sigue siendo el propio control.
    else hit=(!encima||encima===e||e.contains(encima)||encima.contains(e))?'self':nombre(encima);
   }

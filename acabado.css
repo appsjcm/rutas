@@ -1,0 +1,262 @@
+/* Acabado: la ultima capa del aspecto.
+   Cada funcion trajo su hoja de estilos y sobre el mapa se fueron pisando. Una estiraba la
+   barra de vistas a todo el ancho y otra empujaba sus botones a la derecha, con medio hueco
+   vacio; los mandos de la cabina se dibujaban con caracteres sueltos -"◖))", "◎", "↻"-; y a
+   pantalla completa, sin conducir, el zoom y "Reducir mapa" quedaban debajo de la hora del
+   iPhone. Esta hoja va la ultima y toca el aspecto de lo que flota sobre el mapa y donde se
+   coloca; la cabina de conduccion conserva su disposicion. */
+
+:root{
+ --vidrio:color-mix(in srgb,var(--surface) 84%,transparent);
+ --vidrio-linea:color-mix(in srgb,var(--ink) 12%,transparent);
+ --vidrio-sombra:0 1px 1px rgb(10 28 46/.05),0 10px 26px -12px rgb(10 28 46/.42);
+ --mando:40px;
+ --i-ampliar:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5'/%3E%3C/svg%3E");
+ --i-reducir:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5'/%3E%3C/svg%3E");
+ --i-persona:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='5' r='2.4'/%3E%3Cpath d='M9.3 21v-5.5H7.7v-3.8a2.6 2.6 0 0 1 2.6-2.6h3.4a2.6 2.6 0 0 1 2.6 2.6v3.8h-1.6V21'/%3E%3C/svg%3E");
+ --i-camara:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8.3h3.1l1.7-2.6h6.4l1.7 2.6H20V19H4z'/%3E%3Ccircle cx='12' cy='13.3' r='3.4'/%3E%3C/svg%3E");
+ --i-brujula:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 5.6l2.7 6.4H9.3z' fill='black' stroke='none'/%3E%3Cpath d='M9.3 12l2.7 6.4 2.7-6.4'/%3E%3C/svg%3E");
+ --i-rumbo:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5l6.6 16.2-6.6-3.7-6.6 3.7z' fill='black'/%3E%3C/svg%3E");
+ --i-voz:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9.6h3.4L12 5.8v12.4l-4.6-3.8H4z'/%3E%3Cpath d='M15.6 9.2a4 4 0 0 1 0 5.6M18.3 6.6a7.6 7.6 0 0 1 0 10.8'/%3E%3C/svg%3E");
+ --i-silencio:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9.6h3.4L12 5.8v12.4l-4.6-3.8H4z'/%3E%3Cpath d='M16.2 9.6l4.8 4.8M21 9.6l-4.8 4.8'/%3E%3C/svg%3E");
+ --i-centrar:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='6.6'/%3E%3Ccircle cx='12' cy='12' r='2.2' fill='black' stroke='none'/%3E%3Cpath d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3'/%3E%3C/svg%3E");
+ --i-repetir:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.6 12a7.4 7.4 0 1 0 2.2-5.2'/%3E%3Cpath d='M4.6 4.3v3.6h3.6'/%3E%3Cpath d='M11.2 10v4l3-2z' fill='black'/%3E%3C/svg%3E");
+ --i-cerrar:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 6.5l11 11M17.5 6.5l-11 11'/%3E%3C/svg%3E");
+}
+:root[data-theme=dark]{--vidrio-sombra:0 1px 1px rgb(0 0 0/.25),0 12px 28px -10px rgb(0 0 0/.7)}
+
+/* ---- el material: vidrio esmerilado, igual para todo lo que flota sobre el mapa ---- */
+#nav-stage .leaflet-control-zoom.leaflet-bar,
+#nav-stage .map-dimension,
+#nav-stage #nav-focus,
+#nav-stage .nav-map-key,
+:root[data-theme=dark] #nav-stage .leaflet-control-zoom.leaflet-bar,
+:root[data-theme=dark] #nav-stage .map-dimension,
+:root[data-theme=dark] #nav-stage .nav-map-key{
+ background:var(--vidrio)!important;
+ border:1px solid var(--vidrio-linea)!important;
+ box-shadow:var(--vidrio-sombra)!important;
+ -webkit-backdrop-filter:blur(16px) saturate(1.6);backdrop-filter:blur(16px) saturate(1.6);
+}
+
+/* ---- zoom ---- */
+#nav-stage .leaflet-control-zoom.leaflet-bar{border-radius:14px!important;overflow:hidden}
+#nav-stage .leaflet-control-zoom a,
+:root[data-theme=dark] #nav-stage .leaflet-control-zoom a{
+ width:var(--mando)!important;height:var(--mando)!important;line-height:var(--mando)!important;
+ border:0!important;border-radius:0!important;background:transparent!important;color:var(--ink)!important;
+ font:500 21px/var(--mando) system-ui,-apple-system,'Segoe UI',sans-serif!important;
+}
+#nav-stage .leaflet-control-zoom a+a,
+:root[data-theme=dark] #nav-stage .leaflet-control-zoom a+a{border-top:1px solid var(--vidrio-linea)!important}
+#nav-stage .leaflet-control-zoom a:active,
+#nav-stage .leaflet-control-zoom a:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)!important}
+#nav-stage .leaflet-control-zoom a.leaflet-disabled{color:color-mix(in srgb,var(--ink) 28%,transparent)!important}
+
+/* ---- barra de vistas: del tamaño de lo que lleva ---- */
+#nav-stage .map-dimension{
+ width:auto!important;padding:3px!important;gap:2px!important;border-radius:999px!important;
+ justify-content:flex-start!important;align-items:center;
+}
+#nav-stage .map-dimension button,
+:root[data-theme=dark] #nav-stage .map-dimension button{
+ min-width:0!important;height:36px;min-height:36px!important;padding:0 13px!important;
+ border:0!important;border-radius:999px!important;background:transparent;color:var(--ink-2);
+ font-family:inherit;font-size:13px!important;font-weight:650;letter-spacing:-.01em;line-height:1;
+ box-shadow:none;transition:background-color .18s ease,color .18s ease;
+}
+#nav-stage .map-dimension button[aria-pressed=true],
+:root[data-theme=dark] #nav-stage .map-dimension button[aria-pressed=true]{
+ background:var(--accent);color:var(--on-accent);
+ box-shadow:0 4px 12px -5px color-mix(in srgb,var(--accent) 85%,transparent);
+}
+#nav-stage .map-dimension button:not([aria-pressed=true]):active{background:color-mix(in srgb,var(--ink) 9%,transparent)}
+/* Street View y las fotos de la calle son acciones, no vistas: van como iconos, tras una raya.
+   El texto se queda para el lector de pantalla; el codigo lo reescribe y no hace falta tocarlo. */
+#nav-stage .map-dimension #map-streetview,
+#nav-stage .map-dimension #si-quick{
+ position:relative;display:grid;place-items:center;width:36px;padding:0!important;font-size:0!important;
+}
+#nav-stage .map-dimension #map-streetview{margin-left:8px;--ico:var(--i-persona)}
+#nav-stage .map-dimension #si-quick{--ico:var(--i-camara)}
+#nav-stage .map-dimension #map-streetview::after{
+ content:'';position:absolute;left:-6px;top:9px;bottom:9px;width:1px;background:var(--vidrio-linea);
+}
+#nav-stage .map-dimension #map-streetview::before,
+#nav-stage .map-dimension #si-quick::before{
+ content:'';width:20px;height:20px;background:currentColor;
+ -webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat;
+}
+
+/* ---- ampliar y reducir el mapa: un icono, siempre del mismo tamaño ---- */
+#nav-stage #nav-focus{
+ display:grid;place-items:center;width:var(--mando);height:var(--mando);min-width:0;min-height:var(--mando)!important;
+ padding:0!important;border-radius:14px!important;font-size:0!important;color:var(--ink);--ico:var(--i-ampliar);
+}
+#nav-stage #nav-focus[hidden]{display:none}
+#nav-stage #nav-focus[aria-pressed=true]{--ico:var(--i-reducir)}
+#nav-stage #nav-focus::before{
+ content:'';width:20px;height:20px;background:currentColor;
+ -webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat;
+}
+
+/* ---- leyenda y escala ---- */
+#nav-stage .nav-map-key{
+ border-radius:999px!important;padding:6px 11px!important;font-size:10.5px!important;font-weight:600;
+ line-height:1.2;color:var(--ink-2)!important;
+}
+#nav-stage .nav-map-key{display:flex;align-items:center;gap:10px;white-space:nowrap}
+#nav-stage .nav-map-key .clave{display:inline-flex;align-items:center;gap:5px}
+#nav-stage .nav-map-key .clave::before{
+ content:'';width:14px;height:4px;border-radius:2px;background:var(--c);box-shadow:0 0 0 1.5px rgb(255 255 255/.85);
+}
+#nav-stage .leaflet-control-scale-line{
+ border:1.5px solid color-mix(in srgb,var(--ink) 55%,transparent);border-top:0;border-radius:0 0 3px 3px;
+ background:var(--vidrio);color:var(--ink-2);font:600 10px/1.4 inherit;padding:1px 6px 0;
+}
+/* La escala, solo a pantalla completa: conduciendo nadie la lee -y quedaba medio tapada por el
+   velocimetro- y en el mapa pequeño no cabia junto a la leyenda. */
+#nav-stage.driving .leaflet-control-scale,
+#nav-stage:not(.focus) .leaflet-control-scale{display:none}
+
+/* "Repetir indicacion" solo sirve con la navegacion en marcha: fuera de ella tapaba la salida. */
+#nav-stage:not(.driving) #nav-repeat{display:none!important}
+
+/* ---- donde va cada cosa, con el movil en vertical o en pantallas grandes. El movil en
+   horizontal tiene su propia disposicion en landscape.css y no se toca. ---- */
+@media (orientation:portrait),(min-height:561px){
+ #nav-stage .map-dimension{left:auto!important;right:max(12px,env(safe-area-inset-right))!important;max-width:calc(100% - 24px)}
+
+ /* En la vista previa, abajo a la izquierda: el boton y, a su lado, la leyenda. */
+ #nav-stage:not(.focus) #nav-focus{left:12px;right:auto;top:auto;bottom:12px}
+ #nav-stage:not(.focus) .nav-map-key{left:60px;right:auto;bottom:18px;max-width:calc(100% - 72px)}
+
+ /* A pantalla completa, sin conducir: todo por debajo de la hora y por encima de la barra de
+    inicio del iPhone. Reducir, arriba a la derecha, y la barra de vistas debajo. */
+ body.map-focus #nav-stage.focus:not(.driving) .leaflet-top{top:env(safe-area-inset-top);left:env(safe-area-inset-left)}
+ body.map-focus #nav-stage.focus:not(.driving) .leaflet-bottom{bottom:env(safe-area-inset-bottom)}
+ /* La escala, a la derecha encima de la atribucion: a la izquierda va la leyenda. */
+ body.map-focus #nav-stage.focus:not(.driving) .leaflet-bottom.leaflet-left{left:auto;right:0;bottom:calc(15px + env(safe-area-inset-bottom))}
+ body.map-focus #nav-stage.focus:not(.driving) .leaflet-bottom.leaflet-left .leaflet-control-scale{margin:0 10px 0 0}
+ body.map-focus #nav-stage.focus:not(.driving) #nav-focus{
+  top:calc(12px + env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));left:auto;bottom:auto;
+ }
+ body.map-focus #nav-stage.focus:not(.driving) .map-dimension{top:calc(62px + env(safe-area-inset-top))}
+ body.map-focus #nav-stage.focus:not(.driving) .nav-map-key{
+  left:max(12px,env(safe-area-inset-left));right:auto;bottom:calc(14px + env(safe-area-inset-bottom));max-width:calc(100% - 24px);
+ }
+ /* Con el simulador, su barra ocupa el pie de la pantalla: leyenda, escala y atribucion suben
+    por encima de ella en vez de quedar debajo. */
+ body.con-simulador.map-focus #nav-stage.focus:not(.driving) .nav-map-key{bottom:calc(72px + env(safe-area-inset-bottom))}
+ body.con-simulador.map-focus #nav-stage.focus:not(.driving) .leaflet-bottom.leaflet-left{bottom:calc(74px + env(safe-area-inset-bottom))}
+ body.con-simulador.map-focus #nav-stage.focus:not(.driving) .leaflet-bottom.leaflet-right{bottom:calc(62px + env(safe-area-inset-bottom))}
+}
+
+/* ---- cabina: los mandos, con iconos de linea en vez de caracteres sueltos ---- */
+#nav-stage.driving #drive-tools button,
+#nav-stage.driving #nav-repeat{
+ background:color-mix(in srgb,#fff 88%,transparent)!important;border:1px solid rgb(16 38 58/.1)!important;
+ box-shadow:0 1px 1px rgb(10 28 46/.05),0 10px 24px -10px rgb(10 28 46/.45)!important;color:#173a57;
+ -webkit-backdrop-filter:blur(16px) saturate(1.6);backdrop-filter:blur(16px) saturate(1.6);
+}
+#nav-stage.driving #drive-tools #drive-heading::before,
+#nav-stage.driving #drive-tools #drive-voice::before,
+#nav-stage.driving #drive-tools #drive-center::before,
+#nav-stage.driving #nav-repeat::before{
+ content:''!important;position:absolute;inset:0;margin:auto;width:23px;height:23px;background:currentColor;
+ -webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat;
+}
+#nav-stage.driving #drive-heading{--ico:var(--i-brujula)}
+#nav-stage.driving #drive-heading[aria-pressed=true]{--ico:var(--i-rumbo);color:#1684d6}
+#nav-stage.driving #drive-voice{--ico:var(--i-voz)}
+#nav-stage.driving #drive-voice[aria-pressed=false]{--ico:var(--i-silencio);color:#a3303a}
+#nav-stage.driving #drive-center{--ico:var(--i-centrar)}
+#nav-stage.driving #drive-center.needs-center{color:#fff;background:#1684d6!important;border-color:rgb(255 255 255/.55)!important}
+#nav-stage.driving #nav-repeat{--ico:var(--i-repetir)}
+
+/* En modo oscuro, la cabina tambien: sobre el mapa oscuro, las tarjetas y los botones blancos
+   deslumbraban de noche, que es justo cuando se usa este modo. Los colores de cada tipo de via
+   se mantienen, en su version oscura. */
+:root[data-theme=dark] #nav-stage.driving #drive-tools button,
+:root[data-theme=dark] #nav-stage.driving #nav-repeat{
+ background:color-mix(in srgb,#142132 86%,transparent)!important;border-color:rgb(255 255 255/.12)!important;
+ box-shadow:0 1px 1px rgb(0 0 0/.25),0 12px 26px -10px rgb(0 0 0/.75)!important;color:#e6eef7;
+}
+:root[data-theme=dark] #nav-stage.driving #drive-heading[aria-pressed=true]{color:#6dd5e7}
+:root[data-theme=dark] #nav-stage.driving #drive-voice[aria-pressed=false]{color:#ff8f8f}
+:root[data-theme=dark] #nav-stage.driving #drive-road-info:not([hidden]){
+ background:color-mix(in srgb,#142132 90%,transparent);border-color:rgb(255 255 255/.12);color:#edf4fc;
+ box-shadow:0 1px 1px rgb(0 0 0/.25),0 12px 28px -10px rgb(0 0 0/.75);
+ -webkit-backdrop-filter:blur(16px) saturate(1.5);backdrop-filter:blur(16px) saturate(1.5);
+}
+:root[data-theme=dark] #drive-road-name{color:#edf4fc}
+:root[data-theme=dark] #drive-road-kind,:root[data-theme=dark] #drive-road-extra{color:#9bafc5}
+:root[data-theme=dark] #drive-road-icon{background:#1b3346;color:#7cc4ff}
+:root[data-theme=dark] #drive-road-info[data-flow=oneway] #drive-road-icon{background:#15314d;color:#8cc8ff}
+:root[data-theme=dark] #drive-road-info[data-flow=twoway] #drive-road-icon{background:#19392f;color:#7bd5b0}
+:root[data-theme=dark] #drive-road-info[data-flow=conditional] #drive-road-icon,
+:root[data-theme=dark] #drive-road-info[data-flow=ambiguous] #drive-road-icon{background:#3d2f12;color:#f3c268}
+:root[data-theme=dark] #drive-road-info[data-flow=opposed] #drive-road-icon{background:#46201c;color:#ff9b8f}
+
+/* Las rayas entre los datos del panel de abajo contaban con tres; con "Ritmo" son cuatro, en
+   una fila o -en el movil- en dos de dos, y quedaban rayas sueltas en el borde derecho y
+   faltaba la del medio en la segunda fila. */
+#nav-stage.driving .drive-eta .drive-stat{border-right:1px solid #dce5ea}
+#nav-stage.driving .drive-eta .drive-stat:last-child{border-right:0}
+@media(max-width:560px){#nav-stage.driving .drive-eta .drive-stat:nth-child(even){border-right:0}}
+/* Los tonos de "Ritmo" eran para fondo oscuro: sobre el panel blanco, el rosa apenas se leia. */
+#nav-stage.driving .drive-pace[data-tone=behind] b{color:#b3261e}
+#nav-stage.driving .drive-pace[data-tone=ahead] b{color:#0f766e}
+:root[data-theme=dark] #nav-stage.driving .drive-pace[data-tone=behind] b{color:#ffb4a2}
+:root[data-theme=dark] #nav-stage.driving .drive-pace[data-tone=ahead] b{color:#93e7df}
+:root[data-theme=dark] #nav-stage .leaflet-control-attribution{background:rgb(16 29 44/.86)!important;color:#b9c8d8!important}
+:root[data-theme=dark] #nav-stage .leaflet-control-attribution a{color:#82dceb!important}
+
+/* El panel de abajo -llegada, distancia, siguiente parada- era blanco tambien de noche. */
+:root[data-theme=dark] #nav-stage.driving{--cockpit-panel:rgb(18 30 46/.94)}
+:root[data-theme=dark] #nav-stage.driving #drive-panel{color:#edf4fc;box-shadow:0 -10px 34px rgb(0 0 0/.5)}
+:root[data-theme=dark] #nav-stage.driving .drive-stat{border-right-color:#2b3d52}
+:root[data-theme=dark] #nav-stage.driving .drive-stat small{color:#9bafc5}
+:root[data-theme=dark] #nav-stage.driving #drive-progress{background:#2b3d52}
+:root[data-theme=dark] #nav-stage.driving #drive-progress::-webkit-progress-bar{background:#2b3d52}
+:root[data-theme=dark] #nav-stage.driving #drive-next{color:#6dd5e7}
+:root[data-theme=dark] #nav-stage.driving #drive-status{color:#9bafc5}
+:root[data-theme=dark] #nav-stage.driving #drive-status.warn{color:#ff9b8f}
+
+/* Salir: un circulo de vidrio sobre el cartel oscuro, no una mancha roja; rojo solo al pulsar.
+   Con la franja de "Simulacion" arriba, baja con el cartel en vez de quedar montado encima. */
+#nav-stage.driving #drive-exit{
+ display:grid;place-items:center;width:40px!important;height:40px!important;min-height:40px!important;
+ border-radius:50%;border:1px solid rgb(255 255 255/.24)!important;background:rgb(255 255 255/.12)!important;
+ color:#fff;box-shadow:inset 0 1px rgb(255 255 255/.14)!important;
+ -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+}
+#nav-stage.driving #drive-exit[hidden]{display:none}
+#nav-stage.driving #drive-exit::before{
+ content:''!important;width:18px;height:18px;background:currentColor;
+ -webkit-mask:var(--i-cerrar) center/contain no-repeat;mask:var(--i-cerrar) center/contain no-repeat;
+}
+#nav-stage.driving #drive-exit:active{background:#b7353c!important;border-color:rgb(255 255 255/.4)!important}
+body.sim-corriendo #nav-stage.driving #drive-exit{top:calc(38px + env(safe-area-inset-top))}
+
+/* ---- iconos dentro de botones con texto: el simulador y la vista de calle ---- */
+#sim-pace button,.si-modes button,.si-controls button{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.ico-boton{width:17px;height:17px;flex:none}
+.si-controls #si-prev .ico-boton,.si-controls #si-next .ico-boton{width:20px;height:20px}
+
+/* ---- ahorro de bateria: sin desenfoque, que es lo que mas gasta de todo esto ---- */
+body.low-power #nav-stage .leaflet-control-zoom.leaflet-bar,
+body.low-power #nav-stage .map-dimension,
+body.low-power #nav-stage #nav-focus,
+body.low-power #nav-stage .nav-map-key,
+body.low-power #nav-stage.driving #drive-tools button,
+body.low-power #nav-stage.driving #nav-repeat,
+body.low-power #nav-stage.driving #drive-exit{
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+body.low-power #nav-stage .leaflet-control-zoom.leaflet-bar,
+body.low-power #nav-stage .map-dimension,
+body.low-power #nav-stage #nav-focus,
+body.low-power #nav-stage .nav-map-key{background:var(--surface)!important}
+
+@media (prefers-reduced-motion:reduce){#nav-stage .map-dimension button{transition:none}}

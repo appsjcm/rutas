@@ -70,15 +70,15 @@ const control=document.createElement('div');
 control.id='si-box';
 control.innerHTML='<span class="si-title">Vista de calle</span>'+
  '<div class="si-modes" role="group" aria-label="Vista durante la simulación">'+
-  '<button type="button" data-modo="mapa">🗺 Mapa</button>'+
-  '<button type="button" data-modo="calle">📷 Calle</button>'+
-  '<button type="button" data-modo="auto">🔀 Automático</button>'+
+  '<button type="button" data-modo="mapa"><svg class="ui-icon ico-boton" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.5L3.5 6.5v13l5.5-2 6 2 5.5-2v-13l-5.5 2-6-2z"/><path d="M9 4.5v13M15 6.5v13"/></svg>Mapa</button>'+
+  '<button type="button" data-modo="calle"><svg class="ui-icon ico-boton" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.3h3.1l1.7-2.6h6.4l1.7 2.6H20V19H4z"/><circle cx="12" cy="13.3" r="3.4"/></svg>Calle</button>'+
+  '<button type="button" data-modo="auto"><svg class="ui-icon ico-boton" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h12.5M13 4.5L16.5 8 13 11.5M20 16H7.5M11 12.5L7.5 16l3.5 3.5"/></svg>Automático</button>'+
  '</div>'+
  // Los mandos del visor viven aquí y no sobre la foto: en la esquina de la foto los
  // tapaba este mismo panel, y encima ensuciaban la imagen.
- '<div class="si-controls"><button type="button" id="si-prev" aria-label="Foto anterior">◀</button>'+
- '<button type="button" id="si-auto" aria-label="Volver a seguir la posición">🎯 Automático</button>'+
- '<button type="button" id="si-next" aria-label="Foto siguiente">▶</button></div>'+
+ '<div class="si-controls"><button type="button" id="si-prev" aria-label="Foto anterior"><svg class="ui-icon ico-boton" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg></button>'+
+ '<button type="button" id="si-auto" aria-label="Volver a seguir la posición"><svg class="ui-icon ico-boton" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.6"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg>Automático</button>'+
+ '<button type="button" id="si-next" aria-label="Foto siguiente"><svg class="ui-icon ico-boton" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5L16 12l-6.5 6.5"/></svg></button></div>'+
  '<p class="si-state" id="si-state"></p>'+
  // Ultimo eslabon: donde KartaView y Panoramax no llegan, Google casi siempre si. No se
  // abre solo -manda el usuario- y solo sale de aqui la coordenada de este punto.
@@ -96,7 +96,7 @@ const barra=document.querySelector('.map-dimension');
 let atajo=null;
 if(barra){
  atajo=document.createElement('button');
- atajo.type='button';atajo.id='si-quick';atajo.textContent='📷 Calle';
+ atajo.type='button';atajo.id='si-quick';atajo.textContent='Calle';atajo.setAttribute('aria-label','Fotos de la calle');
  atajo.title='Fotografías reales de la calle durante la simulación';
  barra.append(atajo);
  atajo.addEventListener('click',()=>cambiarModo(modo==='mapa'?'calle':'mapa'));
