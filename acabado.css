@@ -357,6 +357,19 @@ body.route-settings-open #sim-panel{display:none!important}
 #nav-road-alert[data-level=danger] .road-alert-icon{width:26px;height:26px;box-shadow:0 0 0 2px #fff}
 #nav-road-alert[data-level=caution] .road-alert-icon{width:30px;height:27px;filter:none}
 
+/* ---- al pulsar, una respuesta leve, como un boton de verdad. Solo bajaban un pixel los botones
+   grandes; chips, pestañas y mandos del simulador no hacian nada. ---- */
+.btn,.chip,.tab,#sim-panel button,#nav-stage .map-dimension button{
+ transition:transform .12s ease,background-color .18s ease,color .18s ease,box-shadow .18s ease;
+}
+:is(.btn,.chip,#sim-panel button,#nav-stage .map-dimension button):not(:disabled):not(#app-update):not(.mobile-panel-toggle):active{transform:scale(.97)}
+.tab:not([aria-selected=true]):active{transform:scale(.96)}
+@media (prefers-reduced-motion:reduce){
+ :is(.btn,.chip,.tab,#sim-panel button,#nav-stage .map-dimension button):active{transform:none!important}
+}
+/* De noche, el filo blanco de las muestras de la leyenda brillaba mas que el propio color. */
+:root[data-theme=dark] #nav-stage .nav-map-key .clave::before{box-shadow:0 0 0 1.5px rgb(0 0 0/.45)}
+
 /* ---- ahorro de bateria: sin desenfoque, que es lo que mas gasta de todo esto ---- */
 body.low-power #nav-stage .leaflet-control-zoom.leaflet-bar,
 body.low-power #nav-stage .map-dimension,

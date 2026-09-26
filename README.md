@@ -253,6 +253,8 @@ Cada función trajo su hoja de estilos, y sobre el mapa se fueron pisando: una e
 - **El plano de la pestaña del conductor**: la escala iba abajo a la izquierda, justo donde empezaba el recorrido, y la «A» la tapaba. Ahora el dibujo deja una franja para ella, y las marcas A y B son más grandes.
 - **Con el móvil en horizontal**: el botón de salir va sobre el mapa y no sobre el cartel oscuro, así que es de vidrio oscuro; simulando, toda la pantalla baja lo que mide la franja roja, que tapaba la tarjeta de la calle y el cartel; y los botones de lento y rápido pierden el icono, que no cabía.
 
+- **Al pulsar, una respuesta leve**: los botones, chips, pestañas y mandos del simulador se hunden un poco, como un botón de verdad; antes solo bajaban un píxel los botones grandes. Con «reducir movimiento» activado en el móvil, no.
+
 Comprobado con el auditor de pantalla en la vista previa, a pantalla completa y conduciendo: nada importante tapado. El propio auditor daba cuatro falsas alarmas a pantalla completa con el simulador -las pestañas, que quedan debajo del mapa, salían "tapadas por el simulador"-; ahora mira toda la pila de capas en ese punto y no solo la de arriba.
 
 ## Menús sobre el mapa
