@@ -22,6 +22,15 @@
  --i-centrar:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='6.6'/%3E%3Ccircle cx='12' cy='12' r='2.2' fill='black' stroke='none'/%3E%3Cpath d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3'/%3E%3C/svg%3E");
  --i-repetir:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.6 12a7.4 7.4 0 1 0 2.2-5.2'/%3E%3Cpath d='M4.6 4.3v3.6h3.6'/%3E%3Cpath d='M11.2 10v4l3-2z' fill='black'/%3E%3C/svg%3E");
  --i-cerrar:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 6.5l11 11M17.5 6.5l-11 11'/%3E%3C/svg%3E");
+ --m-recto:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20.5V4.8'/%3E%3Cpath d='M6 10.8l6-6 6 6'/%3E%3C/svg%3E");
+ --m-izquierda:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16.5 20.5v-7a4 4 0 0 0-4-4H5.2'/%3E%3Cpath d='M9.6 4.6L4.8 9.5l4.8 4.9'/%3E%3C/svg%3E");
+ --m-derecha:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7.5 20.5v-7a4 4 0 0 1 4-4h7.3'/%3E%3Cpath d='M14.4 4.6l4.8 4.9-4.8 4.9'/%3E%3C/svg%3E");
+ --m-cambio:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 20.5v-10a5 5 0 0 0-10 0v5.6'/%3E%3Cpath d='M3.2 12.3L7 16.1l3.8-3.8'/%3E%3C/svg%3E");
+ --m-rotonda:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.60 18.24A7.20 7.20 0 0 0 18.24 8.40'/%3E%3Cpath d='M17.80 11.47L18.24 8.40L21.11 9.56'/%3E%3Cpath d='M4.80 12.00A7.20 7.20 0 0 0 12.00 19.20'/%3E%3Cpath d='M9.56 17.29L12.00 19.20L9.56 21.11'/%3E%3Cpath d='M15.60 5.76A7.20 7.20 0 0 0 5.76 8.40'/%3E%3Cpath d='M8.64 7.24L5.76 8.40L5.33 5.33'/%3E%3C/svg%3E");
+ --m-salida:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 20.5v-5.1a4 4 0 0 1 1.2-2.9l8.3-8.3'/%3E%3Cpath d='M11.8 4.1h5.9V10'/%3E%3C/svg%3E");
+ --m-llegada:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 21V3.8'/%3E%3Cpath d='M6.5 4.4h10.8l-2.3 4.1 2.3 4.1H6.5'/%3E%3C/svg%3E");
+ --m-aviso:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.9l9 15.6H3z'/%3E%3Cpath d='M12 9.9v4.3'/%3E%3Cpath d='M12 17.1v.2'/%3E%3C/svg%3E");
+ --m-buscando:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='6.8'/%3E%3Cpath d='M12 2.6v3.6M12 17.8v3.6M2.6 12h3.6M17.8 12h3.6'/%3E%3C/svg%3E");
 }
 :root[data-theme=dark]{--vidrio-sombra:0 1px 1px rgb(0 0 0/.25),0 12px 28px -10px rgb(0 0 0/.7)}
 
@@ -239,10 +248,51 @@
 #nav-stage.driving #drive-exit:active{background:#b7353c!important;border-color:rgb(255 255 255/.4)!important}
 body.sim-corriendo #nav-stage.driving #drive-exit{top:calc(38px + env(safe-area-inset-top))}
 
+/* ---- la flecha de la maniobra, dibujada y no escrita (hud-core.js, maneuverIcon) ---- */
+:is(#drive-turn-arrow,#nav-turn-icon)[data-icono]{
+ display:block;flex:none;font-size:0!important;line-height:0;text-shadow:none;
+ background:currentColor;-webkit-mask:var(--maniobra) center/contain no-repeat;mask:var(--maniobra) center/contain no-repeat;
+}
+#nav-stage #drive-turn-arrow[data-icono]{width:46px;height:46px}
+#nav-turn-icon[data-icono]{width:32px;height:32px}
+@media(max-width:600px){#nav-stage #drive-turn-arrow[data-icono]{width:42px;height:42px}}
+@media (orientation:landscape) and (max-height:560px){#nav-stage #drive-turn-arrow[data-icono]{width:30px;height:30px}}
+:is(#drive-turn-arrow,#nav-turn-icon)[data-icono=recto]{--maniobra:var(--m-recto)}
+:is(#drive-turn-arrow,#nav-turn-icon)[data-icono=izquierda]{--maniobra:var(--m-izquierda)}
+:is(#drive-turn-arrow,#nav-turn-icon)[data-icono=derecha]{--maniobra:var(--m-derecha)}
+:is(#drive-turn-arrow,#nav-turn-icon)[data-icono=cambio]{--maniobra:var(--m-cambio)}
+:is(#drive-turn-arrow,#nav-turn-icon)[data-icono=rotonda]{--maniobra:var(--m-rotonda)}
+:is(#drive-turn-arrow,#nav-turn-icon)[data-icono=salida]{--maniobra:var(--m-salida)}
+:is(#drive-turn-arrow,#nav-turn-icon)[data-icono=llegada]{--maniobra:var(--m-llegada)}
+:is(#drive-turn-arrow,#nav-turn-icon)[data-icono=aviso]{--maniobra:var(--m-aviso)}
+:is(#drive-turn-arrow,#nav-turn-icon)[data-icono=buscando]{--maniobra:var(--m-buscando)}
+
 /* ---- iconos dentro de botones con texto: el simulador y la vista de calle ---- */
 #sim-pace button,.si-modes button,.si-controls button{display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .ico-boton{width:17px;height:17px;flex:none}
 .si-controls #si-prev .ico-boton,.si-controls #si-next .ico-boton{width:20px;height:20px}
+
+/* ---- interruptores: las opciones de si o no eran casillas sueltas ---- */
+.switch{display:flex;align-items:center;gap:12px}
+.switch>input[type=checkbox]{
+ -webkit-appearance:none;appearance:none;flex:none;position:relative;width:46px;height:28px;margin:0;
+ border:0;border-radius:999px;background:color-mix(in srgb,var(--ink) 20%,transparent);cursor:pointer;
+ transition:background-color .2s ease;
+}
+.switch>input[type=checkbox]::after{
+ content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;
+ box-shadow:0 2px 4px rgb(0 0 0/.22),0 0 0 .5px rgb(0 0 0/.05);transition:transform .22s cubic-bezier(.3,.7,.4,1);
+}
+.switch>input[type=checkbox]:checked{background:var(--accent)}
+.switch>input[type=checkbox]:checked::after{transform:translateX(18px)}
+:root[data-theme=dark] .switch>input[type=checkbox]:checked{background:#1f9fb5}
+.switch>input[type=checkbox]:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+.switch>input[type=checkbox]:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:reduce){.switch>input[type=checkbox],.switch>input[type=checkbox]::after{transition:none}}
+
+/* Con la hoja de "Ruta y ajustes" abierta, la barra del simulador quedaba encima tapando sus
+   botones: la hoja lo cubre todo y el simulador ahi no hace falta. */
+body.route-settings-open #sim-panel{display:none!important}
 
 /* ---- ahorro de bateria: sin desenfoque, que es lo que mas gasta de todo esto ---- */
 body.low-power #nav-stage .leaflet-control-zoom.leaflet-bar,

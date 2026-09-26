@@ -134,3 +134,20 @@ test('pantalla y voz comparten el mismo redondeo',()=>{
  assert.equal(H.banner(s).lead,'EN '+H.distance(s.gap));
  assert.equal(H.distance(183),'175 m');
 });
+
+// La flecha del cartel se dibuja como icono segun el simbolo (acabado.css). Si un simbolo
+// nuevo no tuviera dibujo se veria como caracter suelto: que no pase sin enterarse.
+test('todas las maniobras que puede dar la app tienen su icono',()=>{
+ const S=require('../street-match-core');
+ const simbolos=new Set(['↰','↱','↶','↑','✓','!','⌖']);   // del GPX (nav-core), del cartel y de la navegacion
+ for(let type=0;type<=45;type++){
+  for(const exit of [0,2]){const m=S.roadManeuver({type,roundabout_exit_count:exit});if(m)simbolos.add(m.symbol);}
+ }
+ for(const v of S.upgradeManeuvers([{type:26,label:'En la rotonda, toma la salida 3'},{type:27,label:'Sal de la rotonda'}]))simbolos.add(v.symbol);
+ for(const s of simbolos)assert.ok(H.maneuverIcon(s),'sin icono: '+s);
+ assert.equal(H.maneuverIcon('↰'),'izquierda');
+ assert.equal(H.maneuverIcon(' ⟲ '),'rotonda','con espacios alrededor tambien');
+ assert.equal(H.maneuverIcon('☃'),'','lo desconocido se queda como caracter');
+ assert.equal(H.maneuverIcon(null),'');
+ assert.equal(H.maneuverIcon('constructor'),'','no se cuela lo que hereda cualquier objeto');
+});

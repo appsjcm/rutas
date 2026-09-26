@@ -79,6 +79,13 @@ function banner(state){
  };
 }
 
-const api={step,distance,after,banner,lower,imperative,SIN_NOMBRE};
+// La flecha del cartel era un caracter -↰, ↱, ⟲- y cada tipo de letra lo dibuja a su manera:
+// fino, desigual, a veces con otra altura que el resto. acabado.css la dibuja como icono segun
+// este nombre. Un simbolo que no este aqui se sigue viendo como caracter, que es mejor que nada.
+const ICONOS_MANIOBRA={'↑':'recto','↰':'izquierda','↱':'derecha','↶':'cambio','⟲':'rotonda',
+ '↗':'salida','✓':'llegada','!':'aviso','⌖':'buscando'};
+function maneuverIcon(symbol){return Object.prototype.hasOwnProperty.call(ICONOS_MANIOBRA,String(symbol||'').trim())?ICONOS_MANIOBRA[String(symbol).trim()]:'';}
+
+const api={step,distance,after,banner,lower,imperative,maneuverIcon,SIN_NOMBRE,ICONOS_MANIOBRA};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasHudCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

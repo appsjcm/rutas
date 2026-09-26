@@ -243,6 +243,10 @@ Cada función trajo su hoja de estilos, y sobre el mapa se fueron pisando: una e
 - **La cabina, de noche también**: en modo oscuro la tarjeta de la calle, los botones y el panel de abajo eran blancos y deslumbraban; ahora son de vidrio oscuro, con los colores de cada tipo de vía en su versión oscura.
 - **Detalles**: el botón de salir, un círculo de vidrio dentro del cartel en vez de una mancha roja montada sobre la franja de «Simulación»; «Repetir indicación» solo con la navegación en marcha; la escala solo a pantalla completa; las rayas entre llegada, tiempo, restante y ritmo, bien puestas con cuatro datos; y los colores de «Ritmo», que eran para fondo oscuro, legibles sobre el panel blanco.
 
+- **La flecha de la maniobra, dibujada y no escrita.** El cartel mostraba un carácter -↰, ↱, ⟲- y cada tipo de letra lo dibuja a su manera: fino, desigual, a veces con otra altura. Ahora son iconos de trazo grueso, como los de un navegador de coche: recto, izquierda, derecha, cambio de sentido, salida, llegada -una bandera-, aviso y buscando posición. La rotonda es el pictograma de la señal: tres flechas en círculo en sentido contrario a las agujas del reloj; un anillo con una flecha en diagonal, que se probó antes, se parecía demasiado a ♂. Qué icono toca a cada símbolo lo decide `hud-core.js` (`maneuverIcon`), y una prueba recorre todas las maniobras que pueden dar Valhalla, el GPX y el propio cartel para que ninguna se quede sin dibujo. Un símbolo desconocido se sigue viendo como carácter.
+- **Interruptores**: las opciones de sí o no -avisos por voz, modo simulación, arrancar la navegación- eran casillas sueltas; ahora son interruptores.
+- **La hoja de «Ruta y ajustes» por encima de todo**: la barra del simulador quedaba encima tapándole botones.
+
 Comprobado con el auditor de pantalla en la vista previa, a pantalla completa y conduciendo: nada importante tapado. El propio auditor daba cuatro falsas alarmas a pantalla completa con el simulador -las pestañas, que quedan debajo del mapa, salían "tapadas por el simulador"-; ahora mira toda la pila de capas en ese punto y no solo la de arriba.
 
 ## Menús sobre el mapa
