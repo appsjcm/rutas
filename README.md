@@ -255,6 +255,8 @@ Cada función trajo su hoja de estilos, y sobre el mapa se fueron pisando: una e
 
 - **Al pulsar, una respuesta leve**: los botones, chips, pestañas y mandos del simulador se hunden un poco, como un botón de verdad; antes solo bajaban un píxel los botones grandes. Con «reducir movimiento» activado en el móvil, no.
 
+- **El coche se desliza en vez de saltar.** Con una posición del GPS por segundo, el coche y el mapa se colocaban de golpe en cada una: un tirón cada segundo. Ahora, entre una posición y la siguiente, el coche avanza a pasitos -medido con el simulador a 50 km/h: 165 movimientos en 3 segundos, de 0,3 m como mucho, en vez de un salto de 14 m por segundo- y el mapa le acompaña con un desplazamiento suave de la misma duración. Es solo lo que se ve: el avance, las indicaciones y todo lo demás usan la posición real en cuanto llega, y la posición que se da a los demás módulos -marcas, fotos de la calle, 3D, accesos- también es la real, no la dibujada. Sin animación con el ahorro de batería, con «reducir movimiento», ante saltos de más de 250 m -el GPS que vuelve tras perderse- y con la aplicación oculta, donde el navegador no anima y el coche se habría quedado atrás.
+
 Comprobado con el auditor de pantalla en la vista previa, a pantalla completa y conduciendo: nada importante tapado. El propio auditor daba cuatro falsas alarmas a pantalla completa con el simulador -las pestañas, que quedan debajo del mapa, salían "tapadas por el simulador"-; ahora mira toda la pila de capas en ese punto y no solo la de arriba.
 
 ## Menús sobre el mapa
