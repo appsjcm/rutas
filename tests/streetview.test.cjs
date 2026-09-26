@@ -134,3 +134,45 @@ test('los textos no prometen lo que no se puede saber',()=>{
  assert.equal(V.offlineNote(false),'Street View necesita conexión.');
  assert.equal(V.offlineNote(true),'');
 });
+
+// ---- tocar cualquier punto del mapa ----
+{
+ const KX=111320*Math.cos(41.9*Math.PI/180),KY=110540;
+ const en=(x,y)=>({lat:41.9+y/KY,lon:1.87+x/KX});
+ const ruta=N.prepare([en(0,0),en(500,0),en(500,500)]);
+
+ test('un toque encima de la ruta se ajusta a ella y guarda en que punto cae',()=>{
+  const r=V.pick(ruta,en(200,12),30);
+  assert.equal(r.onRoute,true);
+  assert.ok(Math.abs(r.d-200)<1,'a los 200 m: '+r.d);
+  assert.ok(N.distance(r.point,en(200,0))<0.5,'sobre la linea');
+ });
+
+ test('un toque lejos de la ruta se abre justo donde se ha tocado',()=>{
+  const toque=en(200,120),r=V.pick(ruta,toque,30);
+  assert.equal(r.onRoute,false);
+  assert.equal(r.d,null);
+  assert.deepEqual(r.point,{lat:toque.lat,lon:toque.lon});
+ });
+
+ test('el radio de ajuste manda: a mas zoom, hay que tocar mas cerca',()=>{
+  const toque=en(300,50);
+  assert.equal(V.pick(ruta,toque,60).onRoute,true,'con 60 m de radio, se ajusta');
+  assert.equal(V.pick(ruta,toque,40).onRoute,false,'con 40 m, no');
+ });
+
+ test('sin ruta, o sin radio, se abre donde se toca; y lo roto no abre nada',()=>{
+  const toque=en(10,10);
+  assert.equal(V.pick(null,toque,30).onRoute,false);
+  assert.equal(V.pick(ruta,toque,0).onRoute,false);
+  assert.equal(V.pick(ruta,toque,NaN).onRoute,false);
+  assert.equal(V.pick(ruta,{lat:null,lon:2},30),null);
+  assert.equal(V.pick(ruta,{lat:95,lon:2},30),null);
+ });
+
+ test('de un punto del mapa solo sale hacia Google la coordenada, sin rumbo',()=>{
+  const r=V.pick(ruta,en(200,120),30),u=V.url(r.point,null);
+  assert.ok(u.includes('viewpoint='+r.point.lat.toFixed(6)+','+r.point.lon.toFixed(6)));
+  assert.ok(!/heading=/.test(u),'sin rumbo inventado');
+ });
+}

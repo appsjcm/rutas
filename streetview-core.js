@@ -71,6 +71,20 @@ function routePosition(route,point){
  return best;
 }
 
+// Donde abrir Street View al tocar el mapa. Antes cualquier toque se llevaba al punto de la
+// ruta mas cercano, aunque estuviera a un kilometro: no se podia mirar una calle de al lado.
+// Ahora se abre donde se toca. Solo si el toque cae a menos de "radio" metros de la linea -el
+// radio sale de los pixeles de la pantalla, asi que es "encima de la linea" a cualquier zoom-
+// se ajusta a ella: el punto queda sobre la calzada y la vista mira en el sentido de la marcha.
+function pick(route,tap,radius){
+ if(!validPoint(tap))return null;
+ const exacto={point:{lat:numero(tap.lat),lon:numero(tap.lon)},onRoute:false,d:null};
+ const r=numero(radius);
+ if(!(r>0))return exacto;
+ const hit=routePosition(route,tap);
+ return hit&&hit.error<=r?{point:hit.point,onRoute:true,d:hit.d}:exacto;
+}
+
 function ahead(list,progress,key){
  const d=Number(progress)||0;
  const campo=key||'d';
@@ -106,7 +120,7 @@ function offlineNote(online){
  return online===false?'Street View necesita conexión.':'';
 }
 
-const api={url,embedUrl,validPoint,numero,normaliseHeading,routePosition,nextTurn,nextStop,ahead,walk,label,title,offlineNote,
+const api={url,embedUrl,validPoint,numero,normaliseHeading,routePosition,pick,nextTurn,nextStop,ahead,walk,label,title,offlineNote,
            BASE,EMBED,PRECISION,FOV,STEP};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasStreetView=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
