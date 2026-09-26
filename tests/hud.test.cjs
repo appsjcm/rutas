@@ -151,3 +151,35 @@ test('todas las maniobras que puede dar la app tienen su icono',()=>{
  assert.equal(H.maneuverIcon(null),'');
  assert.equal(H.maneuverIcon('constructor'),'','no se cuela lo que hereda cualquier objeto');
 });
+
+// ---- la voz ----
+const v=(name,lang,localService=true,def=false)=>({name,lang,localService,default:def,voiceURI:'uri:'+name});
+test('en un iPhone con voces descargadas se usa la premium de España',()=>{
+ const voces=[v('Mónica','es-ES',true,true),v('Mónica (mejorada)','es-ES'),v('Marisol (prémium)','es-ES'),
+  v('Paulina','es-MX'),v('Eddy (Español (España))','es-ES'),v('Grandma (Español (España))','es-ES'),v('Samantha','en-US')];
+ assert.equal(H.bestVoice(voces).name,'Marisol (prémium)');
+ const nombres=H.spanishVoices(voces).map(x=>x.name);
+ assert.deepEqual(nombres,['Marisol (prémium)','Mónica (mejorada)','Mónica','Paulina'],'sin voces de broma ni de otro idioma');
+});
+test('sin voces descargadas, la basica de España antes que la de otro pais',()=>{
+ assert.equal(H.bestVoice([v('Paulina','es-MX',true,true),v('Mónica','es-ES')]).name,'Mónica');
+});
+test('una voz que necesita conexion no gana a una que funciona sin ella',()=>{
+ // Windows: la natural en linea suena mejor, pero sin cobertura se queda muda en la ronda.
+ const voces=[v('Microsoft Elvira Online (Natural) - Spanish (Spain)','es-ES',false),v('Microsoft Helena - Spanish (Spain)','es-ES',true)];
+ assert.equal(H.bestVoice(voces).name,'Microsoft Helena - Spanish (Spain)');
+});
+test('la voz que elige quien conduce manda, si sigue en el movil',()=>{
+ const voces=[v('Mónica','es-ES'),v('Marisol (prémium)','es-ES'),v('Jorge','es-ES')];
+ assert.equal(H.bestVoice(voces,'uri:Jorge').name,'Jorge');
+ assert.equal(H.bestVoice(voces,'Jorge').name,'Jorge','tambien por nombre');
+ assert.equal(H.bestVoice(voces,'uri:Borrada').name,'Marisol (prémium)','si ya no esta, la mejor');
+ assert.equal(H.bestVoice(voces,'uri:Samantha'),H.bestVoice(voces),'una de otro idioma no se acepta');
+});
+test('sin voces en castellano, ninguna; y entradas raras no rompen nada',()=>{
+ assert.equal(H.bestVoice([v('Samantha','en-US')]),null);
+ assert.equal(H.bestVoice([]),null);
+ assert.equal(H.bestVoice(null),null);
+ assert.equal(H.voiceScore({name:'x'}),-1);
+ assert.ok(H.voiceScore(v('Mónica','es_ES'))>0,'con guion bajo, como en algunos Android');
+});

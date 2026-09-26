@@ -86,6 +86,36 @@ const ICONOS_MANIOBRA={'↑':'recto','↰':'izquierda','↱':'derecha','↶':'ca
  '↗':'salida','✓':'llegada','!':'aviso','⌖':'buscando'};
 function maneuverIcon(symbol){return Object.prototype.hasOwnProperty.call(ICONOS_MANIOBRA,String(symbol||'').trim())?ICONOS_MANIOBRA[String(symbol).trim()]:'';}
 
-const api={step,distance,after,banner,lower,imperative,maneuverIcon,SIN_NOMBRE,ICONOS_MANIOBRA};
+// ---- la voz de las indicaciones ----
+// El navegador no elige voz: con el idioma puesto, el movil usa la basica. En iPhone, las voces
+// "mejoradas" o "premium" que se descargan en Ajustes suenan mucho mejor y no se usaban. Se
+// elige la mejor en castellano con este orden: de España antes que de otros paises; premium y
+// mejoradas antes que la basica; y las que funcionan sin conexion antes que las que la
+// necesitan, porque en la ronda no siempre hay cobertura y una voz en linea se queda muda.
+// Fuera las voces de broma que trae el sistema (Eddy, Flo, Grandma...).
+const VOCES_DE_BROMA=/\b(eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|albert|bahh|bells|boing|bubbles|cellos|jester|organ|superstar|trinoids|whisper|wobble|zarvox)\b|abuel|bad news|good news|pipe organ/i;
+function voiceScore(v){
+ if(!v||typeof v.lang!=='string')return -1;
+ const lang=v.lang.replace('_','-').toLowerCase(),nombre=String(v.name||'');
+ if(!/^es(-|$)/.test(lang)||VOCES_DE_BROMA.test(nombre))return -1;
+ let p=lang==='es-es'?100:lang==='es'?70:60;
+ if(/premium|prémium/i.test(nombre))p+=30;
+ else if(/enhanced|mejorada|natural|neural/i.test(nombre))p+=20;
+ if(v.localService)p+=25;
+ if(v.default)p+=1;
+ return p;
+}
+function spanishVoices(voices){
+ return (Array.isArray(voices)?voices:Array.from(voices||[])).filter(v=>voiceScore(v)>=0)
+  .sort((a,b)=>voiceScore(b)-voiceScore(a)||String(a.name).localeCompare(String(b.name)));
+}
+// La que haya elegido quien conduce, si sigue en el movil; si no, la mejor.
+function bestVoice(voices,preferida){
+ const lista=spanishVoices(voices);
+ if(preferida){const f=lista.find(v=>v.voiceURI===preferida||v.name===preferida);if(f)return f;}
+ return lista[0]||null;
+}
+
+const api={step,distance,after,banner,lower,imperative,maneuverIcon,voiceScore,spanishVoices,bestVoice,SIN_NOMBRE,ICONOS_MANIOBRA};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasHudCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
