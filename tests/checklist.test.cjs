@@ -147,3 +147,26 @@ test('los avisos propios entran como sexto apartado, al final',()=>{
  assert.equal(l[5].detail,'2 avisos tuyos en esta ruta.');
  assert.equal(C.verdict(l).tone,'ok','todo en orden sigue siendo todo en orden');
 });
+
+// ---- la pantalla encendida ----
+test('si la pantalla queda encendida, se dice y no se preocupa a nadie',()=>{
+ const i=C.screenItem('on');
+ assert.equal(i.id,'pantalla');assert.equal(i.state,'ok');
+});
+test('si el movil no deja mantenerla encendida, se avisa y se dice que ajuste tocar',()=>{
+ for(const s of ['off','unsupported']){
+  const i=C.screenItem(s);
+  assert.equal(i.state,'warn',s);
+  assert.match(i.detail,/Bloqueo automático en «Nunca»/);
+ }
+});
+test('mientras no se sabe, la pantalla no sale en el chequeo',()=>{
+ assert.equal(C.screenItem('pending'),null);
+ assert.equal(C.screenItem(undefined),null);
+ const base={route:{pts:[1,2],name:'R',metres:1000},permission:'granted',voiceSupported:true,voiceEnabled:true,
+  mapRatio:1,online:true,roadState:'ready',vehicleCount:0,profiled:true};
+ assert.deepEqual(C.items({...base,screen:'pending'}).map(i=>i.id),['ruta','gps','voz','mapas','calles','avisos']);
+ const l=C.items({...base,screen:'off'});
+ assert.equal(l.at(-1).id,'pantalla','al final, cuando se sabe');
+ assert.equal(C.verdict(l).tone,'warn','sale con advertencia, no se bloquea la salida');
+});

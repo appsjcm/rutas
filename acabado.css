@@ -306,6 +306,9 @@ body.sim-corriendo #nav-stage.driving #drive-exit{top:calc(38px + env(safe-area-
 /* Con la hoja de "Ruta y ajustes" abierta, la barra del simulador quedaba encima tapando sus
    botones: la hoja lo cubre todo y el simulador ahi no hace falta. */
 body.route-settings-open #sim-panel{display:none!important}
+/* Y lo mismo con el chequeo de salida: con el modo simulacion siempre activo, su barra tapaba
+   el boton "Entendido" al arrancar una navegacion de verdad. El chequeo dura unos segundos. */
+body:has(#check-panel:not([hidden])) #sim-panel{display:none!important}
 
 /* ---- abrir y cerrar: un chevron dibujado. Eran tres caracteres distintos -"⌃" en el
    simulador, "+" y "−" en los desplegables, "⌄" en las secciones- que se leian como letras. ---- */

@@ -59,7 +59,8 @@ function estado(permission,mapRatio){
   mapRatio,online:navigator.onLine,
   roadState,vehicleCount:v.count,profiled:v.profiled,
   marksHere:window.RutasMarks?window.RutasMarks.anchored().length:0,
-  marksTotal:window.RutasMarks?window.RutasMarks.all().length:0
+  marksTotal:window.RutasMarks?window.RutasMarks.all().length:0,
+  screen:window.RutasMap&&window.RutasMap.screenLock?window.RutasMap.screenLock():undefined
  };
 }
 
@@ -100,7 +101,9 @@ function pinta(items){
 async function chequear(){
  const token=pendiente={};
  pinta(K.items(estado(undefined,ratio==null?0:ratio)));
- const [p,r]=await Promise.all([permiso(),cobertura()]);
+ // La pantalla la pide la navegacion en este mismo toque: se espera un momento a que conteste.
+ const pantalla=new Promise(ok=>{let n=0;(function mira(){const s=window.RutasMap&&window.RutasMap.screenLock&&window.RutasMap.screenLock();if(s==='on'||s==='off'||s==='unsupported'||++n>15)ok();else setTimeout(mira,100);})();});
+ const [p,r]=await Promise.all([permiso(),cobertura(),pantalla]);
  if(pendiente!==token||panel.hidden)return;
  ratio=r;
  pinta(K.items(estado(p,r)));

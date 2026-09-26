@@ -138,6 +138,17 @@ function marksItem(count,total){
   detail:'Ninguno marcado todavía. Marca un paso bajo o una calle donde no pasas.'};
 }
 
+// La pantalla encendida. Si el movil se bloquea a mitad de ronda, el GPS del navegador deja de
+// actualizarse y se acaban las indicaciones. La aplicacion la pide encendida al arrancar, pero
+// no todos los moviles lo dejan: en iPhone, instalada en la pantalla de inicio, no funciono
+// hasta iOS 18.4, y el fallo es silencioso. Aqui se dice, y que ajuste tocar.
+function screenItem(state){
+ if(state==='on')return {id:'pantalla',label:'Pantalla',state:OK,detail:'Se mantendrá encendida durante la ronda.'};
+ if(state==='off'||state==='unsupported')return {id:'pantalla',label:'Pantalla',state:AVISO,
+  detail:'Este móvil no deja que la aplicación la mantenga encendida. Pon Bloqueo automático en «Nunca» (Ajustes › Pantalla y brillo) mientras dure la ronda.'};
+ return null;   // aun no se sabe: se pinta cuando se sepa
+}
+
 function items(state){
  const s=state||{};
  return [routeItem(s.route),
@@ -145,7 +156,8 @@ function items(state){
          voiceItem(s.voiceSupported,s.voiceEnabled),
          mapItem(s.mapRatio,s.online),
          roadsItem(s.roadState,s.vehicleCount,s.profiled),
-         marksItem(s.marksHere,s.marksTotal)];
+         marksItem(s.marksHere,s.marksTotal),
+         screenItem(s.screen)].filter(Boolean);
 }
 
 // El chequeo informa; no impide salir. Solo la falta de ruta deja el boton sin nada que hacer.
@@ -170,7 +182,7 @@ function dwell(tone){
 }
 
 const api={tileOf,keyOf,fromUrl,cachedKeys,zoomLevels,sample,tilesFor,seen,coverage,
-           routeItem,gpsItem,voiceItem,mapItem,roadsItem,marksItem,items,verdict,dwell,
+           routeItem,gpsItem,voiceItem,mapItem,roadsItem,marksItem,screenItem,items,verdict,dwell,
            DRIVE_ZOOM,SPREAD,MAX_ZOOM,OK,AVISO,FALLO};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasCheckCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
