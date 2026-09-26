@@ -319,6 +319,12 @@ Fuentes de integración: https://openfreemap.org/quick_start/ y https://maplibre
 
 Validación: carga real de calles y edificios, GPS simulado con rumbo, pausa y recuperación de cámara, cambio 2D/3D durante navegación, avisos sobre el mapa y limpieza al cambiar de ruta. Verificado también el retorno a 2D sin WebGL y las 94 pruebas del motor existente. Pendiente la comprobación de rendimiento con GPS real en el teléfono.
 
+## De noche
+
+La recogida suele ser de noche, y con el tema oscuro la cabina se oscurecía pero el mapa seguía siendo el de día, casi blanco: deslumbraba. Ahora, en oscuro, el mapa de calles sale en colores de noche -calles oscuras entre manzanas grises, el agua azul, el verde verde, los nombres claros-. No hay otro servidor de teselas ni claves: son las mismas teselas de OpenStreetMap, con los colores vueltos del revés en el propio móvil por un filtro de color, que la gráfica aplica de una pasada y no pesa al moverse (no es un desenfoque). La foto de satélite no se toca. El 3D sigue en colores de día: el estilo oscuro de OpenFreeMap existe, pero no trae los edificios en relieve, que es para lo que está el 3D.
+
+La apariencia **Automático** -antes «Sistema»- se pone ahora en oscuro también cuando es de noche donde se está, aunque el móvil esté en claro; de día sigue al móvil. La hora de salida y puesta del sol se calcula en el propio móvil (`sol-core.js`, la aproximación de la NOAA, con un par de minutos de error) con la posición del GPS o, sin ella, con el principio de la ruta; nada sale del teléfono. Se revisa cada minuto, así que al anochecer la cabina cambia sola. Claro y Oscuro siguen fijos para quien los elija.
+
 ## Paradas en el mapa
 
 Las paradas del GPX -donde el camión estuvo tres minutos o más quieto- solo se veían como texto: «Parada 3 de 14 a 2,1 km». Ahora se dibujan numeradas sobre la línea: las pendientes en blanco, la siguiente en azul marino y algo mayor, y las hechas en gris y más pequeñas, así que de un vistazo se ve dónde queda cada una y por cuál se va. Al tocarlas dicen a cuántos kilómetros del inicio están y cuánto duró la parada en el GPX. Siguen al avance tanto navegando como moviendo el punto de la vista previa, y van en la capa del recorrido, así que se van con él al cambiar de ruta.

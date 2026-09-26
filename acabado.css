@@ -439,6 +439,18 @@ body:has(#check-panel:not([hidden])) #sim-panel{display:none!important}
  #nav-stage#nav-stage.driving :is(.leaflet-bottom.leaflet-right,.maplibregl-ctrl-bottom-right){bottom:calc(var(--drive-panel-alto,90px) + 4px)}
 }
 
+/* ---- el mapa de calles, de noche ----
+   Con el tema oscuro la cabina era oscura pero el mapa seguia siendo el de dia, casi blanco: de
+   noche -y la recogida suele ser de noche- deslumbraba. Sin otro servidor de teselas ni claves:
+   las mismas de OpenStreetMap con los colores vueltos del reves en el propio movil. Invertir y
+   girar el tono deja calles oscuras entre manzanas grises, el agua azul y el verde verde; el
+   resto sube el brillo lo justo para que las calles se distingan y se lean los nombres. Es un
+   filtro de color, que la grafica aplica de una pasada: no es un desenfoque y no pesa al
+   moverse. La foto de satelite no se toca. */
+:root[data-theme=dark] #nav-map .capa-calles{filter:invert(1) hue-rotate(180deg) brightness(1.25) contrast(.85) saturate(.55)}
+:root[data-theme=dark] #nav-map,
+:root[data-theme=dark] #nav-stage.driving{background:#1b221f}
+
 /* ---- conduciendo, sin desenfoque ----
    Mientras se conduce, el mapa se mueve sin parar -el coche se desliza entre posiciones- y el
    desenfoque de lo que flota encima se recalcula en cada fotograma: hasta 60 veces por segundo
