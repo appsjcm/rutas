@@ -139,6 +139,8 @@ Una jornada entera con el GPS activo, la pantalla encendida y el mapa 3D gasta b
 
 Lo que se quita es lo que obliga a recomponer capas en cada fotograma, no lo que se ve: los textos, los colores y los tamaños siguen igual. El ahorro real depende del teléfono y no se mide aquí; lo comprobado es que el estado cambia cuando debe y suelta cuando debe.
 
+Desde que el vehículo se desliza entre posiciones, el mapa se mueve sin parar mientras se conduce, y el desenfoque de fondo de los mandos que flotan encima se recalculaba en cada fotograma -hasta 60 veces por segundo, durante toda la ronda-, con batería o sin ella. Ahora, conduciendo, ningún mando lleva desenfoque: fondos casi opacos, que a la vista es casi lo mismo porque ya lo eran. Con el mapa quieto, el vidrio sigue. El auditor de pantalla del simulador avisa si algún mando vuelve a llevarlo.
+
 ## Lo que se carga y cuándo
 
 La primera visita pide 481 kB en 61 peticiones. Dos cosas se quedaron fuera de esa carga porque casi nadie las usa y pesaban en todas: la hoja de estilo del motor 3D -64 kB, que se cargaba siempre aunque su propio motor ya se pedía solo al abrir la vista 3D- y el generador de códigos QR -6 kB de otro servidor-. Ahora la hoja viaja con el motor y el generador se pide cuando alguien pide un QR. Son 94 kB y cinco peticiones menos en cada visita, sin perder nada: al abrir el 3D la hoja llega con él, y al pedir un QR el generador llega antes de dibujarlo.
@@ -282,6 +284,8 @@ La instrucción de maniobra llevaba `line-height:1.12`, demasiado justo para dos
 Iniciar navegación abre el mapa a pantalla completa con una franja superior negra: flecha del giro, distancia en grande y nombre de la calle de destino cuando OpenStreetMap lo ha podido identificar. Abajo, una hoja con el tiempo que queda, la hora de llegada y la distancia, la barra de avance y la siguiente parada de la ronda. El velocímetro es el círculo de la esquina inferior izquierda.
 
 En horizontal, para el soporte del coche, esas dos franjas se apilan en una columna a la derecha y el mapa se queda entero a la izquierda: en una pantalla de 375 px de alto la franja superior y la hoja inferior dejaban 215 px de mapa. Los mandos -salir, 2D/Satélite/3D, orientación, voz, centrar, velocímetro y repetir indicación- pasan al lado del mapa, y los avisos de desvío, de restricción y el chequeo de salida se quedan a la izquierda de la columna. El manifiesto ya no fuerza vertical.
+
+Lo que flota sobre la hoja de abajo -velocímetro, límite, repetir y los mandos de la derecha- se coloca sobre lo que mide la hoja de verdad, no sobre una altura fija: al sumarse el ritmo la hoja pasó a dos filas de datos y el velocímetro le pisaba el borde. También crece con la línea de la fuente del acceso o con la letra grande del sistema, y los créditos del mapa quedan siempre a la vista justo encima. En horizontal la hoja mide lo que lleva y cada dato ocupa lo que necesita: «A tiempo» salía cortado. La distancia que queda se da como en cualquier navegador -«104 km», «9,4 km», «850 m»-, sin los decimales que no caben de reojo.
 
 El tiempo restante no se estima por velocidad sino con las horas del propio GPX: el recorrido grabado ya sabe cuánto se tarda desde cada punto hasta el final, incluidas las paradas. Si el GPX no trae horas se recurre a la velocidad del GPS.
 

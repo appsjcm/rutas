@@ -62,6 +62,16 @@ function panels(list){
  return out;
 }
 
+// ---- desenfoque mientras se conduce ----
+// Conduciendo, el mapa se mueve sin parar -el coche se desliza entre posiciones- y cada
+// desenfoque que flota encima se recalcula en cada fotograma: horas de ronda, bateria y
+// calor. Se quitaron todos; si vuelve alguno -un mando nuevo que copia el estilo de vidrio-,
+// que se vea. No impide usar la app: es aviso, no problema.
+const DESENFOQUE='desenfoque al conducir';
+function blurs(list){
+ return (Array.isArray(list)?list:[]).filter(x=>x&&x.name).map(x=>({q:DESENFOQUE,name:x.name,grave:false}));
+}
+
 function report(items,extra){
  const lista=Array.isArray(items)?items:[];
  const malos=[],avisos=[];
@@ -72,6 +82,7 @@ function report(items,extra){
  }
  const o=extra||{};
  for(const m of panels(o.panels))(m.grave?malos:avisos).push(m);
+ for(const m of blurs(o.blurs))avisos.push(m);
  if(o.overflowX)malos.push({q:'la página se desplaza de lado',name:'documento',grave:true});
  return {malos,avisos,revisados:lista.length,limpio:malos.length===0};
 }
@@ -83,12 +94,17 @@ function line(m){
 }
 function headline(r){
  if(!r)return '';
- const sueltos=(r.avisos||[]).length;
- const cola=sueltos?' · '+sueltos+(sueltos===1?' se destapa bajando':' se destapan bajando'):'';
+ // Cada aviso se cuenta por lo que es: dos paneles de datos que se rozan no «se destapan
+ // bajando», y asi lo decia el resumen.
+ const av=r.avisos||[],cuenta=q=>av.filter(m=>m.q===q).length;
+ const borrosos=cuenta(DESENFOQUE),roces=cuenta('tapado por otro panel'),sueltos=av.length-borrosos-roces;
+ let cola=sueltos?' · '+sueltos+(sueltos===1?' se destapa bajando':' se destapan bajando'):'';
+ if(roces)cola+=' · '+roces+(roces===1?' roce entre paneles':' roces entre paneles');
+ if(borrosos)cola+=' · '+borrosos+(borrosos===1?' desenfoque':' desenfoques')+' al conducir';
  if(r.limpio)return 'Sin problemas: '+r.revisados+' controles revisados.'+cola;
  return r.malos.length+(r.malos.length===1?' problema':' problemas')+' en '+r.revisados+' controles.'+cola;
 }
 
-const api={judge,report,line,headline,big,inside,centre,overlap,panels,MIN};
+const api={judge,report,line,headline,big,inside,centre,overlap,panels,blurs,MIN};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasLayoutAuditCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

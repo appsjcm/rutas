@@ -117,9 +117,25 @@ function capas(){
  return out;
 }
 
+// Lo que se ve con desenfoque mientras se conduce (ver layout-audit-core).
+function desenfoques(){
+ const escenario=document.getElementById('nav-stage');
+ if(!escenario||!escenario.classList.contains('driving'))return [];
+ const out=[];
+ for(const e of document.querySelectorAll('body *')){
+  if(e.closest('#sim-panel'))continue;
+  const c=getComputedStyle(e),f=c.backdropFilter||c.webkitBackdropFilter;
+  if(!f||f==='none'||c.visibility==='hidden'||!e.getClientRects().length)continue;
+  const r=e.getBoundingClientRect();
+  if(r.width<2||r.height<2||r.bottom<=0||r.right<=0||r.top>=innerHeight||r.left>=innerWidth)continue;
+  out.push({name:nombre(e)});
+ }
+ return out;
+}
+
 function run(){
  const r=A.report(recoger(),
-  {panels:capas(),
+  {panels:capas(),blurs:desenfoques(),
    overflowX:document.documentElement.scrollWidth>document.documentElement.clientWidth});
  pinta(r);
  return r;
@@ -156,5 +172,5 @@ $('audit-run').onclick=()=>{
  if(window.console&&console.table)console.table(r.malos.length?r.malos:[{q:'sin problemas'}]);
 };
 
-window.RutasLayoutAudit={run,collect:recoger,layers:capas};
+window.RutasLayoutAudit={run,collect:recoger,layers:capas,blurs:desenfoques};
 })();

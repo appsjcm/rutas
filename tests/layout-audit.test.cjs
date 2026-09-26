@@ -195,3 +195,23 @@ test('sin capas el informe sigue funcionando igual que antes',()=>{
  assert.equal(A.report([],{panels:null}).limpio,true);
  assert.equal(A.report([],{panels:[]}).limpio,true);
 });
+
+// ---- desenfoque mientras se conduce ----
+test('conduciendo, un desenfoque que vuelve se dice, sin contarlo como problema',()=>{
+ const r=A.report([item()],{blurs:[{name:'drive-center'},null,{}]});
+ assert.equal(r.limpio,true,'no impide usar la app');
+ assert.deepEqual(r.avisos.map(A.line),['drive-center — desenfoque al conducir']);
+ assert.equal(A.headline(r),'Sin problemas: 1 controles revisados. · 1 desenfoque al conducir');
+});
+test('los desenfoques no se cuentan como cosas que se destapan bajando',()=>{
+ const r=A.report([item({name:'x',hit:'panel',fixed:false,scrolls:true})],{blurs:[{name:'a'},{name:'b'}]});
+ assert.equal(A.headline(r),'Sin problemas: 1 controles revisados. · 1 se destapa bajando · 2 desenfoques al conducir');
+ assert.deepEqual(A.blurs(null),[]);
+});
+test('dos paneles de datos que se rozan se cuentan como roce, no como algo que se destapa',()=>{
+ const velocimetro={name:'velocímetro',kind:'dato',z:'610',rect:marco(14,80,589,655)};
+ const panel={name:'panel de conducción',kind:'dato',z:'600',rect:marco(0,375,650,812)};
+ const r=A.report([item()],{panels:[velocimetro,panel]});
+ assert.equal(r.limpio,true);
+ assert.equal(A.headline(r),'Sin problemas: 1 controles revisados. · 1 roce entre paneles');
+});

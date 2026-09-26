@@ -410,6 +410,49 @@ body:has(#check-panel:not([hidden])) #sim-panel{display:none!important}
 .diag-copiado{margin-left:10px;font-size:12.5px;color:var(--pine)}
 #diag-copiar{margin-bottom:14px}
 
+/* ---- lo que flota sobre el panel de abajo, siempre encima de el ----
+   Los mandos se colocaban a una altura fija sobre el panel -142 px en el movil-, pero con
+   «Ritmo» el panel paso a dos filas de datos y mide 162: el velocimetro y el boton de centrar
+   le pisaban el borde, y los creditos del mapa en 3D quedaban debajo. navigation.js mide
+   donde acaba el panel (--drive-panel-alto) y todo se coloca sobre lo que mida de verdad; sin
+   medida, lo de siempre. El id repetido gana a las reglas de approach.css, que subian los
+   mandos a mano cuando aparecia la linea de la fuente del acceso: ahora eso ya lo recoge la
+   medida. En horizontal el panel va en la columna de la derecha y los mandos abajo a la
+   izquierda: no se toca. */
+@media not all and (orientation:landscape) and (max-height:560px){
+ #nav-stage.driving{--panel-base:max(calc(var(--cockpit-panel-height) + env(safe-area-inset-bottom)),var(--drive-panel-alto,0px))}
+ #nav-stage#nav-stage.driving #drive-tools{bottom:calc(var(--panel-base) + 14px)}
+ #nav-stage#nav-stage.driving #drive-speedo{bottom:calc(var(--panel-base) + 15px)}
+ #nav-stage#nav-stage.driving #drive-speed-limit{bottom:calc(var(--panel-base) + 24px)}
+ #nav-stage#nav-stage.driving #nav-repeat{bottom:calc(var(--panel-base) + 28px)}
+ #nav-stage#nav-stage.driving :is(.leaflet-bottom,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-bottom-left){bottom:calc(var(--panel-base) + 4px)}
+}
+
+/* En horizontal los cuatro datos van en una fila de la columna de la derecha, a partes
+   iguales: «A tiempo» salia «A tiem…» mientras «12:47» sobraba de sitio. Cada columna mide
+   lo que su dato y el sitio que queda se reparte. */
+@media (orientation:landscape) and (max-height:560px){
+ #nav-stage.driving .drive-eta{grid-template-columns:repeat(4,auto)}
+ /* Y el panel mide lo que lleva: en horizontal no van la parada ni el estado, y la altura
+    minima dejaba media tarjeta en blanco. Los creditos del mapa, justo encima de lo que mida. */
+ body.map-focus #nav-stage.focus.driving #drive-panel{min-height:0}
+ #nav-stage#nav-stage.driving :is(.leaflet-bottom.leaflet-right,.maplibregl-ctrl-bottom-right){bottom:calc(var(--drive-panel-alto,90px) + 4px)}
+}
+
+/* ---- conduciendo, sin desenfoque ----
+   Mientras se conduce, el mapa se mueve sin parar -el coche se desliza entre posiciones- y el
+   desenfoque de lo que flota encima se recalcula en cada fotograma: hasta 60 veces por segundo
+   durante horas de ronda, bateria y calor. Conduciendo, fondos casi opacos y sin desenfoque; a
+   la vista es casi lo mismo, porque ya eran casi opacos. Con el mapa quieto -vista previa,
+   pantalla completa sin conducir- el vidrio sigue. La barra de pestañas, debajo del mapa a
+   pantalla completa, ni se ve: tampoco. */
+#nav-stage.driving :is(#drive-tools button,#nav-repeat,#drive-road-info,.map-dimension,#drive-exit,#drive-panel),
+body.map-focus .tabs{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+#nav-stage.driving :is(#drive-tools button,#nav-repeat){background:#fafbfc!important}
+#nav-stage.driving .map-dimension,:root[data-theme=dark] #nav-stage.driving .map-dimension{background:var(--surface)!important}
+:root[data-theme=dark] #nav-stage.driving :is(#drive-tools button,#nav-repeat){background:#18283a!important}
+:root[data-theme=dark] #nav-stage.driving #drive-road-info:not([hidden]){background:#16263a}
+
 /* ---- ahorro de bateria: sin desenfoque, que es lo que mas gasta de todo esto ---- */
 body.low-power #nav-stage .leaflet-control-zoom.leaflet-bar,
 body.low-power #nav-stage .map-dimension,

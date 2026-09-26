@@ -19,6 +19,17 @@ function distance(m){
  return v>=1000?(v/1000).toFixed(1).replace('.',',')+' km':v+' m';
 }
 
+// Lo que queda de ronda, en la cabina: se lee de reojo, asi que sin decimales de mas.
+// «104,21 km» no cabia en la fila de datos con el movil en horizontal, y a cien kilometros
+// los diez metros no le sirven a nadie. Como los navegadores de siempre: metros por debajo
+// del kilometro, un decimal hasta diez y kilometros enteros a partir de ahi.
+function remaining(m){
+ const v=Math.max(0,Number(m)||0);
+ if(v<995)return Math.round(v/10)*10+' m';
+ if(v<9950)return (v/1000).toFixed(1).replace('.',',')+' km';
+ return Math.round(v/1000)+' km';
+}
+
 function lower(s){
  const t=String(s||'');
  return t?t.charAt(0).toLowerCase()+t.slice(1):'';
@@ -116,6 +127,6 @@ function bestVoice(voices,preferida){
  return lista[0]||null;
 }
 
-const api={step,distance,after,banner,lower,imperative,maneuverIcon,voiceScore,spanishVoices,bestVoice,SIN_NOMBRE,ICONOS_MANIOBRA};
+const api={step,distance,remaining,after,banner,lower,imperative,maneuverIcon,voiceScore,spanishVoices,bestVoice,SIN_NOMBRE,ICONOS_MANIOBRA};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasHudCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

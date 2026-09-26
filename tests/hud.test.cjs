@@ -152,6 +152,20 @@ test('todas las maniobras que puede dar la app tienen su icono',()=>{
  assert.equal(H.maneuverIcon('constructor'),'','no se cuela lo que hereda cualquier objeto');
 });
 
+test('lo que queda de ronda se lee de reojo: sin decimales de mas',()=>{
+ assert.equal(H.remaining(104210),'104 km');
+ assert.equal(H.remaining(10000),'10 km');
+ assert.equal(H.remaining(9949),'9,9 km');
+ assert.equal(H.remaining(9950),'10 km','sin «10,0 km»');
+ assert.equal(H.remaining(1234),'1,2 km');
+ assert.equal(H.remaining(995),'1,0 km');
+ assert.equal(H.remaining(994),'990 m');
+ assert.equal(H.remaining(153),'150 m');
+ assert.equal(H.remaining(0),'0 m');
+ assert.equal(H.remaining(-5),'0 m');
+ assert.equal(H.remaining(undefined),'0 m');
+});
+
 // ---- la voz ----
 const v=(name,lang,localService=true,def=false)=>({name,lang,localService,default:def,voiceURI:'uri:'+name});
 test('en un iPhone con voces descargadas se usa la premium de España',()=>{

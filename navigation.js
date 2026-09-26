@@ -32,8 +32,17 @@ function mideCapas(){
  }
  pon('--drive-road-height',$('drive-road-info'),8);
  pon('--drive-alert-height',$('nav-road-alert'),8);
+ // Y el panel de abajo: lo que flota encima -velocimetro, mandos, repetir- se coloca sobre lo
+ // que mide de verdad. Con una altura fija, al sumarse «Ritmo» el panel paso a dos filas de
+ // datos y el velocimetro y el boton de centrar le pisaban el borde. Tambien crece con la
+ // linea de la fuente del acceso y con la letra grande del sistema.
+ const panel=$('drive-panel');
+ if(panel&&!panel.hidden){
+  const alto=Math.round(stage.getBoundingClientRect().bottom-panel.getBoundingClientRect().top);
+  if(alto>0)stage.style.setProperty('--drive-panel-alto',alto+'px');
+ }
 }
-for(const el of [$('drive-banner'),$('drive-road-info'),$('nav-road-alert')])
+for(const el of [$('drive-banner'),$('drive-road-info'),$('nav-road-alert'),$('drive-panel')])
  if(el)new ResizeObserver(mideCapas).observe(el);
 // La tarjeta de la calle empuja hacia abajo la barra de vistas: en un movil no caben en la
 // misma fila y la tarjeta tapaba 2D, Satelite y 3D. Cuando no hay tarjeta, cero.
@@ -82,7 +91,7 @@ function hud(d,g,end){
  const st=C.stopProgress(stopList,d);
  $('drive-next').textContent=st.total?(st.next?'Parada '+(st.done+1)+' de '+st.total+' a '+metres(st.gap):'Paradas completadas: '+st.total+' de '+st.total):'';
 }
-function metrics(d){$('nav-done').textContent=metres(d);const left=metres(Math.max(0,route.total-d));$('nav-left').textContent=left;$('drive-left').textContent=left;$('drive-progress').value=route.total?100*d/route.total:0;const s=C.stopProgress(stopList,d);$('nav-stops').textContent=s.total?s.done+' de '+s.total:'—';paintStops(d);$('nav-stops').title=s.total?(s.next?'Siguiente parada a '+metres(s.gap):'Todas las paradas hechas'):'Este GPX no trae horas, o no registra ninguna parada de 3 minutos o más';}
+function metrics(d){$('nav-done').textContent=metres(d);const resto=Math.max(0,route.total-d);$('nav-left').textContent=metres(resto);$('drive-left').textContent=H.remaining(resto);$('drive-progress').value=route.total?100*d/route.total:0;const s=C.stopProgress(stopList,d);$('nav-stops').textContent=s.total?s.done+' de '+s.total:'—';paintStops(d);$('nav-stops').title=s.total?(s.next?'Siguiente parada a '+metres(s.gap):'Todas las paradas hechas'):'Este GPX no trae horas, o no registra ninguna parada de 3 minutos o más';}
 function showPreview(d,pan=false){if(!route)return;explore=Math.max(0,Math.min(route.total,d));const p=C.at(route,explore);preview.setLatLng(ll(p));$('nav-progress').value=route.total?Math.round(explore/route.total*1000):0;$('nav-preview-distance').textContent=metres(explore);paint(explore);if(watch===null)metrics(explore);if(pan){map.panTo(ll(p));window.dispatchEvent(new Event('rutas:preview-pan'));}}
 function pause(){if(playing)clearInterval(playing);playing=null;$('nav-play').textContent='Reproducir';}
 function controls(active){
