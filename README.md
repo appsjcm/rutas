@@ -325,6 +325,10 @@ La recogida suele ser de noche, y con el tema oscuro la cabina se oscurecía per
 
 La apariencia **Automático** -antes «Sistema»- se pone ahora en oscuro también cuando es de noche donde se está, aunque el móvil esté en claro; de día sigue al móvil. La hora de salida y puesta del sol se calcula en el propio móvil (`sol-core.js`, la aproximación de la NOAA, con un par de minutos de error) con la posición del GPS o, sin ella, con el principio de la ruta; nada sale del teléfono. Se revisa cada minuto, así que al anochecer la cabina cambia sola. Claro y Oscuro siguen fijos para quien los elija.
 
+## Ronda terminada
+
+Al llegar al final, además de la voz, sale una tarjeta con el resumen: lo recorrido y en cuánto tiempo, las paradas y el ritmo contra la grabación («8 min por delante de la grabación»). Cuenta solo lo medido en esta navegación, desde que se pulsó Iniciar: si se arrancó a mitad de ronda lo dice -«Desde el km 12,3»- y las paradas de antes no se cuentan como hechas hoy. Si quedaron tramos sin pasar, van debajo como aviso, que al final de la jornada es cuando todavía se puede volver. Sin horas en el GPX no hay ritmo, y la tarjeta enseña lo que hay en vez de inventarlo. Se cierra con el botón o tocando fuera. La parte que decide está en `llegada-core.js`, con sus pruebas.
+
 ## Paradas en el mapa
 
 Las paradas del GPX -donde el camión estuvo tres minutos o más quieto- solo se veían como texto: «Parada 3 de 14 a 2,1 km». Ahora se dibujan numeradas sobre la línea: las pendientes en blanco, la siguiente en azul marino y algo mayor, y las hechas en gris y más pequeñas, así que de un vistazo se ve dónde queda cada una y por cuál se va. Al tocarlas dicen a cuántos kilómetros del inicio están y cuánto duró la parada en el GPX. Siguen al avance tanto navegando como moviendo el punto de la vista previa, y van en la capa del recorrido, así que se van con él al cambiar de ruta.

@@ -451,6 +451,31 @@ body:has(#check-panel:not([hidden])) #sim-panel{display:none!important}
 :root[data-theme=dark] #nav-map,
 :root[data-theme=dark] #nav-stage.driving{background:#1b221f}
 
+/* ---- ronda terminada ---- */
+dialog.llegada{
+ border:0;border-radius:26px;padding:26px 22px 20px;width:min(360px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;
+ background:var(--surface);color:var(--ink);text-align:center;
+ box-shadow:0 1px 0 rgb(255 255 255/.06) inset,0 32px 80px -24px rgb(6 16 26/.55);
+}
+dialog.llegada[open]{animation:llegada-entra .32s cubic-bezier(.2,.9,.3,1.1)}
+@keyframes llegada-entra{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+dialog.llegada::backdrop{background:rgb(8 18 28/.5)}
+.llegada-icono{display:grid;place-items:center;width:60px;height:60px;margin:0 auto 12px;border-radius:50%;
+ background:linear-gradient(145deg,#1d8a64,#146b52);box-shadow:0 10px 24px -8px rgb(20 107 82/.6)}
+.llegada-icono::before{content:'';width:30px;height:30px;background:#fff;
+ -webkit-mask:var(--m-llegada) center/contain no-repeat;mask:var(--m-llegada) center/contain no-repeat}
+.llegada h2{margin:0 0 16px;font-size:23px;font-weight:800;letter-spacing:-.025em;line-height:1.15}
+.llegada-datos{display:grid;grid-template-columns:auto 1fr;gap:0;margin:0 0 16px;text-align:left;font-size:15px;
+ border:1px solid var(--rule);border-radius:16px;overflow:hidden}
+.llegada-datos dt,.llegada-datos dd{padding:11px 14px;border-top:1px solid var(--rule)}
+.llegada-datos dt:first-of-type,.llegada-datos dt:first-of-type+dd{border-top:0}
+.llegada-datos dt{color:var(--muted);font-weight:650;background:var(--surface-2)}
+.llegada-datos dd{margin:0;font-weight:750;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.llegada-aviso{margin:0 0 16px;padding:11px 13px;border-radius:14px;background:var(--warn-soft);color:var(--warn);font-size:14px;font-weight:650;text-align:left}
+.llegada-aviso[hidden]{display:none}
+#llegada-cerrar{width:100%;min-height:50px;font-size:16px}
+@media (prefers-reduced-motion:reduce){dialog.llegada[open]{animation:none}}
+
 /* ---- conduciendo, sin desenfoque ----
    Mientras se conduce, el mapa se mueve sin parar -el coche se desliza entre posiciones- y el
    desenfoque de lo que flota encima se recalcula en cada fotograma: hasta 60 veces por segundo

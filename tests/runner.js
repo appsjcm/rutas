@@ -11,8 +11,8 @@ const MODULOS=['nav-core','gpx-core','restrictions-core','street-match-core','st
  'coverage-core','start-core','route-store-core','diagnostico-core',
  'vehicle-core','checklist-core','power-core','hud-core','marks-core','pace-core',
  'overlay-core','recovery-core','access-core','library-core','sim-core',
- 'layout-audit-core','street-imagery-core','sol-core'];
-const FICHEROS=['access','checklist','corridor','coverage','diagnostico','fuentes','gpx','hud','layout-audit','library','marks',
+ 'layout-audit-core','street-imagery-core','sol-core','llegada-core'];
+const FICHEROS=['access','checklist','corridor','coverage','diagnostico','fuentes','gpx','hud','layout-audit','library','llegada','marks',
  'navigation','overlay','pace','power','recovery','restrictions','shim','sim','sol','street-imagery',
  'start','street-match','streetview','road-cache','route-store','vehicle'];
 
