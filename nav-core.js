@@ -131,5 +131,18 @@ function rejoin(r,p,progress,{minAhead=100,maxAhead=1500,course=null}={}){
  }
  return best;
 }
-const api={distance,prepare,at,heading,match,section,turns,guidance,fingerprint,nearbyPasses,rejoin,speedAt,stops,stopProgress,remainingSeconds,gpsFatal,gpsPause,transferTimes,remapProgress,carryProgress,simplify,packRoute,unpackRoute,TURN_MIN_SPEED,TURN_MIN_GAP,STOP_RADIUS,STOP_SECONDS};if(typeof module!=='undefined')module.exports=api;else root.RutasNav=api;
+// El zoom de la camara segun la velocidad (m/s): 18 despacio, 17 en calle, 16 en carretera.
+// Con margen: sin el, circulando a 29 km/h justos -el umbral- el mapa cambiaba de zoom a cada
+// posicion, de golpe. Para cambiar hay que pasar el umbral por 1 m/s (3,6 km/h); un zoom que no
+// es de los tres -el conductor ha pellizcado el mapa- vuelve al que toca.
+const ZOOM_MARGEN=1;
+function cameraZoom(speed,actual){
+ const v=Math.max(0,Number(speed)||0);
+ const objetivo=v>20?16:v>8?17:18;
+ if(objetivo===actual||![16,17,18].includes(actual))return objetivo;
+ // El umbral que separa el zoom actual del de al lado, en la direccion del cambio.
+ const umbral=objetivo<actual?(actual===18?8:20):(actual===16?20:8);
+ return (objetivo<actual?v>umbral+ZOOM_MARGEN:v<umbral-ZOOM_MARGEN)?objetivo:actual;
+}
+const api={cameraZoom,distance,prepare,at,heading,match,section,turns,guidance,fingerprint,nearbyPasses,rejoin,speedAt,stops,stopProgress,remainingSeconds,gpsFatal,gpsPause,transferTimes,remapProgress,carryProgress,simplify,packRoute,unpackRoute,TURN_MIN_SPEED,TURN_MIN_GAP,STOP_RADIUS,STOP_SECONDS};if(typeof module!=='undefined')module.exports=api;else root.RutasNav=api;
 })(typeof window!=='undefined'?window:globalThis);

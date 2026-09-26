@@ -83,7 +83,7 @@ function pick(group,attr,set){
  });
 }
 // Con el panel reducido al minimo la velocidad se sigue leyendo aqui.
-function estadoTexto(){return running?('en marcha · '+speed+' km/h'):'parado';}
+function estadoTexto(){return running?(speed>0?'en marcha · '+speed+' km/h':'detenido · el GPS baila'):'parado';}
 function pintaVelocidad(){
  $('sim-speed-value').textContent=speed;
  const e=$('sim-state');if(e)e.textContent=estadoTexto();
@@ -161,7 +161,7 @@ function paso(){
  tick++;
  if(S.drops(tick,cal.dropEvery)){sendError();info(pos()+' · sin señal');return;}
  const p=S.jitter(S.sidestep(aqui,delante,drift),cal.jitter);
- send(fix(p,C.heading(aqui,delante)));
+ send(fix(p,speed>0?C.heading(aqui,delante):null));
  info(pos()+(drift?' · desviado '+drift+' m':''));
 }
 function pos(){

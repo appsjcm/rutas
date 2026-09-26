@@ -53,6 +53,8 @@ function speedOf(kmh){const v=Math.max(0,Number(kmh)||0);return v/3.6;}
 // recorrido sin esperar. Una escalera explicita se lee mejor que una formula.
 const SPEEDS=[5,10,15,20,30,40,50,60,80,100,120,160,200];
 
+// Por debajo del primer escalon, detenido: una ronda de recogida es parar en cada contenedor,
+// y parado es cuando el GPS baila sin que nadie se mueva. Hay que poder verlo.
 function stepSpeed(current,direction){
  const v=Number(current);
  const dir=Number(direction)<0?-1:1;
@@ -62,9 +64,9 @@ function stepSpeed(current,direction){
   return SPEEDS[SPEEDS.length-1];
  }
  for(let i=SPEEDS.length-1;i>=0;i--)if(SPEEDS[i]<v)return SPEEDS[i];
- return SPEEDS[0];
+ return 0;
 }
-function atFloor(v){return Number(v)<=SPEEDS[0];}
+function atFloor(v){return Number(v)<=0;}
 function atCeiling(v){return Number(v)>=SPEEDS[SPEEDS.length-1];}
 
 // Marchas con nombre. Subir la escalera de una en una para pasar de un ritmo de recogida

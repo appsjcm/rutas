@@ -143,3 +143,32 @@ test('el avance se conserva al cambiar de trazado a mitad de ronda',()=>{
   assert.ok(Number.isNaN(N.carryProgress(G,{d:'x'})));
  });
 }
+
+// ---- el zoom de la camara ----
+test('el zoom va con la velocidad: despacio de cerca, en carretera de lejos',()=>{
+ assert.equal(N.cameraZoom(0,18),18);
+ assert.equal(N.cameraZoom(12,17),17);
+ assert.equal(N.cameraZoom(25,16),16);
+ assert.equal(N.cameraZoom(undefined,18),18);
+ assert.equal(N.cameraZoom(-3,17),18,'una velocidad negativa es estar parado');
+});
+test('en el umbral no salta de un zoom a otro a cada posicion',()=>{
+ // 29 km/h = 8 m/s: alrededor de ahi, el zoom se queda como esta.
+ for(const v of [7.6,8,8.4,8.9])assert.equal(N.cameraZoom(v,18),18,'sigue en 18 a '+v);
+ for(const v of [7.1,7.6,8,8.4])assert.equal(N.cameraZoom(v,17),17,'sigue en 17 a '+v);
+ assert.equal(N.cameraZoom(9.1,18),17,'pasado el margen, cambia');
+ assert.equal(N.cameraZoom(6.9,17),18);
+ assert.equal(N.cameraZoom(20.5,17),17);
+ assert.equal(N.cameraZoom(21.1,17),16);
+ assert.equal(N.cameraZoom(19.5,16),16);
+ assert.equal(N.cameraZoom(18.9,16),17);
+});
+test('de parado a carretera, o al reves, va directo al zoom que toca',()=>{
+ assert.equal(N.cameraZoom(25,18),16);
+ assert.equal(N.cameraZoom(0,16),18);
+});
+test('un zoom que no es de la camara -el mapa pellizcado- vuelve al que toca',()=>{
+ assert.equal(N.cameraZoom(8.4,15),17);
+ assert.equal(N.cameraZoom(0,12),18);
+ assert.equal(N.cameraZoom(0,undefined),18);
+});

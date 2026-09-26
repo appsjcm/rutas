@@ -66,12 +66,19 @@ test('la velocidad sube y baja por escalones, finos abajo y gruesos arriba',()=>
 });
 
 test('no se sale de la escalera por ningun extremo',()=>{
- assert.equal(S.stepSpeed(5,-1),5);
+ assert.equal(S.stepSpeed(0,-1),0);
  assert.equal(S.stepSpeed(200,1),200);
- assert.equal(S.atFloor(5),true);
+ assert.equal(S.atFloor(0),true);
+ assert.equal(S.atFloor(5),false);
  assert.equal(S.atFloor(10),false);
  assert.equal(S.atCeiling(200),true);
  assert.equal(S.atCeiling(160),false);
+});
+
+test('por debajo del primer escalon, detenido: como en cada contenedor',()=>{
+ assert.equal(S.stepSpeed(5,-1),0);
+ assert.equal(S.stepSpeed(0,1),5,'y se arranca por el primer escalon');
+ assert.equal(S.advance(250,S.stepSpeed(5,-1),10),250,'detenido no avanza');
 });
 
 test('un valor que no este en la escalera se engancha al siguiente',()=>{
