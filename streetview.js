@@ -46,6 +46,8 @@ function openAt(point,bearing,note,enRuta){
  const embed=V.embedUrl(point,bearing),url=V.url(point,bearing);
  if(!embed||!url){message('No se pudo abrir ese punto.');return false;}
  dialog.querySelector('#streetview-dialog-kind').textContent=enRuta===false?'PUNTO DEL MAPA':'PUNTO DE LA RUTA';
+ // Lo que se dice que recibe Google tiene que ser lo que recibe: sin rumbo, solo el punto.
+ dialog.querySelector('.streetview-modal-foot p').textContent='Google recibe solamente este punto'+(V.normaliseHeading(bearing)===null?'':' y el rumbo')+'. La disponibilidad de imágenes depende de Street View.';
  clearTimeout(frameTimer);frameWrap.classList.remove('loaded');loading.textContent='Cargando la panorámica…';external.href=url;frame.src=embed;
  dialog.showModal();if(note)message(note);
  frameTimer=setTimeout(()=>{if(dialog.open&&!frameWrap.classList.contains('loaded'))loading.textContent='La panorámica tarda en cargar. Puedes abrir este punto en Google Maps.';},10000);
