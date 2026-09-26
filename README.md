@@ -247,6 +247,12 @@ Cada función trajo su hoja de estilos, y sobre el mapa se fueron pisando: una e
 - **Interruptores**: las opciones de sí o no -avisos por voz, modo simulación, arrancar la navegación- eran casillas sueltas; ahora son interruptores.
 - **La hoja de «Ruta y ajustes» por encima de todo**: la barra del simulador quedaba encima tapándole botones.
 
+- **Señales de la vía, dibujadas como las de verdad.** Los avisos de contramano y de restricción eran emojis -⛔, ⚠- que cada móvil pinta a su manera y a otra escala que el resto. En el mapa, en la vista 3D y en el aviso de la cabina ahora son señales: disco rojo con barra blanca para contramano o prohibido, triángulo blanco con borde rojo para los avisos. Las ya revisadas siguen saliendo apagadas. En las listas y ventanas de texto el símbolo se queda, que allí ayuda a ojear.
+- **Abrir y cerrar con un chevrón dibujado.** Eran tres caracteres distintos -«⌃» en el simulador, «+» y «−» en los desplegables, «⌄» en las secciones- que se leían como letras.
+- **Una sola letra.** El diseño original escribía datos y etiquetas -«283 puntos», «RECORRIDO», coordenadas- en letra de máquina, y junto a la del resto parecían de otra aplicación. Ahora usan la misma, con cifras de ancho fijo para que las columnas sigan alineadas. Los campos donde se pegan enlaces se quedan con la suya.
+- **El plano de la pestaña del conductor**: la escala iba abajo a la izquierda, justo donde empezaba el recorrido, y la «A» la tapaba. Ahora el dibujo deja una franja para ella, y las marcas A y B son más grandes.
+- **Con el móvil en horizontal**: el botón de salir va sobre el mapa y no sobre el cartel oscuro, así que es de vidrio oscuro; simulando, toda la pantalla baja lo que mide la franja roja, que tapaba la tarjeta de la calle y el cartel; y los botones de lento y rápido pierden el icono, que no cabía.
+
 Comprobado con el auditor de pantalla en la vista previa, a pantalla completa y conduciendo: nada importante tapado. El propio auditor daba cuatro falsas alarmas a pantalla completa con el simulador -las pestañas, que quedan debajo del mapa, salían "tapadas por el simulador"-; ahora mira toda la pila de capas en ese punto y no solo la de arriba.
 
 ## Menús sobre el mapa

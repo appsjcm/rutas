@@ -22,6 +22,7 @@
  --i-centrar:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='6.6'/%3E%3Ccircle cx='12' cy='12' r='2.2' fill='black' stroke='none'/%3E%3Cpath d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3'/%3E%3C/svg%3E");
  --i-repetir:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.6 12a7.4 7.4 0 1 0 2.2-5.2'/%3E%3Cpath d='M4.6 4.3v3.6h3.6'/%3E%3Cpath d='M11.2 10v4l3-2z' fill='black'/%3E%3C/svg%3E");
  --i-cerrar:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 6.5l11 11M17.5 6.5l-11 11'/%3E%3C/svg%3E");
+ --i-chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
  --m-recto:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20.5V4.8'/%3E%3Cpath d='M6 10.8l6-6 6 6'/%3E%3C/svg%3E");
  --m-izquierda:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16.5 20.5v-7a4 4 0 0 0-4-4H5.2'/%3E%3Cpath d='M9.6 4.6L4.8 9.5l4.8 4.9'/%3E%3C/svg%3E");
  --m-derecha:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7.5 20.5v-7a4 4 0 0 1 4-4h7.3'/%3E%3Cpath d='M14.4 4.6l4.8 4.9-4.8 4.9'/%3E%3C/svg%3E");
@@ -31,6 +32,7 @@
  --m-llegada:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 21V3.8'/%3E%3Cpath d='M6.5 4.4h10.8l-2.3 4.1 2.3 4.1H6.5'/%3E%3C/svg%3E");
  --m-aviso:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.9l9 15.6H3z'/%3E%3Cpath d='M12 9.9v4.3'/%3E%3Cpath d='M12 17.1v.2'/%3E%3C/svg%3E");
  --m-buscando:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='6.8'/%3E%3Cpath d='M12 2.6v3.6M12 17.8v3.6M2.6 12h3.6M17.8 12h3.6'/%3E%3C/svg%3E");
+ --s-peligro:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath d='M16 2.4L30 26.6H2z' fill='white' stroke='%23d0231b' stroke-width='3.4' stroke-linejoin='round'/%3E%3Cpath d='M16 10.6v7.6' stroke='%23161a1d' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='22.4' r='1.8' fill='%23161a1d'/%3E%3C/svg%3E");
 }
 :root[data-theme=dark]{--vidrio-sombra:0 1px 1px rgb(0 0 0/.25),0 12px 28px -10px rgb(0 0 0/.7)}
 
@@ -247,6 +249,17 @@
 }
 #nav-stage.driving #drive-exit:active{background:#b7353c!important;border-color:rgb(255 255 255/.4)!important}
 body.sim-corriendo #nav-stage.driving #drive-exit{top:calc(38px + env(safe-area-inset-top))}
+/* Con el movil en horizontal el boton va sobre el mapa, no sobre el cartel oscuro: ahi el vidrio
+   blanco no se veia. Vidrio oscuro. */
+@media (orientation:landscape) and (max-height:560px){
+ #nav-stage.driving #drive-exit{background:rgb(16 38 58/.84)!important;border-color:rgb(255 255 255/.22)!important;box-shadow:0 6px 16px rgb(0 0 0/.28)!important}
+ body.sim-corriendo #nav-stage.driving #drive-exit{top:calc(34px + env(safe-area-inset-top))}
+ /* Simulando, la franja roja de arriba tapaba la tarjeta de la calle y el cartel: toda la
+    pantalla de conduccion baja lo que mide la franja. */
+ body.sim-corriendo.map-focus #nav-stage.focus.driving{top:26px!important;height:calc(100dvh - 26px)!important;min-height:0!important}
+ /* Y el panel del simulador es estrecho: los iconos de lento y rapido cortaban las palabras. */
+ #sim-pace .ico-boton{display:none}
+}
 
 /* ---- la flecha de la maniobra, dibujada y no escrita (hud-core.js, maneuverIcon) ---- */
 :is(#drive-turn-arrow,#nav-turn-icon)[data-icono]{
@@ -293,6 +306,56 @@ body.sim-corriendo #nav-stage.driving #drive-exit{top:calc(38px + env(safe-area-
 /* Con la hoja de "Ruta y ajustes" abierta, la barra del simulador quedaba encima tapando sus
    botones: la hoja lo cubre todo y el simulador ahi no hace falta. */
 body.route-settings-open #sim-panel{display:none!important}
+
+/* ---- abrir y cerrar: un chevron dibujado. Eran tres caracteres distintos -"⌃" en el
+   simulador, "+" y "−" en los desplegables, "⌄" en las secciones- que se leian como letras. ---- */
+#sim-panel>#sim-toggle i::before{
+ content:''!important;display:block;width:18px;height:18px;background:currentColor;
+ -webkit-mask:var(--i-chevron) center/contain no-repeat;mask:var(--i-chevron) center/contain no-repeat;
+}
+#sim-panel>#sim-toggle i{transition:transform .2s ease}
+#sim-panel[data-open=no]>#sim-toggle i{transform:rotate(180deg)!important}
+#sim-panel[data-open=yes]>#sim-toggle i{transform:none!important}
+.premium-fold>summary::after{
+ content:''!important;flex:none;width:20px;height:20px;margin-left:auto;background:var(--muted);
+ -webkit-mask:var(--i-chevron) center/contain no-repeat;mask:var(--i-chevron) center/contain no-repeat;
+ transition:transform .2s ease;
+}
+.premium-fold[open]>summary::after{transform:rotate(180deg)}
+.mobile-panel-toggle{font-size:0!important}
+.mobile-panel-toggle::before{
+ content:'';width:20px;height:20px;background:currentColor;
+ -webkit-mask:var(--i-chevron) center/contain no-repeat;mask:var(--i-chevron) center/contain no-repeat;
+}
+@media (prefers-reduced-motion:reduce){#sim-panel>#sim-toggle i,.premium-fold>summary::after{transition:none}}
+
+/* ---- una sola letra: el diseño original escribia datos y etiquetas en letra de maquina, y
+   junto a la del resto de la aplicacion parecian de otra. Las cifras, de ancho fijo, siguen
+   alineadas en columna. Los campos donde se pegan enlaces se quedan con la suya. ---- */
+.fchip,.tag,.stat dt,.flabel em,.leg-meta,.coords,.qr-cap,.prow .pv span{
+ font-family:inherit!important;font-variant-numeric:tabular-nums;
+}
+.stat dt,.tag{font-weight:700;letter-spacing:.09em}
+.stat dd,.drive-stat b{font-variant-numeric:tabular-nums}
+
+/* ---- señales de la via: dibujadas como las de verdad. Eran emojis -"⛔", "⚠"- y cada movil
+   los pinta a su manera y a otra escala que el resto. Contramano o prohibido: disco rojo con
+   barra blanca. Aviso: triangulo blanco con borde rojo. En listas y ventanas de texto el
+   simbolo se queda, que alli ayuda a ojear. ---- */
+.leaflet-marker-icon.road-sign{font-size:0!important;line-height:0!important;background:none!important;border:0!important;box-shadow:none!important;display:grid;place-items:center}
+.road-sign-prohibido::before,.map3d-prohibido::before,#nav-road-alert[data-level=danger] .road-alert-icon{
+ content:'';display:block;width:28px;height:28px;border-radius:50%;
+ background:#d0231b linear-gradient(#fff,#fff) center/58% 18% no-repeat;
+ box-shadow:0 0 0 2.5px #fff,0 3px 10px rgb(0 0 0/.35);
+}
+.road-sign-aviso::before,.map3d-aviso::before,#nav-road-alert[data-level=caution] .road-alert-icon{
+ content:'';display:block;width:32px;height:29px;background:var(--s-peligro) center/contain no-repeat;
+ filter:drop-shadow(0 2px 3px rgb(0 0 0/.3));
+}
+.map3d-warning.map3d-prohibido,.map3d-warning.map3d-aviso{font-size:0!important;background:none!important;border:0!important;box-shadow:none!important;display:grid;place-items:center}
+#nav-road-alert .road-alert-icon{font-size:0!important;line-height:0;flex:none}
+#nav-road-alert[data-level=danger] .road-alert-icon{width:26px;height:26px;box-shadow:0 0 0 2px #fff}
+#nav-road-alert[data-level=caution] .road-alert-icon{width:30px;height:27px;filter:none}
 
 /* ---- ahorro de bateria: sin desenfoque, que es lo que mas gasta de todo esto ---- */
 body.low-power #nav-stage .leaflet-control-zoom.leaflet-bar,
