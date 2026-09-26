@@ -154,8 +154,12 @@ const STEP=1000;
 function paso(){
  const state=RutasMap.get(),route=state&&state.route;
  if(!route||route.total<1){info('No hay recorrido cargado.');return;}
- distance=S.advance(distance,speed,STEP/1000);
+ // El ultimo paso cae justo en el final y se manda: la llegada solo se reconoce a menos de 15 m
+ // del ultimo punto, y a 60 km/h los pasos son de 17 m. Parando al pasarse, la ultima posicion
+ // se quedaba antes de esa ventana y la llegada -el aviso, la voz, el resumen- no se veia nunca.
+ // Se para en el paso siguiente.
  if(distance>=route.total){info('Final del recorrido alcanzado.');parar();return;}
+ distance=Math.min(route.total,S.advance(distance,speed,STEP/1000));
  const aqui=C.at(route,distance),delante=C.at(route,Math.min(route.total,distance+12));
  last=aqui;
  tick++;

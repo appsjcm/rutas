@@ -30,6 +30,33 @@ function remaining(m){
  return Math.round(v/1000)+' km';
 }
 
+// La voz de las paradas de la ronda: una vez al acercarse -unos veinte segundos antes, y nunca
+// a menos de 150 m- y otra al llegar. Al llegar dice cuanto duro esa parada en la ronda grabada,
+// que es lo que no se sabe de memoria. st es lo que da stopProgress; key, para no repetirlo.
+function stopVoice(st,speed){
+ if(!st||!st.next||!Number.isFinite(st.gap))return null;
+ const n=st.done+1,cual='Parada '+n+' de '+st.total;
+ if(st.gap<=40){
+  const min=Math.round((Number(st.next.seconds)||0)/60);
+  return {key:n+':llegada',text:cual+'.'+(min>=1?' En la grabación duró '+min+(min===1?' minuto.':' minutos.'):'')};
+ }
+ const aviso=Math.max(150,Math.min(500,Math.max(0,Number(speed)||0)*20));
+ return st.gap<=aviso?{key:n+':aviso',text:cual+' en '+distance(st.gap)+'.'}:null;
+}
+
+// La misma parada en el panel: a cuanto esta la siguiente y, ya en ella, cuanto duro en la
+// grabacion. Las distancias, redondeadas como las dice la voz.
+function stopLine(st){
+ if(!st||!st.total)return '';
+ if(!st.next)return 'Paradas completadas: '+st.total+' de '+st.total;
+ const n=st.done+1;
+ if(Number(st.gap)<=40){
+  const min=Math.round((Number(st.next.seconds)||0)/60);
+  return 'En la parada '+n+' de '+st.total+(min>=1?' · '+min+' min en la grabación':'');
+ }
+ return 'Parada '+n+' de '+st.total+' a '+distance(st.gap);
+}
+
 function lower(s){
  const t=String(s||'');
  return t?t.charAt(0).toLowerCase()+t.slice(1):'';
@@ -127,6 +154,6 @@ function bestVoice(voices,preferida){
  return lista[0]||null;
 }
 
-const api={step,distance,remaining,after,banner,lower,imperative,maneuverIcon,voiceScore,spanishVoices,bestVoice,SIN_NOMBRE,ICONOS_MANIOBRA};
+const api={step,distance,remaining,stopVoice,stopLine,after,banner,lower,imperative,maneuverIcon,voiceScore,spanishVoices,bestVoice,SIN_NOMBRE,ICONOS_MANIOBRA};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasHudCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

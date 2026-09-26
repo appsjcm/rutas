@@ -166,6 +166,36 @@ test('lo que queda de ronda se lee de reojo: sin decimales de mas',()=>{
  assert.equal(H.remaining(undefined),'0 m');
 });
 
+// ---- las paradas, de viva voz ----
+const parada=(done,total,gap,seconds=0)=>({done,total,gap,next:gap===null?null:{seconds}});
+test('una parada se anuncia al acercarse, redondeada como las indicaciones',()=>{
+ assert.deepEqual(H.stopVoice(parada(2,14,140),8),{key:'3:aviso',text:'Parada 3 de 14 en 150 m.'});
+ assert.equal(H.stopVoice(parada(2,14,300),8),null,'a 300 m y 29 km/h aun es pronto');
+ assert.equal(H.stopVoice(parada(2,14,300),20).key,'3:aviso','en carretera se avisa antes: veinte segundos');
+ assert.equal(H.stopVoice(parada(2,14,600),30),null,'nunca a mas de 500 m');
+ assert.equal(H.stopVoice(parada(2,14,149),0).key,'3:aviso','parado, a 150 m');
+});
+test('al llegar se dice cuanto duro esa parada en la grabacion',()=>{
+ assert.deepEqual(H.stopVoice(parada(2,14,30,372),3),{key:'3:llegada',text:'Parada 3 de 14. En la grabación duró 6 minutos.'});
+ assert.equal(H.stopVoice(parada(0,3,0,65),0).text,'Parada 1 de 3. En la grabación duró 1 minuto.');
+ assert.equal(H.stopVoice(parada(0,3,0,20),0).text,'Parada 1 de 3.','menos de medio minuto no se dice');
+});
+test('sin parada por delante no hay nada que decir',()=>{
+ assert.equal(H.stopVoice(parada(14,14,null),5),null);
+ assert.equal(H.stopVoice(null,5),null);
+ assert.equal(H.stopVoice({done:0,total:2,gap:NaN,next:{}},5),null);
+});
+
+test('la linea de la parada en el panel dice lo mismo que la voz',()=>{
+ assert.equal(H.stopLine(parada(2,14,140)),'Parada 3 de 14 a 150 m');
+ assert.equal(H.stopLine(parada(2,14,1234)),'Parada 3 de 14 a 1,2 km');
+ assert.equal(H.stopLine(parada(2,14,12,372)),'En la parada 3 de 14 · 6 min en la grabación');
+ assert.equal(H.stopLine(parada(2,14,0,20)),'En la parada 3 de 14');
+ assert.equal(H.stopLine(parada(14,14,null)),'Paradas completadas: 14 de 14');
+ assert.equal(H.stopLine({done:0,total:0,gap:null,next:null}),'','un GPX sin paradas no pone nada');
+ assert.equal(H.stopLine(null),'');
+});
+
 // ---- la voz ----
 const v=(name,lang,localService=true,def=false)=>({name,lang,localService,default:def,voiceURI:'uri:'+name});
 test('en un iPhone con voces descargadas se usa la premium de España',()=>{
