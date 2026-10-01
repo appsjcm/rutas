@@ -24,6 +24,12 @@ select,input[type=text],textarea,.road-vehicle input{border-radius:10px;backgrou
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 @media print{.tabs,.theme-control{display:none}.wrap{padding:0}.panel{box-shadow:none}}
 
+/* En móvil, los controles pequeños también deben poder pulsarse con un dedo sin precisión. */
+@media(max-width:700px){
+ .theme-control select{min-height:44px}
+ .mobile-panel-toggle{width:44px;height:44px;min-height:44px}
+}
+
 button,select,input,textarea{font-family:inherit}.theme-control select{font-family:inherit;font-weight:500}.brandrow .sub{font-family:inherit}.brandrow h1{font-weight:750}.nav-shell .panel-bd>.btnrow:first-child{display:grid;grid-template-columns:auto auto auto;justify-content:start}.nav-shell .panel-bd>.btnrow:first-child .btn{white-space:nowrap}@media(max-width:700px){.nav-shell .panel-bd>.btnrow:first-child{grid-template-columns:1fr 1fr;justify-content:stretch}.nav-shell .panel-bd>.btnrow:first-child label{grid-column:1/-1}.nav-shell .panel-bd>.btnrow:first-child .btn{padding:9px 7px;font-size:11px}.nav-actions .switch{flex-basis:auto;margin-left:auto}.nav-actions{gap:8px}.nav-actions #nav-stop{font-size:11px}}
 
 .road-vehicle>span{flex-basis:100%}.road-vehicle label{flex:1 1 130px;display:grid;grid-template-columns:auto minmax(58px,1fr) auto}.road-vehicle input{width:100%;min-width:58px}@media(max-width:700px){.road-vehicle label{flex-basis:100%}}
