@@ -427,6 +427,8 @@ Este acceso no considera altura, peso ni anchura del vehículo. El GPX guardado 
 
 En **Ruta y ajustes** hay un modo de alta visibilidad para conducir con reflejos o con el móvil algo alejado: aumenta la calle, las maniobras, los avisos y los mandos, y usa fondos sólidos de contraste alto. La elección queda guardada en el dispositivo.
 
+En simulación, los controles arrancan reducidos a una sola cabecera situada sobre el resumen de conducción, de modo que no tapan el tiempo, la llegada ni la distancia restante. Al tocarla aparecen velocidad, avance y Parar; otro toque vuelve a despejar el mapa.
+
 La misma sección incluye **Bluetooth y voz**. Una web no puede emparejar el audio Bluetooth clásico del coche: esa conexión se hace en los ajustes del iPhone o Android. Rutas usa la salida que tenga elegida el sistema y el botón **Probar voz** confirma, antes de salir, que la indicación se escucha por los altavoces correctos. La prueba queda válida durante 24 horas y aparece en el chequeo de salida.
 
 El chequeo también muestra la batería y el espacio disponible. Si el navegador no permite leer la batería, como ocurre habitualmente en iPhone, lo dice y recuerda conectar el cargador. Con poca batería o menos de 25 MB disponibles avisa, pero no bloquea la ronda.

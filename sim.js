@@ -65,6 +65,7 @@ function plegar(abierto){
  panel.dataset.open=abierto?'yes':'no';
  $('sim-toggle').setAttribute('aria-expanded',String(abierto));
  panel.dataset.min=(running&&minimo&&!abierto)?'yes':'no';
+ document.body.classList.toggle('sim-minimo',running&&minimo&&!abierto);
  $('sim-body').hidden=!abierto&&(!running||minimo);
  try{localStorage.setItem(ABIERTO,abierto?'1':'0');}catch{}
 }
@@ -204,7 +205,7 @@ function arrancar(opts){
  if(opts&&Number.isFinite(Number(opts.speed))){speed=Number(opts.speed);pintaVelocidad();}
  const state=RutasMap.get();
  if(!state||!state.route||state.route.total<1){info('Carga un GPX antes de simular.');plegar(true);return;}
- running=true;minimo=false;tick=0;
+ running=true;minimo=true;tick=0;
  distance=Number.isFinite(state.progress)&&state.progress>0?state.progress:0;
  for(const s of subs.values())if(s.realId!=null){real.clear(s.realId);s.realId=null;}
  banner.hidden=false;panel.dataset.running='yes';
@@ -239,7 +240,7 @@ function parar(){
  running=false;if(timer)clearInterval(timer);timer=null;
  plegar(panel.dataset.open==='yes');      // al parar vuelve a valer lo que eligio el usuario
  banner.hidden=true;delete panel.dataset.running;
- document.body.classList.remove('sim-corriendo');
+ document.body.classList.remove('sim-corriendo','sim-minimo');
  pintaBotones();
  // Simular arranca la navegacion, asi que parar tiene que pararla. Si no, el GPS real toma
  // el relevo desde donde este el vehiculo de verdad -normalmente lejos del recorrido- y la

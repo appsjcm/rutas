@@ -427,6 +427,9 @@ body:has(#check-panel:not([hidden])) #sim-panel{display:none!important}
  #nav-stage#nav-stage.driving #nav-repeat{bottom:calc(var(--panel-base) + 28px)}
  #nav-stage#nav-stage.driving :is(.leaflet-bottom,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-bottom-left){bottom:calc(var(--panel-base) + 4px)}
 }
+@media not all and (orientation:landscape) and (max-height:560px){
+ body.sim-corriendo.sim-minimo #nav-stage#nav-stage.driving #drive-tools{bottom:calc(var(--panel-base) + 46px)}
+}
 
 /* En horizontal los cuatro datos van en una fila de la columna de la derecha, a partes
    iguales: «A tiempo» salia «A tiem…» mientras «12:47» sobraba de sitio. Cada columna mide
@@ -531,7 +534,8 @@ dialog.llegada::backdrop{background:rgb(8 18 28/.5)}
 :root.alta-visibilidad #nav-stage.driving #drive-panel{background:#fff;color:#071d2d;border-top:2px solid #071d2d}
 :root.alta-visibilidad #nav-stage.driving .drive-values strong{font-size:29px;font-weight:850}
 :root.alta-visibilidad #nav-stage.driving .drive-values small,:root.alta-visibilidad #nav-stage.driving #drive-status{font-size:14px;font-weight:700;color:#283b4c}
-:root.alta-visibilidad #nav-stage.driving :is(#drive-tools button,#nav-repeat){min-height:48px;font-size:14px;font-weight:800;border:2px solid #071d2d;color:#071d2d}
+:root.alta-visibilidad #nav-stage.driving :is(#drive-tools button,#nav-repeat){width:52px;height:52px;min-height:52px;font-size:0;border:2px solid #071d2d;color:#071d2d}
+:root.alta-visibilidad #nav-stage.driving :is(#drive-tools button,#nav-repeat)::before{width:27px;height:27px}
 
 @media(max-width:430px){
  .cabina-setting{align-items:flex-start;flex-direction:column}.cabina-setting .btn{width:100%;max-width:none}

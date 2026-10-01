@@ -162,3 +162,9 @@ body.sim-corriendo #nav-stage.driving #drive-banner{top:26px}
 #sim-panel[data-min=yes]{padding:8px 11px;gap:0}
 #sim-panel[data-min=yes]>#sim-toggle b{display:none}
 #sim-panel[data-min=yes] #sim-state{font-size:12px;color:#a8201a}
+/* Al empezar queda solo esta cabecera, colocada sobre el panel de llegada. Un toque la
+   abre con velocidad, avance y Parar; otro vuelve a dejar todo el mapa libre. */
+body.sim-corriendo.map-focus #sim-panel[data-min=yes]{
+ --sim-abajo:calc(var(--rutas-drive-panel-alto,142px) + 12px);
+ left:auto;right:max(12px,env(safe-area-inset-right));width:auto;min-width:156px;
+}

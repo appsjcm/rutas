@@ -39,7 +39,7 @@ function mideCapas(){
  const panel=$('drive-panel');
  if(panel&&!panel.hidden){
   const alto=Math.round(stage.getBoundingClientRect().bottom-panel.getBoundingClientRect().top);
-  if(alto>0)stage.style.setProperty('--drive-panel-alto',alto+'px');
+  if(alto>0){stage.style.setProperty('--drive-panel-alto',alto+'px');document.documentElement.style.setProperty('--rutas-drive-panel-alto',alto+'px');}
  }
 }
 for(const el of [$('drive-banner'),$('drive-road-info'),$('nav-road-alert'),$('drive-panel')])
