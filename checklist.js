@@ -46,7 +46,16 @@ function vehiculo(){
  const perfil=window.RutasVehicle?V.normalise(window.RutasVehicle.get()):{};
  return {count:V.incompatibilities(issues),profiled:Object.keys(perfil).length>0};
 }
-function estado(permission,mapRatio){
+async function almacenamiento(){
+ try{
+  if(!navigator.storage?.estimate)return null;
+  const e=await navigator.storage.estimate(),free=Math.max(0,Number(e.quota||0)-Number(e.usage||0));
+  let persisted;
+  try{persisted=navigator.storage.persisted?await navigator.storage.persisted():undefined;}catch{}
+  return {freeMB:free/1048576,persisted};
+ }catch{return null;}
+}
+function estado(permission,mapRatio,storage){
  const data=window.Roadbook&&window.Roadbook.getRoute();
  const mapa=window.RutasMap&&window.RutasMap.get();
  const v=vehiculo();
@@ -56,6 +65,8 @@ function estado(permission,mapRatio){
   permission,geolocation:!!navigator.geolocation,
   voiceSupported:'speechSynthesis' in window,
   voiceEnabled:!!($('nav-voice')&&$('nav-voice').checked),
+  audio:window.RutasCoche?.state?.(),
+  power:window.RutasPower?.state?.(),storage,
   mapRatio,online:navigator.onLine,
   roadState,vehicleCount:v.count,profiled:v.profiled,
   marksHere:window.RutasMarks?window.RutasMarks.anchored().length:0,
@@ -100,13 +111,13 @@ function pinta(items){
 // Lo que se sabe al instante se pinta ya; el permiso y las teselas llegan al momento.
 async function chequear(){
  const token=pendiente={};
- pinta(K.items(estado(undefined,ratio==null?0:ratio)));
+ pinta(K.items(estado(undefined,ratio==null?0:ratio,null)));
  // La pantalla la pide la navegacion en este mismo toque: se espera un momento a que conteste.
  const pantalla=new Promise(ok=>{let n=0;(function mira(){const s=window.RutasMap&&window.RutasMap.screenLock&&window.RutasMap.screenLock();if(s==='on'||s==='off'||s==='unsupported'||++n>15)ok();else setTimeout(mira,100);})();});
- const [p,r]=await Promise.all([permiso(),cobertura(),pantalla]);
+ const [p,r,,storage]=await Promise.all([permiso(),cobertura(),pantalla,almacenamiento()]);
  if(pendiente!==token||panel.hidden)return;
  ratio=r;
- pinta(K.items(estado(p,r)));
+ pinta(K.items(estado(p,r,storage)));
  badge();
 }
 

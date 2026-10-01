@@ -104,6 +104,30 @@ function voiceItem(supported,enabled){
   :{id:'voz',label:'Voz',state:AVISO,detail:'Avisos por voz desactivados.'};
 }
 
+function audioItem(audio){
+ if(audio&&audio.ready)return {id:'audio',label:'Audio del coche',state:OK,detail:'Prueba de voz realizada en las últimas 24 horas.'};
+ return {id:'audio',label:'Audio del coche',state:AVISO,
+  detail:'Conecta el coche por Bluetooth en el teléfono y usa «Probar voz» en Ruta y ajustes.'};
+}
+
+function batteryItem(power){
+ if(!power||power.percent===null||power.percent===undefined)
+  return {id:'bateria',label:'Batería',state:AVISO,detail:'Este móvil no permite medirla. Comprueba que esté cargando en el coche.'};
+ const p=Math.max(0,Math.min(100,Math.round(Number(power.percent))));
+ if(power.charging)return {id:'bateria',label:'Batería',state:OK,detail:p+' % · cargando.'};
+ if(p<=20)return {id:'bateria',label:'Batería',state:AVISO,detail:p+' % · conecta el cargador antes de salir.'};
+ return {id:'bateria',label:'Batería',state:OK,detail:p+' % disponible.'};
+}
+
+function storageItem(storage){
+ if(!storage||!Number.isFinite(storage.freeMB))
+  return {id:'espacio',label:'Espacio',state:AVISO,detail:'No se puede medir. Conserva también el GPX original.'};
+ const mb=Math.max(0,Math.round(storage.freeMB));
+ if(mb<25)return {id:'espacio',label:'Espacio',state:AVISO,detail:'Solo quedan '+mb+' MB para mapas y recorridos.'};
+ return {id:'espacio',label:'Espacio',state:storage.persisted===false?AVISO:OK,
+  detail:storage.persisted===false?mb+' MB libres · el sistema podría borrar los datos.':mb+' MB libres para la aplicación.'};
+}
+
 // Lo que de verdad quiere saber quien sale a una zona sin cobertura.
 function mapItem(ratio,online){
  const r=Number.isFinite(ratio)?Math.max(0,Math.min(1,ratio)):0;
@@ -154,6 +178,9 @@ function items(state){
  return [routeItem(s.route),
          gpsItem(s.permission,s.geolocation),
          voiceItem(s.voiceSupported,s.voiceEnabled),
+         audioItem(s.audio),
+         batteryItem(s.power),
+         storageItem(s.storage),
          mapItem(s.mapRatio,s.online),
          roadsItem(s.roadState,s.vehicleCount,s.profiled),
          marksItem(s.marksHere,s.marksTotal),
@@ -182,7 +209,7 @@ function dwell(tone){
 }
 
 const api={tileOf,keyOf,fromUrl,cachedKeys,zoomLevels,sample,tilesFor,seen,coverage,
-           routeItem,gpsItem,voiceItem,mapItem,roadsItem,marksItem,screenItem,items,verdict,dwell,
+           routeItem,gpsItem,voiceItem,audioItem,batteryItem,storageItem,mapItem,roadsItem,marksItem,screenItem,items,verdict,dwell,
            DRIVE_ZOOM,SPREAD,MAX_ZOOM,OK,AVISO,FALLO};
 if(typeof module==='object'&&module.exports)module.exports=api;else root.RutasCheckCore=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -103,8 +103,9 @@ test('el apartado de calles cuenta lo del vehiculo, no lo de los sentidos',()=>{
 test('el chequeo lista los apartados en orden',()=>{
  const l=C.items({route:{pts:[1,2],name:'R',metres:1000},permission:'granted',
                   voiceSupported:true,voiceEnabled:true,mapRatio:1,online:true,
+                  audio:{ready:true},power:{percent:78,charging:true},storage:{freeMB:500,persisted:true},
                   roadState:'ready',vehicleCount:0,profiled:true});
- assert.deepEqual(l.map(i=>i.id),['ruta','gps','voz','mapas','calles','avisos']);
+ assert.deepEqual(l.map(i=>i.id),['ruta','gps','voz','audio','bateria','espacio','mapas','calles','avisos']);
  assert.ok(l.every(i=>i.state==='ok'));
  assert.equal(C.verdict(l).tone,'ok');
  assert.equal(C.verdict(l).headline,'Todo listo. Buen turno.');
@@ -139,12 +140,13 @@ test('el chequeo cuenta tambien los avisos que marco quien conduce',()=>{
  assert.equal(C.marksItem(3,5).state,'ok');
 });
 
-test('los avisos propios entran como sexto apartado, al final',()=>{
+test('los avisos propios entran al final de las comprobaciones de salida',()=>{
  const l=C.items({route:{pts:[1,2],name:'R',metres:1000},permission:'granted',
                   voiceSupported:true,voiceEnabled:true,mapRatio:1,online:true,
+                  audio:{ready:true},power:{percent:78},storage:{freeMB:500,persisted:true},
                   roadState:'ready',vehicleCount:0,profiled:true,marksHere:2,marksTotal:3});
- assert.deepEqual(l.map(i=>i.id),['ruta','gps','voz','mapas','calles','avisos']);
- assert.equal(l[5].detail,'2 avisos tuyos en esta ruta.');
+ assert.deepEqual(l.map(i=>i.id),['ruta','gps','voz','audio','bateria','espacio','mapas','calles','avisos']);
+ assert.equal(l[8].detail,'2 avisos tuyos en esta ruta.');
  assert.equal(C.verdict(l).tone,'ok','todo en orden sigue siendo todo en orden');
 });
 
@@ -164,9 +166,22 @@ test('mientras no se sabe, la pantalla no sale en el chequeo',()=>{
  assert.equal(C.screenItem('pending'),null);
  assert.equal(C.screenItem(undefined),null);
  const base={route:{pts:[1,2],name:'R',metres:1000},permission:'granted',voiceSupported:true,voiceEnabled:true,
-  mapRatio:1,online:true,roadState:'ready',vehicleCount:0,profiled:true};
- assert.deepEqual(C.items({...base,screen:'pending'}).map(i=>i.id),['ruta','gps','voz','mapas','calles','avisos']);
+  audio:{ready:true},power:{percent:78},storage:{freeMB:500,persisted:true},mapRatio:1,online:true,roadState:'ready',vehicleCount:0,profiled:true};
+ assert.deepEqual(C.items({...base,screen:'pending'}).map(i=>i.id),['ruta','gps','voz','audio','bateria','espacio','mapas','calles','avisos']);
  const l=C.items({...base,screen:'off'});
  assert.equal(l.at(-1).id,'pantalla','al final, cuando se sabe');
  assert.equal(C.verdict(l).tone,'warn','sale con advertencia, no se bloquea la salida');
+});
+
+test('comprueba audio del coche, batería y espacio antes de salir',()=>{
+ assert.equal(C.audioItem({ready:true}).state,'ok');
+ assert.equal(C.audioItem({ready:false}).state,'warn');
+ assert.match(C.audioItem(null).detail,/Bluetooth/);
+ assert.equal(C.batteryItem({percent:80,charging:false}).state,'ok');
+ assert.equal(C.batteryItem({percent:16,charging:false}).state,'warn');
+ assert.match(C.batteryItem({percent:60,charging:true}).detail,/cargando/);
+ assert.equal(C.batteryItem(null).state,'warn');
+ assert.equal(C.storageItem({freeMB:500,persisted:true}).state,'ok');
+ assert.equal(C.storageItem({freeMB:12,persisted:true}).state,'warn');
+ assert.equal(C.storageItem({freeMB:500,persisted:false}).state,'warn');
 });

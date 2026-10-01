@@ -37,7 +37,7 @@ function decide(state){
  if(s.reducedMotion){if(!reasons.includes('motion'))reasons.push('motion');animations=false;}
 
  return {level:p==='critical'?'critical':(animations?'normal':'saving'),
-         animations,heavy,reasons,percent:percent(s.level),minutes:mins};
+         animations,heavy,reasons,percent:percent(s.level),charging:!!s.charging,minutes:mins};
 }
 
 function message(d){

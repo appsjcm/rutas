@@ -499,8 +499,44 @@ dialog.llegada::backdrop{background:rgb(8 18 28/.5)}
 .llegada-datos dd{margin:0;font-weight:750;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .llegada-aviso{margin:0 0 16px;padding:11px 13px;border-radius:14px;background:var(--warn-soft);color:var(--warn);font-size:14px;font-weight:650;text-align:left}
 .llegada-aviso[hidden]{display:none}
+.llegada-acciones{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 0 10px}
+.llegada-acciones .btn{min-height:48px;padding:8px 10px;line-height:1.2}
 #llegada-cerrar{width:100%;min-height:50px;font-size:16px}
 @media (prefers-reduced-motion:reduce){dialog.llegada[open]{animation:none}}
+
+/* ---- ajustes de cabina y recorrido realizado ---- */
+.cabina-settings,.route-journey{display:grid;gap:12px;padding:15px;border:1px solid var(--rule);border-radius:18px;background:var(--surface-2)}
+.cabina-setting{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.cabina-setting+ .cabina-setting{padding-top:13px;border-top:1px solid var(--rule)}
+.cabina-setting>div,.route-journey>div{min-width:0}
+.cabina-settings small,.route-journey small{color:var(--accent);font-size:9px;font-weight:800;letter-spacing:.12em}
+.cabina-settings h3,.route-journey h3{margin:2px 0 3px;font-size:16px;line-height:1.2}
+.cabina-settings .hint,.route-journey .hint{margin:0;color:var(--muted);font-size:12px;line-height:1.4}
+.cabina-setting .btn{flex:0 0 auto;max-width:150px;min-height:44px;white-space:normal}
+.route-journey .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.route-journey .btn{min-height:44px;white-space:normal;line-height:1.2}
+.cabina-high[aria-pressed=true]{background:var(--pine);border-color:var(--pine);color:#fff}
+
+/* ---- alta visibilidad para una cabina con reflejos o letra pequeña ---- */
+:root.alta-visibilidad #nav-stage.driving #drive-banner{background:#071d2d;color:#fff}
+:root.alta-visibilidad #nav-stage.driving #drive-turn-street{color:#70fff0}
+:root.alta-visibilidad #nav-stage.driving .nav-guidance b{font-size:clamp(25px,7vw,34px);font-weight:850;line-height:1.05}
+:root.alta-visibilidad #nav-stage.driving .nav-guidance small{font-size:16px;font-weight:700;color:#fff}
+:root.alta-visibilidad #nav-stage.driving #drive-road-info:not([hidden]){background:#fff;color:#071d2d;border:2px solid #071d2d}
+:root.alta-visibilidad #nav-stage.driving #drive-road-name{font-size:18px;font-weight:850}
+:root.alta-visibilidad #nav-stage.driving #drive-road-kind,:root.alta-visibilidad #nav-stage.driving #drive-road-extra{font-size:12px;font-weight:750;color:#283b4c}
+:root.alta-visibilidad #nav-stage.driving #nav-road-alert{border-width:3px;font-size:16px;background:#fff4ef;color:#6d130c}
+:root.alta-visibilidad #nav-stage.driving #nav-road-alert strong{font-size:16px}
+:root.alta-visibilidad #nav-stage.driving #nav-road-alert small{font-size:13px;font-weight:700}
+:root.alta-visibilidad #nav-stage.driving #drive-panel{background:#fff;color:#071d2d;border-top:2px solid #071d2d}
+:root.alta-visibilidad #nav-stage.driving .drive-values strong{font-size:29px;font-weight:850}
+:root.alta-visibilidad #nav-stage.driving .drive-values small,:root.alta-visibilidad #nav-stage.driving #drive-status{font-size:14px;font-weight:700;color:#283b4c}
+:root.alta-visibilidad #nav-stage.driving :is(#drive-tools button,#nav-repeat){min-height:48px;font-size:14px;font-weight:800;border:2px solid #071d2d;color:#071d2d}
+
+@media(max-width:430px){
+ .cabina-setting{align-items:flex-start;flex-direction:column}.cabina-setting .btn{width:100%;max-width:none}
+ .route-journey .btnrow,.llegada-acciones{grid-template-columns:1fr}
+}
 
 /* ---- conduciendo, sin desenfoque ----
    Mientras se conduce, el mapa se mueve sin parar -el coche se desliza entre posiciones- y el

@@ -422,3 +422,17 @@ Guiarme en Rutas calcula un acceso temporal para coche desde la posición actual
 La recuperación de un desvío utiliza el mismo sistema: después de dos posiciones fiables fuera de la traza, busca entre los siguientes 100 y 1.500 metros del orden del GPX y favorece el punto futuro más próximo sin saltar una vuelta lejana. El conductor decide si calcula el regreso, en una tarjeta con dos salidas del mismo tamaño: «Te has salido 84 m», y debajo «Volver a la ruta» o «Seguir sin recalcular». Mientras calcula dice «Buscando el mejor punto para volver…» y la segunda opción pasa a ser Cancelar, que devuelve la tarjeta al estado anterior sin dar el cálculo por fallido. Si el servicio no responde, ofrece Reintentar sin cerrar la puerta a seguir sin recalcular. Al aceptarlo, el acceso temporal se guía por calles y al llegar continúa la ronda desde ese punto. El cálculo es para coche y no aplica las dimensiones del camión.
 
 Este acceso no considera altura, peso ni anchura del vehículo. El GPX guardado y su progreso no se sustituyen por el trayecto calculado. Si el servicio de cálculo no responde, la ruta permanece intacta y se puede reintentar.
+
+## Cabina, Bluetooth y alta visibilidad
+
+En **Ruta y ajustes** hay un modo de alta visibilidad para conducir con reflejos o con el móvil algo alejado: aumenta la calle, las maniobras, los avisos y los mandos, y usa fondos sólidos de contraste alto. La elección queda guardada en el dispositivo.
+
+La misma sección incluye **Bluetooth y voz**. Una web no puede emparejar el audio Bluetooth clásico del coche: esa conexión se hace en los ajustes del iPhone o Android. Rutas usa la salida que tenga elegida el sistema y el botón **Probar voz** confirma, antes de salir, que la indicación se escucha por los altavoces correctos. La prueba queda válida durante 24 horas y aparece en el chequeo de salida.
+
+El chequeo también muestra la batería y el espacio disponible. Si el navegador no permite leer la batería, como ocurre habitualmente en iPhone, lo dice y recuerda conectar el cargador. Con poca batería o menos de 25 MB disponibles avisa, pero no bloquea la ronda.
+
+## Recorrido realizado e informe
+
+Al iniciar la navegación se graba en el propio teléfono una traza independiente con las posiciones GPS recibidas, su precisión y el desvío respecto de la ruta. Se filtran posiciones imposibles, precisiones peores de 100 metros y el movimiento pequeño repetido para no llenar el almacenamiento con ruido. El registro se detiene con la navegación y sobrevive a una recarga.
+
+En **Ruta y ajustes** se puede compartir el GPX realizado o guardar un informe CSV con distancia prevista y realizada, duración, puntos GPS, posiciones fuera de ruta, desvío máximo y tramos pendientes. Los mismos botones aparecen al terminar la ronda. El archivo no se publica ni se envía a ningún servidor; solo sale del teléfono cuando quien conduce decide compartirlo.
