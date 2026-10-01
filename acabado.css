@@ -451,6 +451,32 @@ body:has(#check-panel:not([hidden])) #sim-panel{display:none!important}
 :root[data-theme=dark] #nav-map,
 :root[data-theme=dark] #nav-stage.driving{background:#1b221f}
 
+/* ---- ventanas del mapa: paradas, avisos de via y tus avisos ----
+   Eran las de Leaflet de fabrica: blancas tambien de noche, en Helvetica en vez de la letra de
+   la app y con una x de 16 px dificil de acertar con el dedo. Ahora son tarjetas de la app, con
+   su modo oscuro, y la x es un boton de 32 px. */
+#nav-map.leaflet-container{font-family:inherit}
+#nav-map .leaflet-popup-content-wrapper,#nav-map .leaflet-popup-tip{
+ background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--rule),0 16px 36px -14px rgb(8 20 32/.5);
+}
+#nav-map .leaflet-popup-content-wrapper{border-radius:16px;padding:0}
+#nav-map .leaflet-popup-content{margin:13px 44px 14px 16px;font-size:14px;line-height:1.45;color:var(--ink)}
+#nav-map .leaflet-popup-content b{font-weight:750}
+#nav-map .leaflet-popup-content p{margin:6px 0 0}
+#nav-map .leaflet-popup-content small{color:var(--muted)}
+#nav-map .leaflet-popup-content a{color:var(--pine);font-weight:650;text-underline-offset:2px}
+#nav-map a.leaflet-popup-close-button{
+ top:6px;right:6px;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;color:var(--muted);
+}
+#nav-map a.leaflet-popup-close-button span{display:none}
+#nav-map a.leaflet-popup-close-button::before{
+ content:'';width:16px;height:16px;background:currentColor;
+ -webkit-mask:var(--i-cerrar) center/contain no-repeat;mask:var(--i-cerrar) center/contain no-repeat;
+}
+#nav-map a.leaflet-popup-close-button:hover,#nav-map a.leaflet-popup-close-button:focus-visible{
+ background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink);
+}
+
 /* ---- ronda terminada ---- */
 dialog.llegada{
  border:0;border-radius:26px;padding:26px 22px 20px;width:min(360px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;

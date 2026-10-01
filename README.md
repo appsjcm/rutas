@@ -261,6 +261,10 @@ Cada función trajo su hoja de estilos, y sobre el mapa se fueron pisando: una e
 
 Comprobado con el auditor de pantalla en la vista previa, a pantalla completa y conduciendo: nada importante tapado. El propio auditor daba cuatro falsas alarmas a pantalla completa con el simulador -las pestañas, que quedan debajo del mapa, salían "tapadas por el simulador"-; ahora mira toda la pila de capas en ese punto y no solo la de arriba.
 
+### Las ventanas del mapa
+
+Las ventanas que se abren al tocar una parada, un aviso de vía o un aviso tuyo eran las de Leaflet de fábrica: blancas también de noche, en Helvetica y con una «x» de 16 px difícil de acertar con el dedo. Ahora son tarjetas de la app -su letra, sus colores, su modo oscuro- con un botón de cerrar de 32 px. Leaflet solo miraba el borde del mapa al abrirlas, y la de una parada cerca de arriba quedaba debajo del cartel de indicaciones y de la barra de vistas: ahora se mide lo que flota en la mitad de arriba y el mapa se desplaza lo justo para que se lea entera. Tampoco son ya más anchas que el mapa: Leaflet las deja en 300 px y en un móvil el mapa mide 335 con los márgenes, así que se cortaban por la derecha. Y lo que no se ve pero se oye, en castellano: VoiceOver decía «Zoom in», «Zoom out» y «Close popup»; ahora dice Acercar, Alejar y Cerrar.
+
 ## Menús sobre el mapa
 
 Mientras se conduce hay cuatro cosas apiladas sobre el mapa y ninguna puede taparse con otra: el cartel de maniobra, la tarjeta de la calle, el aviso de vía y la barra de vistas. Iban colocadas con distancias fijas, y la barra creció -2D, Satélite, 3D, Lugares, Street View, Calle- hasta ocupar todo el ancho en un móvil, justo donde vive la tarjeta.
